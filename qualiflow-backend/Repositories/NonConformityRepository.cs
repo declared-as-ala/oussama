@@ -26,12 +26,13 @@ namespace DocApi.Repositories
             string? severity,
             int? processId,
             int? responsibleUserId,
-            int? organizationId)
+            int? organizationId,
+            int? restrictedUserId = null)
         {
             using var connection = _connectionFactory.CreateConnection();
 
             var parameters = new DynamicParameters();
-            var whereClause = BuildWhereClause(parameters, search, status, severity, processId, responsibleUserId, organizationId);
+            var whereClause = BuildWhereClause(parameters, search, status, severity, processId, responsibleUserId, organizationId, restrictedUserId);
 
             parameters.Add("@PageSize", pageSize);
             parameters.Add("@Offset", (pageNumber - 1) * pageSize);
@@ -70,12 +71,13 @@ namespace DocApi.Repositories
             string? severity,
             int? processId,
             int? responsibleUserId,
-            int? organizationId)
+            int? organizationId,
+            int? restrictedUserId = null)
         {
             using var connection = _connectionFactory.CreateConnection();
 
             var parameters = new DynamicParameters();
-            var whereClause = BuildWhereClause(parameters, search, status, severity, processId, responsibleUserId, organizationId);
+            var whereClause = BuildWhereClause(parameters, search, status, severity, processId, responsibleUserId, organizationId, restrictedUserId);
 
             var sql = $@"
                 SELECT COUNT(1)
@@ -318,7 +320,8 @@ namespace DocApi.Repositories
             string? severity,
             int? processId,
             int? responsibleUserId,
-            int? organizationId)
+            int? organizationId,
+            int? restrictedUserId = null)
         {
             var conditions = new List<string>();
 
@@ -364,6 +367,16 @@ namespace DocApi.Repositories
             {
                 conditions.Add("nc.OrganizationId = @OrganizationId");
                 parameters.Add("@OrganizationId", organizationId.Value);
+            }
+
+            if (restrictedUserId.HasValue)
+            {
+                conditions.Add(@"nc.ProcessId IN (
+                    SELECT Id FROM Processes WHERE PilotUserId = @RestrictedUserId
+                    UNION
+                    SELECT ProcessId FROM ProcessActors WHERE UserId = @RestrictedUserId
+                )");
+                parameters.Add("@RestrictedUserId", restrictedUserId.Value);
             }
 
             if (!conditions.Any())

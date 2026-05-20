@@ -113,7 +113,8 @@ namespace DocApi.Repositories
             bool? isOverdue,
             DateTime? fromDate,
             DateTime? toDate,
-            int organizationId)
+            int organizationId,
+            int? restrictedUserId = null)
         {
             using var connection = _connectionFactory.CreateConnection();
 
@@ -129,7 +130,8 @@ namespace DocApi.Repositories
                 fromDate,
                 toDate,
                 organizationId,
-                alias: "ca");
+                alias: "ca",
+                restrictedUserId: restrictedUserId);
 
             parameters.Add("@PageSize", pageSize);
             parameters.Add("@Offset", (pageNumber - 1) * pageSize);
@@ -176,7 +178,8 @@ namespace DocApi.Repositories
             bool? isOverdue,
             DateTime? fromDate,
             DateTime? toDate,
-            int organizationId)
+            int organizationId,
+            int? restrictedUserId = null)
         {
             using var connection = _connectionFactory.CreateConnection();
 
@@ -192,7 +195,8 @@ namespace DocApi.Repositories
                 fromDate,
                 toDate,
                 organizationId,
-                alias: "ca");
+                alias: "ca",
+                restrictedUserId: restrictedUserId);
 
             var sql = $@"
                 SELECT COUNT(1)
@@ -494,11 +498,34 @@ namespace DocApi.Repositories
             return rows > 0;
         }
 
-        public async Task<int> CountOverdueAsync(int organizationId)
+        public async Task<int> CountOverdueAsync(int organizationId, int? restrictedUserId = null)
         {
             using var connection = _connectionFactory.CreateConnection();
 
-            const string sql = @"
+            var parameters = new DynamicParameters();
+            parameters.Add("@OrganizationId", organizationId);
+            parameters.Add("@LegacyTodo", CorrectiveActionConstants.LegacyStatusTodo);
+            parameters.Add("@LegacyDone", CorrectiveActionConstants.LegacyStatusDone);
+            parameters.Add("@LegacyOverdue", CorrectiveActionConstants.LegacyStatusOverdue);
+            parameters.Add("@Planned", CorrectiveActionConstants.StatusPlanned);
+            parameters.Add("@InProgress", CorrectiveActionConstants.StatusInProgress);
+            parameters.Add("@Completed", CorrectiveActionConstants.StatusCompleted);
+            parameters.Add("@Verified", CorrectiveActionConstants.StatusVerified);
+
+            var restrictedFilter = "";
+            if (restrictedUserId.HasValue)
+            {
+                restrictedFilter = @"AND ca.NonConformityId IN (
+                    SELECT Id FROM NonConformities WHERE ProcessId IN (
+                        SELECT Id FROM Processes WHERE PilotUserId = @RestrictedUserId
+                        UNION
+                        SELECT ProcessId FROM ProcessActors WHERE UserId = @RestrictedUserId
+                    )
+                )";
+                parameters.Add("@RestrictedUserId", restrictedUserId.Value);
+            }
+
+            var sql = $@"
                 SELECT COUNT(1)
                 FROM CorrectiveActions ca
                 WHERE ca.OrganizationId = @OrganizationId
@@ -510,19 +537,10 @@ namespace DocApi.Repositories
                           WHEN ca.Status = @LegacyOverdue THEN @InProgress
                           ELSE ca.Status
                       END
-                  ) NOT IN (@Completed, @Verified)";
+                  ) NOT IN (@Completed, @Verified)
+                  {restrictedFilter}";
 
-            return await connection.QuerySingleAsync<int>(sql, new
-            {
-                OrganizationId = organizationId,
-                LegacyTodo = CorrectiveActionConstants.LegacyStatusTodo,
-                LegacyDone = CorrectiveActionConstants.LegacyStatusDone,
-                LegacyOverdue = CorrectiveActionConstants.LegacyStatusOverdue,
-                Planned = CorrectiveActionConstants.StatusPlanned,
-                InProgress = CorrectiveActionConstants.StatusInProgress,
-                Completed = CorrectiveActionConstants.StatusCompleted,
-                Verified = CorrectiveActionConstants.StatusVerified
-            });
+            return await connection.QuerySingleAsync<int>(sql, parameters);
         }
 
         private static string BuildWhereClause(
@@ -536,7 +554,8 @@ namespace DocApi.Repositories
             DateTime? fromDate,
             DateTime? toDate,
             int organizationId,
-            string alias)
+            string alias,
+            int? restrictedUserId = null)
         {
             var conditions = new List<string>
             {
@@ -638,6 +657,18 @@ namespace DocApi.Repositories
             {
                 conditions.Add("ca.DueDate::date <= @ToDate");
                 parameters.Add("@ToDate", toDate.Value.Date);
+            }
+
+            if (restrictedUserId.HasValue)
+            {
+                conditions.Add(@"ca.NonConformityId IN (
+                    SELECT Id FROM NonConformities WHERE ProcessId IN (
+                        SELECT Id FROM Processes WHERE PilotUserId = @RestrictedUserId
+                        UNION
+                        SELECT ProcessId FROM ProcessActors WHERE UserId = @RestrictedUserId
+                    )
+                )");
+                parameters.Add("@RestrictedUserId", restrictedUserId.Value);
             }
 
             return $"WHERE {string.Join(" AND ", conditions.Where(c => !string.IsNullOrWhiteSpace(c)))}";

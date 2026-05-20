@@ -14,7 +14,8 @@ namespace DocApi.Repositories.Interfaces
             string? severity,
             int? processId,
             int? responsibleUserId,
-            int? organizationId);
+            int? organizationId,
+            int? restrictedUserId = null);
 
         Task<int> CountSearchAsync(
             string? search,
@@ -22,7 +23,8 @@ namespace DocApi.Repositories.Interfaces
             string? severity,
             int? processId,
             int? responsibleUserId,
-            int? organizationId);
+            int? organizationId,
+            int? restrictedUserId = null);
 
         Task<NonConformity?> GetByIdAsync(int id);
         Task<NonConformityListItemData?> GetListItemByIdAsync(int id);

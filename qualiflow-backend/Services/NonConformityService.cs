@@ -48,6 +48,12 @@ namespace DocApi.Services
 
             await _correctiveActionRepository.SyncOverdueStatusesAsync(organizationScope);
 
+            var isOrgAdminOrQa = string.Equals(userContext.Role, UserRoles.ADMIN_ORG, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(userContext.Role, UserRoles.RESPONSABLE_QUALITE, StringComparison.OrdinalIgnoreCase)
+                || userContext.IsSuperAdmin;
+
+            int? restrictedUserId = isOrgAdminOrQa ? null : userContext.UserId;
+
             var items = await _nonConformityRepository.SearchAsync(
                 pageNumber,
                 pageSize,
@@ -56,7 +62,8 @@ namespace DocApi.Services
                 NormalizeUpper(query.Severity),
                 query.ProcessId,
                 query.ResponsibleUserId,
-                organizationScope);
+                organizationScope,
+                restrictedUserId);
 
             var total = await _nonConformityRepository.CountSearchAsync(
                 NormalizeSearch(query.Search),
@@ -64,7 +71,8 @@ namespace DocApi.Services
                 NormalizeUpper(query.Severity),
                 query.ProcessId,
                 query.ResponsibleUserId,
-                organizationScope);
+                organizationScope,
+                restrictedUserId);
 
             return new PagedNonConformityResponse
             {
@@ -412,8 +420,29 @@ namespace DocApi.Services
 
             await _correctiveActionRepository.SyncOverdueStatusesAsync(organizationScope);
 
+            var isOrgAdminOrQa = string.Equals(userContext.Role, UserRoles.ADMIN_ORG, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(userContext.Role, UserRoles.RESPONSABLE_QUALITE, StringComparison.OrdinalIgnoreCase)
+                || userContext.IsSuperAdmin;
+
+            int? restrictedUserId = isOrgAdminOrQa ? null : userContext.UserId;
+
             var nonConformities = (await _nonConformityRepository.GetByOrganizationAsync(organizationScope)).ToList();
-            var overdueActions = await _correctiveActionRepository.CountOverdueAsync(organizationScope);
+            if (restrictedUserId.HasValue)
+            {
+                var userProcesses = await _processRepository.SearchAsync(
+                    pageNumber: 1,
+                    pageSize: 999999,
+                    search: null,
+                    type: null,
+                    status: null,
+                    pilotUserId: null,
+                    organizationId: organizationScope,
+                    restrictedUserId: restrictedUserId.Value);
+                var processIds = userProcesses.Select(p => p.Id).ToHashSet();
+                nonConformities = nonConformities.Where(nc => nc.ProcessId.HasValue && processIds.Contains(nc.ProcessId.Value)).ToList();
+            }
+
+            var overdueActions = await _correctiveActionRepository.CountOverdueAsync(organizationScope, restrictedUserId);
 
             return new NonConformityStatisticsResponse
             {

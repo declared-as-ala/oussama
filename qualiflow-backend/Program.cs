@@ -268,8 +268,11 @@ var startupLogger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogg
 await DatabaseInitializer.InitializeAsync(app.Services, app.Configuration, startupLogger);
 
 // Configure the HTTP request pipeline.
-app.UseSwagger();
-app.UseSwaggerUI();
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 if (!app.Environment.IsDevelopment() && !isRenderEnvironment)
 {
@@ -281,7 +284,6 @@ app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notifications");
 

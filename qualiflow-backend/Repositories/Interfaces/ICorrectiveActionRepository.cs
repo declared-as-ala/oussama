@@ -20,7 +20,8 @@ namespace DocApi.Repositories.Interfaces
             bool? isOverdue,
             DateTime? fromDate,
             DateTime? toDate,
-            int organizationId);
+            int organizationId,
+            int? restrictedUserId = null);
 
         Task<int> CountSearchAsync(
             string? search,
@@ -31,7 +32,8 @@ namespace DocApi.Repositories.Interfaces
             bool? isOverdue,
             DateTime? fromDate,
             DateTime? toDate,
-            int organizationId);
+            int organizationId,
+            int? restrictedUserId = null);
 
         Task<CorrectiveActionDetailsData?> GetDetailsByIdAsync(int id, int organizationId);
         Task<IEnumerable<CorrectiveActionListItemData>> GetByNonConformityForListAsync(int nonConformityId, int organizationId);
@@ -42,6 +44,6 @@ namespace DocApi.Repositories.Interfaces
         Task<bool> DeleteAsync(int id, int organizationId);
         Task<bool> UpdateStatusAsync(int id, int organizationId, string status, DateTime? completionDate, DateTime updatedAt);
         Task<bool> UpdateEffectivenessAsync(int id, int organizationId, bool effectivenessVerified, string? effectivenessComment, DateTime updatedAt, string? status = null);
-        Task<int> CountOverdueAsync(int organizationId);
+        Task<int> CountOverdueAsync(int organizationId, int? restrictedUserId = null);
     }
 }

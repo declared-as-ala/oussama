@@ -58,6 +58,12 @@ namespace DocApi.Services
                 throw new ServiceException("Le type d'action corrective est invalide.");
             }
 
+            var isOrgAdminOrQa = string.Equals(userContext.Role, UserRoles.ADMIN_ORG, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(userContext.Role, UserRoles.RESPONSABLE_QUALITE, StringComparison.OrdinalIgnoreCase)
+                || userContext.IsSuperAdmin;
+
+            int? restrictedUserId = isOrgAdminOrQa ? null : userContext.UserId;
+
             var items = await _correctiveActionRepository.SearchAsync(
                 pageNumber,
                 pageSize,
@@ -69,7 +75,8 @@ namespace DocApi.Services
                 query.IsOverdue,
                 query.FromDate,
                 query.ToDate,
-                organizationId);
+                organizationId,
+                restrictedUserId);
 
             var total = await _correctiveActionRepository.CountSearchAsync(
                 NormalizeSearch(query.Search),
@@ -80,7 +87,8 @@ namespace DocApi.Services
                 query.IsOverdue,
                 query.FromDate,
                 query.ToDate,
-                organizationId);
+                organizationId,
+                restrictedUserId);
 
             return new PagedCorrectiveActionResponse
             {
@@ -281,22 +289,16 @@ namespace DocApi.Services
             EnsureAccessToOrganization(action, organizationId);
 
             bool isOrgAdminOrQa = userContext.Role == UserRoles.ADMIN_ORG || userContext.Role == UserRoles.RESPONSABLE_QUALITE;
-            bool isAssignee = action.ResponsibleUserId == userContext.UserId;
 
-            if (!isOrgAdminOrQa && !isAssignee)
+            if (!isOrgAdminOrQa)
             {
-                throw new ForbiddenException("Vous n'avez pas les droits de modifier le statut de cette action corrective.");
+                throw new ForbiddenException("Seul le responsable qualité ou l'administrateur de l'organisation peut modifier la situation de cette action corrective.");
             }
 
             var nextStatus = NormalizeStatus(request.Status);
             if (string.IsNullOrWhiteSpace(nextStatus) || !CorrectiveActionConstants.AllowedStatuses.Contains(nextStatus))
             {
                 throw new ServiceException("Le statut de l'action corrective est invalide.");
-            }
-
-            if (!isOrgAdminOrQa && nextStatus != CorrectiveActionConstants.StatusCompleted)
-            {
-                throw new ServiceException("En tant que responsable de l'action, vous pouvez uniquement marquer cette action comme REALISEE (Terminée).");
             }
 
             var currentStatus = NormalizeStatus(action.Status) ?? CorrectiveActionConstants.StatusPlanned;
@@ -424,7 +426,28 @@ namespace DocApi.Services
 
             await _correctiveActionRepository.SyncOverdueStatusesAsync(organizationId);
 
+            var isOrgAdminOrQa = string.Equals(userContext.Role, UserRoles.ADMIN_ORG, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(userContext.Role, UserRoles.RESPONSABLE_QUALITE, StringComparison.OrdinalIgnoreCase)
+                || userContext.IsSuperAdmin;
+
+            int? restrictedUserId = isOrgAdminOrQa ? null : userContext.UserId;
+
             var items = (await _correctiveActionRepository.GetForStatisticsAsync(organizationId)).ToList();
+            if (restrictedUserId.HasValue)
+            {
+                var userNcList = await _nonConformityRepository.SearchAsync(
+                    pageNumber: 1,
+                    pageSize: 999999,
+                    search: null,
+                    status: null,
+                    severity: null,
+                    processId: null,
+                    responsibleUserId: null,
+                    organizationId: organizationId,
+                    restrictedUserId: restrictedUserId.Value);
+                var userNcIds = userNcList.Select(nc => nc.Id).ToHashSet();
+                items = items.Where(item => userNcIds.Contains(item.NonConformityId)).ToList();
+            }
             var today = DateTime.UtcNow.Date;
 
             var normalizedItems = items.Select(item => new
