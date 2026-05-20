@@ -1,0 +1,99 @@
+<div class="page-container">
+    <!-- PAGE HEADER -->
+    <div class="page-header-bar">
+        <div class="ph-title-group">
+            <button class="btn-sub-back" (click)="goBack()" [title]="'common.cancel' | t">
+                <mat-icon>close</mat-icon>
+            </button>
+            <div>
+                <h1>{{ isEdit ? ('form.indicator.editTitle' | t) : ('form.indicator.newTitle' | t) }}</h1>
+                <div class="sub">{{ 'form.indicator.subtitle' | t }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-scroll">
+        <div class="loading-overlay" *ngIf="loading">
+            <mat-spinner diameter="40"></mat-spinner>
+        </div>
+
+        <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="submit()" class="flat-form">
+            <div class="form-section">
+                <div class="form-section-title">{{ 'form.indicator.generalInfo' | t }}</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>{{ 'form.indicator.processOwner' | t }} <span class="req">*</span></label>
+                        <select formControlName="processId">
+                            <option [value]="null">{{ 'form.indicator.select' | t }}</option>
+                            <option *ngFor="let p of processes" [value]="p.id">{{p.code}} - {{p.name}}</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>{{ 'form.indicator.codeRef' | t }} <span class="req">*</span></label>
+                        <input type="text" formControlName="code" placeholder="KPI-QUAL-01">
+                    </div>
+                    <div class="form-group full">
+                        <label>{{ 'form.indicator.designation' | t }} <span class="req">*</span></label>
+                        <input type="text" formControlName="name" [placeholder]="'form.indicator.namePlaceholder' | t">
+                    </div>
+                    <div class="form-group full">
+                        <label>{{ 'form.indicator.descObjective' | t }}</label>
+                        <textarea formControlName="description" rows="3"
+                            [placeholder]="'form.indicator.descPlaceholder' | t"></textarea>
+                    </div>
+                    <div class="form-group full">
+                        <label>{{ 'form.indicator.calcMethod' | t }}</label>
+                        <textarea formControlName="calculationMethod" rows="2"
+                            [placeholder]="'form.indicator.calcPlaceholder' | t"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">{{ 'form.indicator.pilotObjectives' | t }}</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>{{ 'form.indicator.unit' | t }}</label>
+                        <input type="text" formControlName="unit" [placeholder]="'form.indicator.unitPlaceholder' | t">
+                    </div>
+                    <div class="form-group">
+                        <label>{{ 'form.indicator.targetValue' | t }} <span class="req">*</span></label>
+                        <input type="number" formControlName="targetValue">
+                    </div>
+                    <div class="form-group">
+                        <label>{{ 'form.indicator.alertThreshold' | t }} <span class="req">*</span></label>
+                        <input type="number" formControlName="alertThreshold">
+                    </div>
+                    <div class="form-group">
+                        <label>{{ 'form.indicator.measureFrequency' | t }} <span class="req">*</span></label>
+                        <select formControlName="measurementFrequency">
+                            <option *ngFor="let o of frequencyOptions" [value]="o.value">{{o.label}}</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>{{ 'form.indicator.followUpOwner' | t }} <span class="req">*</span></label>
+                        <select formControlName="responsibleUserId">
+                            <option [value]="null">{{ 'form.indicator.select' | t }}</option>
+                            <option *ngFor="let u of users" [value]="u.id">{{u.firstName}} {{u.lastName}}</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>{{ 'form.indicator.initialStatus' | t }}</label>
+                        <select formControlName="status">
+                            <option value="ACTIF">{{ 'form.indicator.operational' | t }}</option>
+                            <option value="INACTIF">{{ 'form.indicator.disabledDraft' | t }}</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sticky-footer">
+                <button type="button" class="btn btn-ghost" (click)="goBack()" [disabled]="saving">{{ 'common.cancel' | t }}</button>
+                <button type="submit" class="btn btn-primary" [disabled]="saving || form.invalid">
+                    <mat-spinner radius="10" *ngIf="saving" diameter="18"></mat-spinner>
+                    {{ isEdit ? ('form.document.saveChanges' | t) : ('form.indicator.create' | t) }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

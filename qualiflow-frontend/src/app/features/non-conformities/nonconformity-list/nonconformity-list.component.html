@@ -1,0 +1,277 @@
+<section class="nonconformity-list-page">
+  <!-- MODERN HEADER -->
+  <div class="glass-header shadow-sm">
+    <div class="header-main">
+      <div class="title-section">
+        <h1><span class="highlight">{{ 'list.nonconformities.title' | t }}</span></h1>
+        <p class="subtitle">{{ 'list.nonconformities.subtitle' | t }}</p>
+      </div>
+      <div class="header-actions">
+        <button *ngIf="canCreate" mat-flat-button color="primary" class="btn-create" (click)="createNonConformity()">
+          <mat-icon>add</mat-icon>
+          {{ 'list.nonconformities.new' | t }}
+        </button>
+      </div>
+    </div>
+
+    <!-- MODERN FILTERS -->
+    <form class="glass-filters" [formGroup]="filtersForm" (ngSubmit)="onSearch()">
+      <div class="filter-grid">
+        <div class="filter-item">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'common.search' | t }}</mat-label>
+            <mat-icon matPrefix>search</mat-icon>
+            <input matInput formControlName="search" [placeholder]="'list.nonconformities.searchPlaceholder' | t" />
+          </mat-form-field>
+        </div>
+
+        <div class="filter-item">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'common.status' | t }}</mat-label>
+            <mat-select formControlName="status">
+              <mat-option value="">{{ 'common.allStatuses' | t }}</mat-option>
+              <mat-option *ngFor="let option of statusOptions" [value]="option.value">{{ option.label }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="filter-item">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'common.severity' | t }}</mat-label>
+            <mat-select formControlName="severity">
+              <mat-option value="">{{ 'common.allSeverities' | t }}</mat-option>
+              <mat-option *ngFor="let option of severityOptions" [value]="option.value">{{ option.label }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="filter-item">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'list.processes.title' | t }}</mat-label>
+            <mat-select formControlName="processId">
+              <mat-option [value]="null">{{ 'list.procedures.allProcesses' | t }}</mat-option>
+              <mat-option *ngFor="let process of processes" [value]="process.id">
+                {{ process.code }} - {{ process.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="filter-buttons">
+          <button mat-flat-button class="btn-apply" type="submit">
+            <mat-icon>filter_list</mat-icon>
+            {{ 'common.filter' | t }}
+          </button>
+          <button mat-stroked-button class="btn-reset" type="button" (click)="clearFilters()">
+            <mat-icon>restart_alt</mat-icon>
+            {{ 'common.reset' | t }}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- SUMMARY CARDS (KPIs) -->
+  <div class="summary-cards" *ngIf="statistics">
+    <div class="summary-card shadow-sm">
+      <span class="sc-label">{{ 'list.nonconformities.totalManaged' | t }}</span>
+      <div class="sc-value">
+        <mat-icon class="icon-neutral">assignment</mat-icon>
+        {{ statistics.total }}
+      </div>
+      <span class="sc-subtext">{{ 'list.nonconformities.records' | t }}</span>
+    </div>
+
+    <div class="summary-card shadow-sm">
+      <span class="sc-label">En attente validation</span>
+      <div class="sc-value">
+        <mat-icon class="icon-warning">hourglass_top</mat-icon>
+        {{ statistics.pendingValidation || 0 }}
+      </div>
+      <span class="sc-subtext">A valider par responsable qualite</span>
+    </div>
+
+    <div class="summary-card shadow-sm">
+      <span class="sc-label">{{ 'list.nonconformities.openInProgress' | t }}</span>
+      <div class="sc-value">
+        <mat-icon class="icon-warning">pending_actions</mat-icon>
+        {{ statistics.opened + statistics.inProgress }}
+      </div>
+      <span class="sc-subtext">{{ statistics.opened }} {{ 'list.nonconformities.opened' | t }}, {{ statistics.inProgress }} {{ 'list.nonconformities.inProgress' | t }}</span>
+    </div>
+
+    <div class="summary-card card-critical shadow-sm" [class.active]="statistics.critical > 0">
+      <span class="sc-label">{{ 'list.nonconformities.critical' | t }}</span>
+      <div class="sc-value">
+        <mat-icon class="icon-danger">report_problem</mat-icon>
+        {{ statistics.critical }}
+      </div>
+      <span class="sc-subtext">{{ 'list.nonconformities.criticalHelp' | t }}</span>
+    </div>
+
+    <div class="summary-card card-overdue shadow-sm" [class.active]="statistics.overdueActions > 0">
+      <span class="sc-label">{{ 'list.nonconformities.overdueActions' | t }}</span>
+      <div class="sc-value">
+        <mat-icon class="icon-danger">event_busy</mat-icon>
+        {{ statistics.overdueActions }}
+      </div>
+      <span class="sc-subtext">{{ 'list.nonconformities.deadlinesExceeded' | t }}</span>
+    </div>
+  </div>
+
+  <div class="quality-queue-banner" *ngIf="canManageValidation && statistics">
+    <div class="queue-main">
+      <mat-icon>fact_check</mat-icon>
+      <div>
+        <strong>File de validation qualite</strong>
+        <span>{{ statistics.pendingValidation || 0 }} non-conformite(s) en attente de validation</span>
+      </div>
+    </div>
+    <div class="queue-actions">
+      <button mat-flat-button color="primary" type="button" (click)="focusAwaitingValidation()">
+        Voir a valider
+      </button>
+      <button mat-stroked-button type="button" *ngIf="awaitingValidationMode" (click)="showAllNonConformities()">
+        Voir tous
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT CARD -->
+  <mat-card class="catalog-content-card shadow-sm">
+    <div class="loading-box" *ngIf="loading">
+      <mat-spinner diameter="38"></mat-spinner>
+      <span>{{ 'list.nonconformities.loading' | t }}</span>
+    </div>
+
+    <ng-container *ngIf="!loading">
+      <div class="empty-box" *ngIf="items.length === 0">
+        <mat-icon>check_circle_outline</mat-icon>
+        <h3>{{ 'list.nonconformities.emptyTitle' | t }}</h3>
+        <p>{{ 'list.nonconformities.emptyText' | t }}</p>
+      </div>
+
+      <div class="table-container" *ngIf="items.length > 0">
+        <table mat-table [dataSource]="items" class="nc-table">
+          <!-- Code Column -->
+          <ng-container matColumnDef="code">
+            <th mat-header-cell *matHeaderCellDef>{{ 'common.code' | t }}</th>
+            <td mat-cell *matCellDef="let item">
+              <span class="nc-code-inline">{{ item.code }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Titre Column -->
+          <ng-container matColumnDef="title">
+            <th mat-header-cell *matHeaderCellDef>{{ 'list.nonconformities.titleDesc' | t }}</th>
+            <td mat-cell *matCellDef="let item" class="title-cell" (click)="view(item)">
+              <span class="nc-title-text">{{ item.title }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Severite Column -->
+          <ng-container matColumnDef="severity">
+            <th mat-header-cell *matHeaderCellDef>{{ 'common.severity' | t }}</th>
+            <td mat-cell *matCellDef="let item">
+              <span class="tag-badge sev-badge" [ngClass]="item.severity.toLowerCase()">
+                {{ getSeverityLabel(item.severity) }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Statut Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>{{ 'list.nonconformities.state' | t }}</th>
+            <td mat-cell *matCellDef="let item">
+              <span class="tag-status" [ngClass]="item.status.toLowerCase()">
+                {{ getStatusLabel(item.status) }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Liaison Column -->
+          <ng-container matColumnDef="linkedTo">
+            <th mat-header-cell *matHeaderCellDef>{{ 'list.nonconformities.linkedTo' | t }}</th>
+            <td mat-cell *matCellDef="let item">
+              <div class="linked-info">
+                <div class="link-row" *ngIf="item.processCode">
+                  <mat-icon>hub</mat-icon>
+                  <strong>{{ item.processCode }}</strong>
+                </div>
+                <div class="link-row" *ngIf="item.procedureCode">
+                  <mat-icon>description</mat-icon>
+                  <span>{{ item.procedureCode }}</span>
+                </div>
+                <span class="empty-text" *ngIf="!item.processCode && !item.procedureCode">-</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Responsable Column -->
+          <ng-container matColumnDef="responsible">
+            <th mat-header-cell *matHeaderCellDef>{{ 'common.responsible' | t }}</th>
+            <td mat-cell *matCellDef="let item">
+              <div class="responsible-cell" *ngIf="item.responsibleFullName; else noResp">
+                <div class="resp-avatar-small">{{ item.responsibleFullName.charAt(0) }}</div>
+                <span>{{ item.responsibleFullName }}</span>
+              </div>
+              <ng-template #noResp><span class="empty-text">{{ 'common.toDefine' | t }}</span></ng-template>
+            </td>
+          </ng-container>
+
+          <!-- Date Column -->
+          <ng-container matColumnDef="detectedDate">
+            <th mat-header-cell *matHeaderCellDef>{{ 'list.nonconformities.detected' | t }}</th>
+            <td mat-cell *matCellDef="let item">{{ item.detectedDate | date: 'dd/MM/yyyy' }}</td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef style="width: 140px;"></th>
+            <td mat-cell *matCellDef="let item">
+              <div class="table-actions">
+                <button mat-icon-button class="action-btn view-btn" matTooltip="Voir"
+                  (click)="$event.stopPropagation(); view(item)">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+                <button *ngIf="canWrite" mat-icon-button class="action-btn edit-btn" matTooltip="Modifier"
+                  (click)="$event.stopPropagation(); edit(item)">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button *ngIf="canWrite" mat-icon-button class="action-btn status-btn" [matMenuTriggerFor]="statusMenu"
+                  matTooltip="Changer statut" (click)="$event.stopPropagation()">
+                  <mat-icon>published_with_changes</mat-icon>
+                </button>
+                <mat-menu #statusMenu="matMenu" class="nc-status-menu">
+                  <button mat-menu-item (click)="updateStatus(item, 'EN_ATTENTE_VALIDATION')">
+                    <mat-icon class="icon-progress">schedule</mat-icon> En attente validation
+                  </button>
+                  <button mat-menu-item (click)="updateStatus(item, 'OUVERTE')">
+                    <mat-icon class="icon-open">fiber_manual_record</mat-icon> Ouverte
+                  </button>
+                  <button mat-menu-item (click)="updateStatus(item, 'EN_COURS')">
+                    <mat-icon class="icon-progress">pending</mat-icon> En cours
+                  </button>
+                  <button mat-menu-item (click)="updateStatus(item, 'CLOTUREE')">
+                    <mat-icon class="icon-closed">check_circle</mat-icon> Clôturée
+                  </button>
+                </mat-menu>
+                <button *ngIf="canWrite" mat-icon-button class="action-btn delete-btn" matTooltip="Supprimer"
+                  (click)="$event.stopPropagation(); delete(item)">
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns" class="clickable-row" (click)="view(row)"></tr>
+        </table>
+
+        <mat-paginator [length]="total" [pageSize]="pageSize" [pageIndex]="pageNumber - 1"
+          [pageSizeOptions]="[5, 10, 20, 50]" showFirstLastButtons (page)="onPageChanged($event)">
+        </mat-paginator>
+      </div>
+    </ng-container>
+  </mat-card>
+</section>

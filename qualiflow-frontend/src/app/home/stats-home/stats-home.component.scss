@@ -1,0 +1,41 @@
+.section {
+  padding: 4.5rem 4vw 1.2rem;
+}
+
+.stats-section {
+  padding-top: 3.7rem;
+}
+
+.cards-grid {
+  margin-top: 1.5rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.stats-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.stat-card {
+  text-align: center;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+}
+
+.stat-card .material-symbols-outlined {
+  color: var(--color-primary);
+}
+
+.stat-card h3 {
+  margin: 0.5rem 0 0.2rem;
+  font-size: 1.8rem;
+  color: #000000;
+}
+
+.stat-card p {
+  margin: 0;
+  color: var(--color-muted);
+}

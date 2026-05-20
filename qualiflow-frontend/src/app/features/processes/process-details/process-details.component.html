@@ -1,0 +1,281 @@
+<section class="process-details-page">
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner diameter="38"></mat-spinner>
+    <span>{{ 'detail.process.loading' | t }}</span>
+  </div>
+
+  <ng-container *ngIf="!loading && details">
+    <div class="page-header-bar">
+      <div class="page-header-left">
+        <div class="page-subtitle">
+          <button type="button" class="back-link-btn" (click)="backToList()">
+            <mat-icon>arrow_back</mat-icon>
+            <span>{{ 'common.backToList' | t }}</span>
+          </button>
+        </div>
+        <h1 class="page-title">{{ details.process.code }} — {{ details.process.name }}</h1>
+        <p class="page-intro">
+          {{ 'detail.process.subtitle' | t }}
+        </p>
+      </div>
+
+      <div class="page-header-right">
+        <button *ngIf="canWrite" mat-flat-button color="primary" class="new-process-btn" (click)="editProcess()">
+          <mat-icon>edit</mat-icon> {{ 'common.edit' | t }}
+        </button>
+      </div>
+    </div>
+
+    <div class="details-body">
+      <div class="summary-cards">
+        <div class="summary-card">
+          <div class="sc-label">{{ 'common.type' | t }}</div>
+          <div class="sc-value">
+            <span class="tag blue">{{ getTypeLabel(details.process.type) }}</span>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="sc-label">{{ 'common.status' | t }}</div>
+          <div class="sc-value">
+            <span class="tag" [ngClass]="details.process.status === 'ACTIF' ? 'conforme' : 'perime'">
+              {{ getStatusLabel(details.process.status) }}
+            </span>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="sc-label">{{ 'list.processes.pilot' | t }}</div>
+          <div class="sc-value pilote-cell">
+            <div class="pilote-avatar">{{ details.process.pilotFullName?.charAt(0) || '?' }}</div>
+            <span>{{ details.process.pilotFullName || ('common.toDefine' | t) }}</span>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="sc-label">{{ 'list.procedures.title' | t }}</div>
+          <div class="sc-value">{{ procedures.length }}</div>
+        </div>
+      </div>
+
+      <div class="details-main-grid">
+        <mat-card class="info-card">
+          <div class="card-header-clean">
+            <mat-icon>info_outline</mat-icon>
+            <h2>{{ 'form.indicator.generalInfo' | t }}</h2>
+          </div>
+
+          <div class="info-grid">
+            <div class="info-item">
+              <label>{{ 'detail.indicator.description' | t }}</label>
+              <p>{{ details.process.description || ('detail.nc.noDescription' | t) }}</p>
+            </div>
+            <div class="info-item">
+              <label>{{ 'form.procedure.objectivesScope' | t }}</label>
+              <p>{{ formatList(details.process.objectives) }}</p>
+            </div>
+            <div class="info-item">
+              <label>{{ 'detail.process.finalities' | t }}</label>
+              <p>{{ formatList(details.process.finalities) }}</p>
+            </div>
+            <div class="info-item">
+              <label>{{ 'form.procedure.scope' | t }}</label>
+              <p>{{ formatList(details.process.scope) }}</p>
+            </div>
+          </div>
+        </mat-card>
+
+        <mat-card class="info-card">
+          <div class="card-header-clean">
+            <mat-icon>input</mat-icon>
+            <h2>{{ 'detail.process.flowsData' | t }}</h2>
+          </div>
+
+          <div class="info-grid">
+            <div class="info-item">
+              <label>{{ 'detail.process.suppliers' | t }}</label>
+              <p>{{ formatList(details.process.suppliers) }}</p>
+            </div>
+            <div class="info-item">
+              <label>{{ 'detail.process.clients' | t }}</label>
+              <p>{{ formatList(details.process.clients) }}</p>
+            </div>
+            <div class="info-item">
+              <label>{{ 'detail.process.inputData' | t }}</label>
+              <p>{{ formatList(details.process.inputData) }}</p>
+            </div>
+            <div class="info-item">
+              <label>{{ 'detail.process.outputData' | t }}</label>
+              <p>{{ formatList(details.process.outputData) }}</p>
+            </div>
+          </div>
+        </mat-card>
+      </div>
+
+      <mat-card class="info-card map-card">
+        <div class="card-header-clean">
+          <div class="title-block">
+            <mat-icon>account_tree</mat-icon>
+            <h2>{{ 'detail.process.linkedMapping' | t }}</h2>
+          </div>
+          <span class="count-pill">{{ procedures.length }} {{ 'detail.process.proceduresCount' | t }}</span>
+        </div>
+
+        <div class="process-flow">
+          <button type="button" class="procedure-chip" [class.active]="selectedProcedureId === null"
+            (click)="selectProcedure(null)">
+            <span class="chip-code">{{ 'detail.process.all' | t }}</span>
+            <span class="chip-title">{{ 'detail.process.processDocuments' | t }}</span>
+            <span class="chip-count">{{ allDocuments.length }} {{ 'detail.process.documentsCount' | t }}</span>
+          </button>
+
+          <button type="button" class="procedure-chip" *ngFor="let procedure of procedures"
+            [class.active]="selectedProcedureId === procedure.id" (click)="selectProcedure(procedure.id)">
+            <span class="chip-code">{{ procedure.code }}</span>
+            <span class="chip-title">{{ procedure.title }}</span>
+            <span class="chip-count">{{ getProcedureDocumentCount(procedure.id) }} {{ 'detail.process.documentsCount' |
+              t }}</span>
+          </button>
+        </div>
+
+        <div class="empty-state-mini" *ngIf="procedures.length === 0">
+          {{ 'detail.process.noProcedureLink' | t }}
+        </div>
+      </mat-card>
+
+      <mat-card class="info-card docs-card">
+        <div class="card-header-clean">
+          <div class="title-block">
+            <mat-icon>description</mat-icon>
+            <h2>{{ selectedDocumentsTitle }}</h2>
+          </div>
+          <span class="count-pill">{{ linkedDocuments.length }} {{ 'detail.process.documentsCount' | t }}</span>
+        </div>
+
+        <div class="table-wrap" *ngIf="linkedDocuments.length > 0; else emptyDocumentsTpl">
+          <table mat-table [dataSource]="linkedDocuments" class="details-word-table">
+            <ng-container matColumnDef="code">
+              <th mat-header-cell *matHeaderCellDef>{{ 'common.code' | t }}</th>
+              <td mat-cell *matCellDef="let document">{{ document.code }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="title">
+              <th mat-header-cell *matHeaderCellDef>{{ 'common.title' | t }}</th>
+              <td mat-cell *matCellDef="let document">{{ document.title }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="procedure">
+              <th mat-header-cell *matHeaderCellDef>{{ 'list.procedures.title' | t }}</th>
+              <td mat-cell *matCellDef="let document">{{ document.procedureCode || '—' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>{{ 'common.status' | t }}</th>
+              <td mat-cell *matCellDef="let document">
+                <span class="tag" [ngClass]="getDocumentStatusClass(document.status)">
+                  {{ document.status || 'BROUILLON' }}
+                </span>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedDocumentColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedDocumentColumns"></tr>
+          </table>
+        </div>
+
+        <ng-template #emptyDocumentsTpl>
+          <div class="empty-state-mid">
+            <mat-icon>description</mat-icon>
+            <p>{{ 'detail.process.noLinkedDocument' | t }}</p>
+          </div>
+        </ng-template>
+      </mat-card>
+
+      <mat-card class="info-card actors-section">
+        <div class="card-header-clean">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <mat-icon>group</mat-icon>
+            <h2>{{ 'detail.process.processActors' | t }}</h2>
+          </div>
+          <button *ngIf="canWrite" mat-stroked-button color="primary" class="add-actor-header-btn" (click)="addActor()">
+            <mat-icon>person_add</mat-icon> {{ 'detail.process.addActor' | t }}
+          </button>
+        </div>
+
+        <form *ngIf="canWrite" [formGroup]="actorForm" class="quick-actor-form" (ngSubmit)="addActor()">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'detail.process.user' | t }}</mat-label>
+            <mat-select formControlName="userId">
+              <mat-option [value]="null">{{ 'form.indicator.select' | t }}</mat-option>
+              <mat-option *ngFor="let user of availableUsers" [value]="user.id">
+                {{ user.firstName }} {{ user.lastName }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'detail.process.actorType' | t }}</mat-label>
+            <mat-select formControlName="actorType">
+              <mat-option *ngFor="let option of actorTypeOptions" [value]="option.value">{{ option.label }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <button mat-flat-button color="primary" type="submit" [disabled]="!actorForm.valid">
+            {{ 'form.nc.submit' | t }}
+          </button>
+        </form>
+
+        <div class="empty-actors" *ngIf="details.actors.length === 0">
+          <mat-icon>group_off</mat-icon>
+          <span>{{ 'detail.process.noActor' | t }}</span>
+        </div>
+
+        <div class="table-wrap" *ngIf="details.actors.length > 0">
+          <table mat-table [dataSource]="details.actors" class="details-word-table">
+            <ng-container matColumnDef="fullName">
+              <th mat-header-cell *matHeaderCellDef>{{ 'detail.process.name' | t }}</th>
+              <td mat-cell *matCellDef="let actor">
+                <div class="pilote-cell">
+                  <div class="pilote-avatar small">{{ actor.fullName?.charAt(0) }}</div>
+                  {{ actor.fullName }}
+                </div>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="email">
+              <th mat-header-cell *matHeaderCellDef>{{ 'detail.process.email' | t }}</th>
+              <td mat-cell *matCellDef="let actor">{{ actor.email }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="function">
+              <th mat-header-cell *matHeaderCellDef>{{ 'detail.process.function' | t }}</th>
+              <td mat-cell *matCellDef="let actor">{{ actor.function || '-' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="actorType">
+              <th mat-header-cell *matHeaderCellDef>{{ 'common.type' | t }}</th>
+              <td mat-cell *matCellDef="let actor">
+                <span class="tag gray">{{ getActorTypeLabel(actor.actorType) }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="assignedAt">
+              <th mat-header-cell *matHeaderCellDef>{{ 'detail.process.assignedAt' | t }}</th>
+              <td mat-cell *matCellDef="let actor">{{ actor.assignedAt | date: 'dd/MM/yyyy' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef style="width: 60px;"></th>
+              <td mat-cell *matCellDef="let actor">
+                <button *ngIf="canWrite" mat-icon-button color="warn" type="button" (click)="removeActor(actor)"
+                  [matTooltip]="'detail.process.removeActor' | t">
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedActorColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedActorColumns"></tr>
+          </table>
+        </div>
+      </mat-card>
+    </div>
+  </ng-container>
+</section>

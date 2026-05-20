@@ -1,0 +1,130 @@
+<section class="ca-form-page">
+  <div class="glass-header shadow-sm">
+    <div class="header-main">
+      <div class="title-section">
+        <button mat-button type="button" class="btn-back" (click)="goBack()">
+          <mat-icon>arrow_back</mat-icon>
+          Retour
+        </button>
+        <h1><span class="highlight">{{ title }}</span></h1>
+      </div>
+    </div>
+  </div>
+
+  <div class="loading-box" *ngIf="loading">
+    <mat-spinner diameter="38"></mat-spinner>
+    <span>Initialisation du formulaire...</span>
+  </div>
+
+  <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="submit()" class="modern-form">
+    <div class="form-grid">
+      <!-- IDENTIFICATION CARD -->
+      <mat-card class="form-card shadow-sm">
+        <div class="card-header">
+          <mat-icon>assignment</mat-icon>
+          <h2>Identification</h2>
+        </div>
+
+        <div class="card-body">
+          <div class="input-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Non-conformité *</mat-label>
+              <mat-select formControlName="nonConformityId">
+                <mat-option [value]="null">Sélectionner une NC</mat-option>
+                <mat-option *ngFor="let nc of nonConformities" [value]="nc.id">
+                  {{ nc.code }} - {{ nc.title }}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="form.controls.nonConformityId.invalid">Sélection requise</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Type *</mat-label>
+              <mat-select formControlName="type">
+                <mat-option *ngFor="let option of typeOptions" [value]="option.value">{{ option.label }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Titre de l'action *</mat-label>
+            <input matInput formControlName="title" placeholder="Ex: Mise à jour du mode opératoire..." />
+            <mat-error *ngIf="form.controls.title.invalid">Titre obligatoire</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Description détaillée</mat-label>
+            <textarea matInput rows="6" formControlName="description"
+              placeholder="Détails de l'action à mener..."></textarea>
+          </mat-form-field>
+        </div>
+      </mat-card>
+
+      <!-- PILOTAGE CARD -->
+      <mat-card class="form-card shadow-sm">
+        <div class="card-header">
+          <mat-icon>person_search</mat-icon>
+          <h2>Pilotage & Échéances</h2>
+        </div>
+
+        <div class="card-body">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Responsable de l'action *</mat-label>
+            <mat-select formControlName="responsibleUserId">
+              <mat-option [value]="null">Sélectionner un pilote</mat-option>
+              <mat-option *ngFor="let user of users" [value]="user.id">
+                {{ user.firstName }} {{ user.lastName }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="form.controls.responsibleUserId.invalid">Responsable requis</mat-error>
+          </mat-form-field>
+
+          <div class="input-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Date d'échéance *</mat-label>
+              <input matInput type="date" formControlName="dueDate" />
+              <mat-error *ngIf="form.controls.dueDate.invalid">Date requise</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>État de l'action *</mat-label>
+              <mat-select formControlName="status">
+                <mat-option *ngFor="let option of statusOptions" [value]="option.value">{{ option.label }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width" *ngIf="showCompletionDate">
+            <mat-label>Date de réalisation effective</mat-label>
+            <input matInput type="date" formControlName="completionDate" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Preuve associée (Enregistrement)</mat-label>
+            <mat-select formControlName="proofRecordId">
+              <mat-option [value]="null">Aucune preuve sélectionnée</mat-option>
+              <mat-option *ngFor="let record of proofRecords" [value]="record.id">
+                {{ record.code }} - {{ record.title }}
+              </mat-option>
+            </mat-select>
+            <mat-hint>Sélectionner le document prouvant la réalisation de l'action</mat-hint>
+          </mat-form-field>
+        </div>
+      </mat-card>
+    </div>
+
+    <!-- FORM ACTIONS -->
+    <div class="form-actions-bar shadow-sm">
+      <div class="actions-content">
+        <button mat-stroked-button type="button" class="btn-cancel" (click)="goBack()" [disabled]="saving">
+          Annuler
+        </button>
+        <button mat-flat-button color="primary" type="submit" class="btn-submit" [disabled]="saving">
+          <mat-spinner *ngIf="saving" diameter="18"></mat-spinner>
+          <mat-icon *ngIf="!saving">{{ isEdit ? 'save' : 'add_task' }}</mat-icon>
+          <span>{{ isEdit ? 'Mettre à jour l\'action' : 'Créer l\'action corrective' }}</span>
+        </button>
+      </div>
+    </div>
+  </form>
+</section>

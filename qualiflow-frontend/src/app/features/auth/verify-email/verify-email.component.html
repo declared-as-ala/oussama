@@ -1,0 +1,121 @@
+<div class="verify-page">
+    <div class="verify-sidebar">
+        <div class="sidebar-content">
+            <div class="sidebar-logo">
+                <img src="assets/logo.png" alt="QualiFlow Logo">
+                <span>QualiFlow</span>
+            </div>
+
+            <div class="sidebar-hero">
+                <h1>Activez votre compte</h1>
+                <p>Plus qu'une étape pour rejoindre QualiFlow. Vérifiez votre adresse email pour sécuriser votre accès.
+                </p>
+            </div>
+
+            <div class="sidebar-footer">
+                <p>&copy; 2026 QualiFlow. Tous droits réservés.</p>
+            </div>
+        </div>
+        <div class="sidebar-overlay"></div>
+    </div>
+
+    <div class="verify-main">
+        <div class="verify-container">
+            <div class="verify-card">
+                <!-- Input Status -->
+                <ng-container *ngIf="status === 'input'">
+                    <div class="card-header">
+                        <h2>Vérification</h2>
+                        <p>Saisissez le code de 6 chiffres envoyé à</p>
+                        <div class="email-pill" *ngIf="registeredEmail">{{ registeredEmail }}</div>
+                    </div>
+
+                    <form [formGroup]="verificationForm" (ngSubmit)="onVerifyCode()" class="verify-form">
+                        <div class="form-field">
+                            <label for="code">Code de confirmation</label>
+                            <div class="input-group"
+                                [class.error]="verificationForm.get('code')?.invalid && verificationForm.get('code')?.touched">
+                                <span class="input-icon">
+                                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path
+                                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                    </svg>
+                                </span>
+                                <input id="code" type="text" formControlName="code" maxlength="6" placeholder="000000"
+                                    autocomplete="one-time-code">
+                            </div>
+                            <div *ngIf="verificationForm.get('code')?.invalid && verificationForm.get('code')?.touched"
+                                class="field-error">
+                                Le code doit contenir 6 chiffres
+                            </div>
+                        </div>
+
+                        <div class="error-box" *ngIf="errorMessage">
+                            {{ errorMessage }}
+                        </div>
+
+                        <button type="submit" class="submit-btn" [disabled]="verificationForm.invalid || isSubmitting"
+                            [class.is-loading]="isSubmitting">
+                            <span *ngIf="!isSubmitting">Vérifier le compte</span>
+                            <span *ngIf="isSubmitting" class="spinner-box">
+                                <svg class="spinner" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2.5"
+                                        stroke-linecap="round"></circle>
+                                </svg>
+                                Vérification...
+                            </span>
+                        </button>
+                    </form>
+
+                    <div class="card-footer">
+                        <p>Vous n'avez pas reçu le code ?
+                            <button class="resend-link" (click)="onResendCode()" [disabled]="isResending">
+                                {{ isResending ? 'Envoi...' : 'Renvoyer le code' }}
+                            </button>
+                        </p>
+                        <a routerLink="/login" class="back-link">Retour à la connexion</a>
+                    </div>
+                </ng-container>
+
+                <!-- Loading Status -->
+                <div class="status-box" *ngIf="status === 'loading'">
+                    <div class="loading-spinner">
+                        <svg class="spinner large" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2.5"
+                                stroke-linecap="round"></circle>
+                        </svg>
+                    </div>
+                    <h3>Vérification en cours</h3>
+                    <p>Nous validons votre code de sécurité...</p>
+                </div>
+
+                <!-- Success Status -->
+                <div class="status-box success" *ngIf="status === 'success'">
+                    <div class="status-icon">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <h3>Compte vérifié !</h3>
+                    <p>Votre adresse email a été confirmée avec succès. Vous pouvez maintenant accéder à votre espace.
+                    </p>
+                    <button class="submit-btn" routerLink="/login">Se connecter</button>
+                </div>
+
+                <!-- Error Status -->
+                <div class="status-box error" *ngIf="status === 'error'">
+                    <div class="status-icon">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path
+                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <h3>Échec de vérification</h3>
+                    <p>{{ errorMessage || 'Le code ou le lien est invalide ou a expiré.' }}</p>
+                    <button class="submit-btn secondary" (click)="status = 'input'">Réessayer</button>
+                    <a routerLink="/login" class="back-link">Retour à la connexion</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

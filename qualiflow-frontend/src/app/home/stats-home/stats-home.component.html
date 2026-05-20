@@ -1,0 +1,9 @@
+<section class="section stats-section">
+  <div class="cards-grid stats-grid">
+    <article class="stat-card" *ngFor="let stat of stats">
+      <span class="material-symbols-outlined">{{ stat.icon }}</span>
+      <h3>{{ stat.value }}</h3>
+      <p>{{ stat.label }}</p>
+    </article>
+  </div>
+</section>

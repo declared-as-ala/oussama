@@ -1,0 +1,245 @@
+<div class="register-page">
+  <div class="register-sidebar">
+    <div class="sidebar-content">
+      <div class="sidebar-logo">
+        <img src="assets/logo.png" alt="QualiFlow Logo">
+        <span>QualiFlow</span>
+      </div>
+
+      <div class="sidebar-hero">
+        <h1>Rejoignez l'Excellence</h1>
+        <p>Créez votre compte en quelques instants et participez à la transformation qualité de votre organisation.</p>
+      </div>
+
+      <div class="sidebar-footer">
+        <p>&copy; 2026 QualiFlow. Tous droits réservés.</p>
+      </div>
+    </div>
+    <div class="sidebar-overlay"></div>
+  </div>
+
+  <div class="register-main">
+    <div class="register-container">
+      <div class="register-card">
+        <div class="card-header">
+          <h2>Créer un compte</h2>
+          <p>Remplissez les informations ci-dessous pour vous inscrire</p>
+        </div>
+
+        <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
+          <!-- Nom et Prénom -->
+          <div class="name-row">
+            <div class="form-field">
+              <label for="firstName">Prénom</label>
+              <div class="input-group"
+                [class.error]="registerForm.get('firstName')?.invalid && registerForm.get('firstName')?.touched">
+                <input id="firstName" type="text" formControlName="firstName" placeholder="Votre prénom">
+              </div>
+            </div>
+
+            <div class="form-field">
+              <label for="lastName">Nom</label>
+              <div class="input-group"
+                [class.error]="registerForm.get('lastName')?.invalid && registerForm.get('lastName')?.touched">
+                <input id="lastName" type="text" formControlName="lastName" placeholder="Votre nom">
+              </div>
+            </div>
+          </div>
+
+          <!-- Email -->
+          <div class="form-field">
+            <label for="email">Adresse Email</label>
+            <div class="input-group"
+              [class.error]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">
+              <span class="input-icon">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path
+                    d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                </svg>
+              </span>
+              <input id="email" type="email" formControlName="email" placeholder="votre@email.com">
+            </div>
+            <div *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched" class="field-error">
+              Email invalide
+            </div>
+          </div>
+
+          <!-- Pays et Téléphone -->
+          <div class="phone-row">
+            <div class="form-field nationality-field">
+              <label for="nationality">Pays</label>
+              <div class="input-group country-select-group">
+                <span class="country-flag-preview">{{ selectedCountry.flag }}</span>
+                <select id="nationality" formControlName="nationality" class="nation-select">
+                  <option *ngFor="let n of nationalities" [value]="n.code">
+                    {{ n.flag }} {{ n.label }}
+                  </option>
+                </select>
+                <span class="select-arrow">
+                  <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" width="14" height="14">
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </span>
+              </div>
+            </div>
+
+            <div class="form-field phone-field">
+              <label for="phone">Téléphone</label>
+              <div class="input-group phone-input-group"
+                [class.error]="registerForm.get('phone')?.invalid && registerForm.get('phone')?.touched">
+                <span class="phone-prefix">
+                  <span class="prefix-flag">{{ selectedCountry.flag }}</span>
+                  <span class="prefix-code">{{ selectedDialCode }}</span>
+                </span>
+                <input id="phone" type="tel" formControlName="phone" placeholder="XX XXX XXX">
+              </div>
+            </div>
+          </div>
+          <div *ngIf="registerForm.get('phone')?.invalid && registerForm.get('phone')?.touched" class="field-error">
+            Téléphone requis (min. 8 chiffres)
+          </div>
+
+          <!-- Code Organisation et Date Naissance -->
+          <div class="name-row">
+            <div class="form-field">
+              <label for="organizationCode">Code organisation</label>
+              <div class="input-group"
+                [class.error]="registerForm.get('organizationCode')?.invalid && registerForm.get('organizationCode')?.touched">
+                <input id="organizationCode" type="text" formControlName="organizationCode" placeholder="Ex: DEMO">
+              </div>
+            </div>
+
+            <div class="form-field">
+              <label for="birthDate">Date de naissance</label>
+              <div class="input-group"
+                [class.error]="registerForm.get('birthDate')?.invalid && registerForm.get('birthDate')?.touched">
+                <input id="birthDate" type="date" formControlName="birthDate">
+              </div>
+            </div>
+          </div>
+
+          <!-- Mot de passe -->
+          <div class="form-field">
+            <label for="password">Mot de passe</label>
+            <div class="input-group"
+              [class.error]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
+              <input id="password" [type]="hidePassword ? 'password' : 'text'" formControlName="password"
+                placeholder="Votre mot de passe">
+              <button type="button" class="password-toggle" (click)="hidePassword = !hidePassword">
+                <svg *ngIf="hidePassword" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <svg *ngIf="!hidePassword" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path
+                    d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24">
+                  </path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Password Requirements -->
+            <div class="password-requirements" *ngIf="registerForm.get('password')?.value">
+              <div class="requirement" [class.met]="passwordRequirements.length">
+                <span class="dot"></span> 8 caractères minimum
+              </div>
+              <div class="requirement" [class.met]="passwordRequirements.upper">
+                <span class="dot"></span> Une majuscule (A-Z)
+              </div>
+              <div class="requirement" [class.met]="passwordRequirements.lower">
+                <span class="dot"></span> Une minuscule (a-z)
+              </div>
+              <div class="requirement" [class.met]="passwordRequirements.digit">
+                <span class="dot"></span> Un chiffre (0-9)
+              </div>
+              <div class="requirement" [class.met]="passwordRequirements.special">
+                <span class="dot"></span> Un caractère spécial
+              </div>
+            </div>
+          </div>
+
+          <!-- Confirmer mot de passe -->
+          <div class="form-field">
+            <label for="confirmPassword">Confirmer mot de passe</label>
+            <div class="input-group"
+              [class.error]="(registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched) || passwordMismatch">
+              <input id="confirmPassword" [type]="hideConfirmPassword ? 'password' : 'text'"
+                formControlName="confirmPassword" placeholder="Confirmez le mot de passe">
+              <button type="button" class="password-toggle" (click)="hideConfirmPassword = !hideConfirmPassword">
+                <svg *ngIf="hideConfirmPassword" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <svg *ngIf="!hideConfirmPassword" fill="none" stroke="currentColor" stroke-width="2"
+                  viewBox="0 0 24 24">
+                  <path
+                    d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24">
+                  </path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </button>
+            </div>
+            <div *ngIf="passwordMismatch" class="field-error">Les mots de passe ne correspondent pas</div>
+          </div>
+
+          <!-- Anti-Bot Math Captcha -->
+          <div class="form-field captcha-field">
+            <label for="captcha">Vérification anti-robot</label>
+            <div class="captcha-question">
+              Combien font <strong>{{ captchaNum1 }} + {{ captchaNum2 }}</strong> ?
+            </div>
+            <div class="input-group"
+              [class.error]="registerForm.get('captcha')?.invalid && registerForm.get('captcha')?.touched">
+              <span class="input-icon">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path
+                    d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+              </span>
+              <input id="captcha" type="number" formControlName="captcha" placeholder="Votre réponse">
+              <button type="button" class="refresh-captcha" (click)="generateCaptcha()" title="Changer de calcul">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="terms-field"
+            [class.error]="registerForm.get('acceptTerms')?.invalid && registerForm.get('acceptTerms')?.touched">
+            <label class="terms-label">
+              <input type="checkbox" formControlName="acceptTerms">
+              <span>J'accepte les conditions d'utilisation et la politique de confidentialite.</span>
+            </label>
+            <div *ngIf="registerForm.get('acceptTerms')?.invalid && registerForm.get('acceptTerms')?.touched"
+              class="field-error">
+              Vous devez accepter les conditions pour creer un compte.
+            </div>
+          </div>
+
+          <div class="error-box" *ngIf="errorMessage">
+            {{ errorMessage }}
+          </div>
+
+          <button type="submit" class="submit-btn" [disabled]="isLoading || registerForm.invalid || passwordMismatch"
+            [class.is-loading]="isLoading">
+            <span *ngIf="!isLoading">Créer mon compte</span>
+            <span *ngIf="isLoading" class="spinner-box">
+              <svg class="spinner" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round"></circle>
+              </svg>
+              Création...
+            </span>
+          </button>
+        </form>
+
+        <div class="card-footer">
+          <p>J'ai déjà un compte ? <a routerLink="/login">Se connecter</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,225 @@
+<section class="procedure-list-page">
+    <!-- MODERN HEADER -->
+    <div class="glass-header shadow-sm">
+        <div class="header-main">
+            <div class="title-section">
+                <h1><span class="highlight">{{ 'list.procedures.title' | t }}</span></h1>
+                <p class="subtitle">
+                    <span>{{ activeCount }} {{ 'list.procedures.activeCount' | t }}</span>
+                </p>
+            </div>
+            <div class="header-actions">
+                <div class="view-mode-toggle">
+                  <button class="toggle-btn" [class.active]="viewMode === 'cards'" (click)="viewMode = 'cards'" matTooltip="Vue Cartes">
+                    <mat-icon>grid_view</mat-icon>
+                  </button>
+                  <button class="toggle-btn" [class.active]="viewMode === 'table'" (click)="viewMode = 'table'" matTooltip="Vue Tableau">
+                    <mat-icon>view_list</mat-icon>
+                  </button>
+                </div>
+
+                <button *ngIf="canWrite" mat-flat-button color="primary" class="btn-create" (click)="createProcedure()">
+                    <mat-icon>add</mat-icon>
+                    {{ 'list.procedures.new' | t }}
+                </button>
+            </div>
+        </div>
+
+        <!-- MODERN FILTERS -->
+        <form class="glass-filters" [formGroup]="filtersForm" (ngSubmit)="onSearch()">
+            <div class="filter-grid">
+                <div class="filter-item">
+                    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                        <mat-label>{{ 'common.search' | t }}</mat-label>
+                        <mat-icon matPrefix>search</mat-icon>
+                        <input matInput formControlName="search" [placeholder]="'list.procedures.searchPlaceholder' | t" />
+                    </mat-form-field>
+                </div>
+
+                <div class="filter-item">
+                    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                        <mat-label>{{ 'list.processes.title' | t }}</mat-label>
+                        <mat-select formControlName="processId">
+                            <mat-option [value]="null">{{ 'list.procedures.allProcesses' | t }}</mat-option>
+                            <mat-option *ngFor="let process of processes" [value]="process.id">
+                                {{ process.code }} - {{ process.name }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+                <div class="filter-item">
+                    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                        <mat-label>{{ 'common.status' | t }}</mat-label>
+                        <mat-select formControlName="status">
+                            <mat-option value="">{{ 'common.allStatuses' | t }}</mat-option>
+                            <mat-option *ngFor="let option of statusOptions" [value]="option.value">{{ option.label
+                                }}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+                <div class="filter-item">
+                    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                        <mat-label>{{ 'common.responsible' | t }}</mat-label>
+                        <mat-select formControlName="responsibleUserId">
+                            <mat-option [value]="null">{{ 'list.procedures.allResponsibles' | t }}</mat-option>
+                            <mat-option *ngFor="let responsible of responsibles" [value]="responsible.id">
+                                {{ responsible.firstName }} {{ responsible.lastName }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+                <div class="filter-buttons">
+                    <button mat-flat-button class="btn-apply" type="submit">
+                        <mat-icon>filter_list</mat-icon>
+                        {{ 'common.filter' | t }}
+                    </button>
+                    <button mat-stroked-button class="btn-reset" type="button" (click)="clearFilters()">
+                        <mat-icon>restart_alt</mat-icon>
+                        {{ 'common.reset' | t }}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <mat-card class="catalog-content-card shadow-sm">
+        <div class="loading-box" *ngIf="loading">
+            <mat-spinner diameter="38"></mat-spinner>
+            <span>{{ 'list.procedures.loading' | t }}</span>
+        </div>
+
+        <ng-container *ngIf="!loading">
+            <div class="empty-box" *ngIf="procedures.length === 0">
+                <mat-icon>inbox</mat-icon>
+                <h3>{{ 'list.procedures.emptyTitle' | t }}</h3>
+                <p>{{ 'list.procedures.emptyText' | t }}</p>
+            </div>
+
+            <!-- CARDS VIEW -->
+            <div class="procedure-cards-grid" *ngIf="procedures.length > 0 && viewMode === 'cards'">
+              <div class="procedure-card glass-card" *ngFor="let item of procedures; trackBy: trackByProcedureId" (click)="viewProcedure(item)">
+                <div class="card-header">
+                  <div class="code-badge">{{ item.code }}</div>
+                  <span class="status-dot" [ngClass]="item.status === 'ACTIF' ? 'active' : 'inactive'"></span>
+                </div>
+                
+                <div class="card-main">
+                  <h3>{{ item.title }}</h3>
+                  <div class="process-ref">
+                    <mat-icon>account_tree</mat-icon>
+                    <span>{{ item.processCode }} - {{ item.processName }}</span>
+                  </div>
+                </div>
+
+                <div class="card-footer">
+                  <div class="responsible-info" *ngIf="item.responsibleFullName">
+                    <div class="resp-avatar">{{ item.responsibleFullName.charAt(0) }}</div>
+                    <span>{{ item.responsibleFullName }}</span>
+                  </div>
+                  <div class="responsible-info" *ngIf="!item.responsibleFullName">
+                    <mat-icon>person_outline</mat-icon>
+                    <span class="empty-text">À définir</span>
+                  </div>
+                  <div class="actions">
+                    <button mat-icon-button (click)="$event.stopPropagation(); editProcedure(item)" *ngIf="canWrite">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TABLE VIEW -->
+            <div class="table-container" *ngIf="procedures.length > 0 && viewMode === 'table'">
+                <table mat-table [dataSource]="procedures" class="procedure-table">
+                    <!-- Code Column -->
+                    <ng-container matColumnDef="code">
+                        <th mat-header-cell *matHeaderCellDef>{{ 'common.code' | t }}</th>
+                        <td mat-cell *matCellDef="let item">
+                            <span class="procedure-code-inline">{{ item.code }}</span>
+                        </td>
+                    </ng-container>
+
+                    <!-- Titre Column -->
+                    <ng-container matColumnDef="title">
+                        <th mat-header-cell *matHeaderCellDef>{{ 'common.title' | t }}</th>
+                        <td mat-cell *matCellDef="let item" class="title-cell" (click)="viewProcedure(item)">
+                            <span class="procedure-title-text">{{ item.title }}</span>
+                        </td>
+                    </ng-container>
+
+                    <!-- Processus Column -->
+                    <ng-container matColumnDef="process">
+                        <th mat-header-cell *matHeaderCellDef>{{ 'list.processes.title' | t }}</th>
+                        <td mat-cell *matCellDef="let item">
+                            <div class="process-link">
+                                <strong>{{ item.processCode }}</strong>
+                                <span>{{ item.processName }}</span>
+                            </div>
+                        </td>
+                    </ng-container>
+
+                    <!-- Responsable Column -->
+                    <ng-container matColumnDef="responsible">
+                        <th mat-header-cell *matHeaderCellDef>{{ 'common.responsible' | t }}</th>
+                        <td mat-cell *matCellDef="let item">
+                            <div class="responsible-cell" *ngIf="item.responsibleFullName; else noResp">
+                                <div class="resp-avatar-small">{{ item.responsibleFullName.charAt(0) }}</div>
+                                <span>{{ item.responsibleFullName }}</span>
+                            </div>
+                            <ng-template #noResp><span class="empty-text">{{ 'common.toDefine' | t }}</span></ng-template>
+                        </td>
+                    </ng-container>
+
+                    <!-- Statut Column -->
+                    <ng-container matColumnDef="status">
+                        <th mat-header-cell *matHeaderCellDef>{{ 'common.status' | t }}</th>
+                        <td mat-cell *matCellDef="let item">
+                            <span class="tag-status" [ngClass]="item.status === 'ACTIF' ? 'conforme' : 'perime'">
+                                {{ getStatusLabel(item.status) }}
+                            </span>
+                        </td>
+                    </ng-container>
+
+                    <!-- Date Column -->
+                    <ng-container matColumnDef="createdAt">
+                        <th mat-header-cell *matHeaderCellDef>{{ 'common.createdAt' | t }}</th>
+                        <td mat-cell *matCellDef="let item">{{ item.createdAt | date: 'dd/MM/yyyy' }}</td>
+                    </ng-container>
+
+                    <!-- Actions Column -->
+                    <ng-container matColumnDef="actions">
+                        <th mat-header-cell *matHeaderCellDef style="width: 140px;"></th>
+                        <td mat-cell *matCellDef="let item">
+                            <div class="table-actions">
+                                <button mat-icon-button class="action-btn view-btn" matTooltip="Voir"
+                                    (click)="$event.stopPropagation(); viewProcedure(item)">
+                                    <mat-icon>visibility</mat-icon>
+                                </button>
+                                <button *ngIf="canWrite" mat-icon-button class="action-btn edit-btn"
+                                    matTooltip="Modifier" (click)="$event.stopPropagation(); editProcedure(item)">
+                                    <mat-icon>edit</mat-icon>
+                                </button>
+                                <button *ngIf="canWrite" mat-icon-button class="action-btn delete-btn"
+                                    matTooltip="Supprimer" (click)="$event.stopPropagation(); deleteProcedure(item)">
+                                    <mat-icon>delete_outline</mat-icon>
+                                </button>
+                            </div>
+                        </td>
+                    </ng-container>
+
+                    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                    <tr mat-row *matRowDef="let row; columns: displayedColumns" class="clickable-row"
+                        (click)="viewProcedure(row)"></tr>
+                </table>
+
+                <mat-paginator [length]="total" [pageSize]="pageSize" [pageIndex]="pageNumber - 1"
+                    [pageSizeOptions]="[5, 10, 20, 50]" showFirstLastButtons (page)="onPageChanged($event)">
+                </mat-paginator>
+            </div>
+        </ng-container>
+    </mat-card>
+</section>

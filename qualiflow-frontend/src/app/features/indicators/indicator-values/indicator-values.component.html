@@ -1,0 +1,80 @@
+<div class="values-flex">
+    <!-- SAISIE -->
+    <div class="entry-card" *ngIf="canWrite">
+        <div class="card-head">Saisie d'un nouveau relevé</div>
+        <form [formGroup]="form" (ngSubmit)="submit()" class="compact-form">
+            <div class="c-grid">
+                <div class="c-group">
+                    <label>Période</label>
+                    <input type="text" formControlName="periodLabel" placeholder="Ex: 2026-Q1">
+                </div>
+                <div class="c-group">
+                    <label>Valeur</label>
+                    <input type="number" step="0.01" formControlName="measuredValue">
+                </div>
+                <div class="c-group">
+                    <label>Date</label>
+                    <input type="date" formControlName="measuredAt">
+                </div>
+                <div class="c-group full">
+                    <label>Commentaire</label>
+                    <input type="text" formControlName="comment" placeholder="Optionnel">
+                </div>
+            </div>
+            <div class="c-actions">
+                <button type="button" class="btn-sm-ghost" (click)="cancelEdit()">Annuler</button>
+                <button type="submit" class="btn-sm-primary" [disabled]="saving || form.invalid">
+                    {{ isEditing ? 'Mettre à jour' : 'Ajouter au registre' }}
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- TABLEAU -->
+    <div class="history-table-card">
+        <div class="card-head">Historique des mesures</div>
+        <div class="table-frame">
+            <table mat-table [dataSource]="values" class="flat-table">
+                <ng-container matColumnDef="periodLabel">
+                    <th mat-header-cell *matHeaderCellDef>Période</th>
+                    <td mat-cell *matCellDef="let v"><strong>{{ v.periodLabel }}</strong></td>
+                </ng-container>
+                <ng-container matColumnDef="measuredValue">
+                    <th mat-header-cell *matHeaderCellDef>Valeur</th>
+                    <td mat-cell *matCellDef="let v" class="v-cell">{{ v.measuredValue }}</td>
+                </ng-container>
+                <ng-container matColumnDef="measuredAt">
+                    <th mat-header-cell *matHeaderCellDef>Date relevé</th>
+                    <td mat-cell *matCellDef="let v">{{ v.measuredAt | date: 'dd/MM/yyyy' }}</td>
+                </ng-container>
+                <ng-container matColumnDef="comment">
+                    <th mat-header-cell *matHeaderCellDef>Commentaire</th>
+                    <td mat-cell *matCellDef="let v" class="comm-cell">{{ v.comment || '-' }}</td>
+                </ng-container>
+                <ng-container matColumnDef="enteredBy">
+                    <th mat-header-cell *matHeaderCellDef>Saisi par</th>
+                    <td mat-cell *matCellDef="let v"><span class="u-tag">{{ v.enteredByFullName }}</span></td>
+                </ng-container>
+                <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef></th>
+                    <td mat-cell *matCellDef="let v">
+                        <div class="row-acts">
+                            <button class="icon-btn" (click)="edit(v)"><mat-icon>edit</mat-icon></button>
+                            <button class="icon-btn del"
+                                (click)="delete(v)"><mat-icon>delete_outline</mat-icon></button>
+                        </div>
+                    </td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+            </table>
+
+            <div class="empty-vals" *ngIf="!loading && values.length === 0">
+                Aucune donnée enregistrée
+            </div>
+            <div class="loading-vals" *ngIf="loading">
+                <mat-spinner diameter="24"></mat-spinner>
+            </div>
+        </div>
+    </div>
+</div>

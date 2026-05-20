@@ -1,0 +1,207 @@
+.page-container {
+    height: calc(100vh - var(--topbar-h));
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-raised);
+}
+
+.page-header-bar {
+    background: white;
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+
+.ph-title-group {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    .btn-sub-back {
+        width: 34px;
+        height: 34px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: white;
+        color: var(--text-muted);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &:hover {
+            background: var(--bg-raised);
+            color: var(--text-primary);
+        }
+
+        mat-icon {
+            font-size: 18px;
+            width: 18px;
+            height: 18px;
+        }
+    }
+
+    h1 {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .sub {
+        font-size: 11.5px;
+        color: var(--text-muted);
+        margin-top: 2px;
+    }
+}
+
+.content-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+}
+
+.flat-form {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.form-section {
+    .form-section-title {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--xl-green);
+        border-bottom: 1px solid var(--xl-green-xlight);
+        padding-bottom: 8px;
+        margin-bottom: 20px;
+        letter-spacing: 0.5px;
+    }
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+
+    @media (max-width: 600px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    &.full {
+        grid-column: 1 / -1;
+    }
+
+    label {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--text-primary);
+
+        .req {
+            color: var(--s-red);
+        }
+    }
+
+    input,
+    select,
+    textarea {
+        padding: 10px 12px;
+        border: 1px solid var(--border-mid);
+        border-radius: var(--radius);
+        font-size: 13.5px;
+        background: white;
+        color: var(--text-primary);
+        transition: all 0.2s;
+
+        &:focus {
+            outline: none;
+            border-color: var(--xl-green-mid);
+            box-shadow: 0 0 0 2px var(--xl-green-xlight);
+        }
+
+        &::placeholder {
+            color: var(--text-muted);
+        }
+    }
+
+    textarea {
+        resize: vertical;
+        min-height: 80px;
+    }
+}
+
+.sticky-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    margin-top: 12px;
+}
+
+.btn {
+    height: 42px;
+    padding: 0 24px;
+    border-radius: var(--radius);
+    font-weight: 700;
+    font-size: 13.5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+
+    &.btn-primary {
+        background: var(--xl-green-mid);
+        color: white;
+
+        &:hover {
+            background: var(--xl-green);
+            box-shadow: 0 4px 12px rgba(0, 135, 90, 0.2);
+        }
+
+        &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+    }
+
+    &.btn-ghost {
+        background: transparent;
+        color: var(--text-secondary);
+
+        &:hover {
+            background: var(--bg-raised);
+            color: var(--text-primary);
+        }
+    }
+}
+
+.loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}

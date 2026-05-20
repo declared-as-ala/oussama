@@ -1,0 +1,58 @@
+<div class="notification-list-container">
+  <!-- LOADING STATE -->
+  <div *ngIf="loading" class="loading-box">
+    <mat-spinner diameter="40"></mat-spinner>
+    <span>Mise à jour de vos alertes...</span>
+  </div>
+
+  <!-- EMPTY STATE -->
+  <div *ngIf="!loading && notifications.length === 0" class="empty-box">
+    <mat-icon>notifications_off</mat-icon>
+    <h3>Tout est en ordre !</h3>
+    <p>Aucune notification non lue ou archivée pour le moment.</p>
+  </div>
+
+  <!-- NOTIFICATION ITEMS -->
+  <div *ngIf="!loading && notifications.length > 0" class="notification-list">
+    <article *ngFor="let item of notifications; trackBy: trackById" class="notification-item"
+      [class.unread]="!item.isRead" [class.priority-high]="item.priority === 'HIGH'"
+      [class.priority-critical]="item.priority === 'CRITICAL'" (click)="onOpen(item)">
+
+      <!-- ICON -->
+      <div class="notification-icon-wrapper shadow-xs" [ngClass]="'type-' + item.category.toLowerCase()">
+        <mat-icon>{{ getIcon(item) }}</mat-icon>
+      </div>
+
+      <!-- CONTENT -->
+      <div class="notification-content">
+        <div class="notification-head">
+          <h4>{{ item.title }}</h4>
+          <span class="badge-pill" [ngClass]="'priority-' + item.priority.toLowerCase()">
+            {{ getPriorityLabel(item.priority) }}
+          </span>
+        </div>
+        <p>{{ item.message }}</p>
+        <div class="notification-meta">
+          <div class="meta-item">
+            <mat-icon>schedule</mat-icon>
+            {{ item.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+          </div>
+          <span class="badge-pill" [class.status-read]="item.isRead" [class.status-unread]="!item.isRead">
+            {{ item.isRead ? 'Déjà lue' : 'Nouveau' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="item-actions">
+        <button *ngIf="!item.isRead" mat-icon-button type="button" matTooltip="Marquer comme lue"
+          (click)="onMarkRead(item, $event)">
+          <mat-icon>done</mat-icon>
+        </button>
+        <button mat-icon-button type="button" color="warn" matTooltip="Archiver" (click)="onArchive(item, $event)">
+          <mat-icon>archive</mat-icon>
+        </button>
+      </div>
+    </article>
+  </div>
+</div>

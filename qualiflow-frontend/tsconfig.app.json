@@ -1,0 +1,25 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/app",
+    "types": []
+  },
+  "files": [
+    "src/main.ts",
+    "src/app/home/accueil-home/accueil-home.component.ts",
+    "src/app/home/contact-home/contact-home.component.ts",
+    "src/app/home/header-home/header-home.component.ts",
+    "src/app/home/services-home/services-home.component.ts",
+    "src/app/home/features-home/features-home.component.ts",
+    "src/app/home/news-home/news-home.component.ts",
+    "src/app/home/why-home/why-home.component.ts",
+    "src/app/home/stats-home/stats-home.component.ts",
+    "src/app/home/footer-home/footer-home.component.ts"
+  ],
+  "include": [
+    "src/**/*.d.ts"
+  ],
+  "exclude": [
+    "src/**/*.spec.ts"
+  ]
+}

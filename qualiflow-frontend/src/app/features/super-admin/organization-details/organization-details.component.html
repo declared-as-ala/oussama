@@ -1,0 +1,329 @@
+﻿<section class="org-details-wrapper">
+  <div *ngIf="loading" class="loading-overlay">
+    <mat-spinner diameter="48"></mat-spinner>
+    <span>Chargement des données...</span>
+  </div>
+
+  <ng-container *ngIf="!loading && organization as org">
+    <!-- Header Banner -->
+    <header class="details-header">
+      <div class="header-content">
+        <div class="title-section">
+          <div class="org-icon">
+            <mat-icon>business</mat-icon>
+          </div>
+          <div class="title-text">
+            <h1>{{ org.name }}</h1>
+            <div class="subtitle">
+              <span class="org-code">#{{ org.code }}</span>
+              <span class="separator">•</span>
+              <span class="org-type">{{ getTypeLabel(org.type) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button mat-button class="btn-back" (click)="backToList()">
+            <mat-icon>arrow_back</mat-icon>
+            Retour
+          </button>
+          <button mat-stroked-button class="btn-toggle" (click)="toggleStatus()"
+            [color]="org.status === 'ACTIF' ? 'warn' : 'primary'">
+            <mat-icon>{{ org.status === 'ACTIF' ? 'pause_circle' : 'play_circle' }}</mat-icon>
+            {{ org.status === 'ACTIF' ? 'Suspendre' : 'Activer' }}
+          </button>
+          <button mat-flat-button color="primary" class="btn-edit" (click)="editOrganization()">
+            <mat-icon>edit</mat-icon>
+            Modifier
+          </button>
+          <button mat-stroked-button class="btn-delete" (click)="deleteOrganization()">
+            <mat-icon>delete_outline</mat-icon>
+            Supprimer
+          </button>
+        </div>
+      </div>
+
+      <div class="status-banners">
+        <span class="status-badge" [class.active]="org.status === 'ACTIF'">
+          {{ getStatusLabel(org.status) }}
+        </span>
+      </div>
+    </header>
+
+    <div class="details-grid">
+      <!-- Info Section -->
+      <mat-card class="info-card">
+        <div class="card-title">
+          <mat-icon>info</mat-icon>
+          <h2>Informations Générales</h2>
+        </div>
+
+        <div class="info-list">
+          <div class="info-item full">
+            <label>Description</label>
+            <p>{{ org.description || 'Aucune description disponible.' }}</p>
+          </div>
+
+          <div class="info-item">
+            <mat-icon>location_on</mat-icon>
+            <div class="item-content">
+              <label>Adresse</label>
+              <p>{{ org.address || '-' }}</p>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <mat-icon>email</mat-icon>
+            <div class="item-content">
+              <label>Email Contact</label>
+              <p>{{ org.email || '-' }}</p>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <mat-icon>phone</mat-icon>
+            <div class="item-content">
+              <label>Téléphone</label>
+              <p>{{ org.phone || '-' }}</p>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <mat-icon>timer</mat-icon>
+            <div class="item-content">
+              <label>Abonnement (jours restants)</label>
+              <p>{{ org.subscriptionDaysRemaining }}</p>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <mat-icon>monitor_heart</mat-icon>
+            <div class="item-content">
+              <label>Moniteur abonnement</label>
+              <p>{{ org.subscriptionMonitorEnabled ? 'Activé' : 'Désactivé' }}</p>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <mat-icon>event</mat-icon>
+            <div class="item-content">
+              <label>Date de Création</label>
+              <p>{{ org.createdAt | date: 'dd/MM/yyyy HH:mm' }}</p>
+            </div>
+          </div>
+        </div>
+      </mat-card>
+
+      <!-- Stats Section -->
+      <div class="stats-column">
+        <mat-card class="stat-box users">
+          <div class="stat-icon">
+            <mat-icon>group</mat-icon>
+          </div>
+          <div class="stat-data">
+            <span class="stat-value">{{ org.usersCount }}</span>
+            <span class="stat-label">Utilisateurs</span>
+          </div>
+        </mat-card>
+
+        <mat-card class="stat-box admins">
+          <div class="stat-icon">
+            <mat-icon>security</mat-icon>
+          </div>
+          <div class="stat-data">
+            <span class="stat-value">{{ org.adminsCount }}</span>
+            <span class="stat-label">Admins Locaux</span>
+          </div>
+        </mat-card>
+
+        <mat-card class="meta-box">
+          <div class="meta-item">
+            <mat-icon>history</mat-icon>
+            <span>Dernière modification : {{ (org.updatedAt | date: 'dd/MM/yyyy HH:mm') || 'Jamais' }}</span>
+          </div>
+        </mat-card>
+      </div>
+
+      <!-- Admins Table Section -->
+      <mat-card class="admins-card">
+        <div class="card-header-with-action">
+          <div class="card-title">
+            <mat-icon>admin_panel_settings</mat-icon>
+            <h2>Administrateurs Locaux</h2>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table mat-table [dataSource]="org.admins" class="modern-table">
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>Administrateur</th>
+              <td mat-cell *matCellDef="let admin">
+                <div class="user-cell">
+                  <div class="user-avatar">{{ admin.firstName[0] }}{{ admin.lastName[0] }}</div>
+                  <div class="user-info">
+                    <span class="user-name">{{ admin.firstName }} {{ admin.lastName }}</span>
+                    <span class="user-email">{{ admin.email }}</span>
+                  </div>
+                </div>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="email">
+              <th mat-header-cell *matHeaderCellDef>Email</th>
+              <td mat-cell *matCellDef="let admin">{{ admin.email }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Statut</th>
+              <td mat-cell *matCellDef="let admin">
+                <span class="table-badge" [class.active]="admin.isActive">
+                  {{ admin.isActive ? 'Actif' : 'Inactif' }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="createdAt">
+              <th mat-header-cell *matHeaderCellDef>Créé le</th>
+              <td mat-cell *matCellDef="let admin">{{ admin.createdAt | date: 'dd/MM/yyyy' }}</td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedAdminColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedAdminColumns"></tr>
+          </table>
+
+          <div *ngIf="org.admins.length === 0" class="empty-state">
+            <mat-icon>person_off</mat-icon>
+            <p>Aucun administrateur local configuré.</p>
+          </div>
+        </div>
+      </mat-card>
+
+      <mat-card class="admins-card">
+        <div class="card-header-with-action">
+          <div class="card-title">
+            <mat-icon>groups</mat-icon>
+            <h2>Utilisateurs et rôles</h2>
+          </div>
+          <button mat-flat-button color="primary" type="button" class="btn-add-user" (click)="toggleCreateUserForm()">
+            <mat-icon>{{ showCreateUserForm ? 'close' : 'person_add' }}</mat-icon>
+            {{ showCreateUserForm ? 'Fermer' : 'Créer utilisateur' }}
+          </button>
+        </div>
+
+        <form class="create-user-panel" *ngIf="showCreateUserForm" [formGroup]="createUserForm" (ngSubmit)="createUser()">
+          <div class="create-user-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Prénom</mat-label>
+              <input matInput formControlName="firstName" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Nom</mat-label>
+              <input matInput formControlName="lastName" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Email</mat-label>
+              <input matInput type="email" formControlName="email" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Mot de passe</mat-label>
+              <input matInput type="text" formControlName="password" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Rôle</mat-label>
+              <mat-select formControlName="role">
+                <mat-option *ngFor="let role of roleOptions" [value]="role">{{ role }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Fonction</mat-label>
+              <input matInput formControlName="function" />
+            </mat-form-field>
+          </div>
+
+          <div class="create-user-actions">
+            <button mat-stroked-button type="button" (click)="toggleCreateUserForm()" [disabled]="creatingUser">
+              Annuler
+            </button>
+            <button mat-flat-button color="primary" type="submit" [disabled]="creatingUser">
+              <mat-icon *ngIf="!creatingUser">send</mat-icon>
+              {{ creatingUser ? 'Création...' : 'Créer et envoyer email' }}
+            </button>
+          </div>
+        </form>
+
+        <div class="table-container">
+          <table mat-table [dataSource]="organizationUsers" class="modern-table">
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>Utilisateur</th>
+              <td mat-cell *matCellDef="let user">
+                <div class="user-cell">
+                  <div class="user-avatar">{{ user.firstName[0] }}{{ user.lastName[0] }}</div>
+                  <div class="user-info">
+                    <span class="user-name">{{ user.firstName }} {{ user.lastName }}</span>
+                    <span class="user-email">{{ user.email }}</span>
+                  </div>
+                </div>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="email">
+              <th mat-header-cell *matHeaderCellDef>Email</th>
+              <td mat-cell *matCellDef="let user">{{ user.email }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="role">
+              <th mat-header-cell *matHeaderCellDef>Rôle</th>
+              <td mat-cell *matCellDef="let user">
+                <mat-form-field appearance="outline">
+                  <mat-select [(ngModel)]="roleDraftByUserId[user.id]">
+                    <mat-option *ngFor="let role of roleOptions" [value]="role">{{ role }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Statut</th>
+              <td mat-cell *matCellDef="let user">
+                <span class="table-badge" [class.active]="user.isActive">
+                  {{ user.isActive ? 'Actif' : 'Inactif' }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="createdAt">
+              <th mat-header-cell *matHeaderCellDef>Créé le</th>
+              <td mat-cell *matCellDef="let user">{{ user.createdAt | date: 'dd/MM/yyyy' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Action</th>
+              <td mat-cell *matCellDef="let user">
+                <button
+                  mat-flat-button
+                  color="primary"
+                  (click)="saveRole(user)"
+                  [disabled]="!roleDraftByUserId[user.id] || roleDraftByUserId[user.id] === user.role">
+                  Enregistrer rôle
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedUserColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedUserColumns"></tr>
+          </table>
+
+          <div *ngIf="organizationUsers.length === 0" class="empty-state">
+            <mat-icon>person_off</mat-icon>
+            <p>Aucun utilisateur trouvé dans cette organisation.</p>
+          </div>
+        </div>
+      </mat-card>
+    </div>
+  </ng-container>
+</section>

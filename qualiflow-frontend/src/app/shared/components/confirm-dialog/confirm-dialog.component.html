@@ -1,0 +1,24 @@
+<div class="modal-header" [ngClass]="data.type || 'warning'">
+  <div class="icon-container">
+    <mat-icon *ngIf="(data.type || 'warning') === 'warning'">warning</mat-icon>
+    <mat-icon *ngIf="data.type === 'danger'">delete_forever</mat-icon>
+    <mat-icon *ngIf="data.type === 'info'">info</mat-icon>
+    <mat-icon *ngIf="data.type === 'success'">check_circle</mat-icon>
+  </div>
+  <div class="modal-title">
+    {{data.title}}
+  </div>
+</div>
+
+<div class="modal-body">
+  <p>{{data.message}}</p>
+</div>
+
+<div class="modal-footer">
+  <button type="button" class="btn btn-ghost" (click)="onCancel()">
+    {{data.cancelText || 'Annuler'}}
+  </button>
+  <button type="button" class="btn btn-danger" (click)="onConfirm()">
+    {{data.confirmText || 'Confirmer'}}
+  </button>
+</div>

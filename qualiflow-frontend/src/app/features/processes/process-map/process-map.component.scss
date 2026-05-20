@@ -1,0 +1,280 @@
+.process-map-page {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-body);
+    min-height: 100vh;
+}
+
+/* ── PAGE HEADER BAR ── */
+.page-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-white);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    z-index: 10;
+}
+
+.page-header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.page-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.page-subtitle {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+
+}
+
+.stats-pills {
+    display: flex;
+    gap: 8px;
+
+    .pill {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--bg-raised);
+        border: 1px solid var(--border);
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+
+        .label {
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .value {
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+
+        &.active {
+            background: var(--s-green-bg);
+            border-color: var(--s-green-border);
+
+            .label {
+                color: var(--s-green);
+            }
+
+            .value {
+                color: var(--s-green);
+            }
+        }
+    }
+}
+
+/* ── MAP CONTAINER ── */
+.map-body-container {
+    padding: 32px;
+    flex-grow: 1;
+    overflow-y: auto;
+    max-width: 1600px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.catalog-content-card.map-content {
+    background: var(--bg-white);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    padding: 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+    position: relative;
+}
+
+/* ── MAP SECTIONS ── */
+.map-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: relative;
+
+    .section-label {
+        align-self: center;
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        color: var(--text-muted);
+        background: var(--bg-raised);
+        padding: 2px 14px;
+        border-radius: 4px;
+        border: 1px solid var(--border);
+        text-transform: uppercase;
+    }
+}
+
+/* ── CHEVRON FLOW (CORE) ── */
+.chevron-flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    flex-wrap: wrap;
+    padding: 40px 20px;
+    background: var(--bg-body);
+    border-radius: 12px;
+    border: 1px dashed var(--border-mid);
+    position: relative;
+
+    .process-tile.realisation {
+        flex: 0 0 240px;
+        background: var(--xl-green-mid);
+        color: #ffffff;
+        clip-path: polygon(0% 0%, 90% 0%, 100% 50%, 90% 100%, 0% 100%, 10% 50%);
+        padding: 16px 32px;
+        height: 80px;
+        border: none;
+        box-shadow: 0 4px 12px rgba(33, 115, 70, 0.2);
+
+        .tile-code {
+            color: rgba(255, 255, 255, 0.8);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .tile-name {
+            color: #ffffff;
+        }
+
+        .tile-footer {
+            color: rgba(255, 255, 255, 0.8);
+
+            mat-icon {
+                color: white;
+                opacity: 0.8;
+            }
+        }
+
+        .status-dot {
+            border-color: #ffffff;
+        }
+
+        &:hover {
+            background: var(--xl-green);
+            transform: scale(1.02) translateX(4px);
+        }
+    }
+}
+
+/* ── PROCESS TILES ── */
+.process-tile {
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px 16px;
+    width: 220px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+    &:hover {
+        border-color: var(--xl-green-mid);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transform: translateY(-2px);
+    }
+
+    .tile-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2px;
+    }
+
+    .tile-code {
+        font-size: 0.7rem;
+        font-weight: 800;
+        color: var(--text-muted);
+        font-family: 'Roboto Mono', monospace;
+    }
+
+    .status-dot {
+        width: 6px;
+        height: 6px;
+        background: var(--border-mid);
+        border-radius: 50%;
+        border: 1px solid var(--bg-white);
+
+        &.active {
+            background: var(--s-green);
+            box-shadow: 0 0 4px var(--s-green);
+        }
+    }
+
+    .tile-name {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #333;
+        line-height: 1.3;
+        min-height: 2.3em;
+    }
+
+    .tile-footer {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        border-top: 1px solid var(--bg-body);
+        padding-top: 4px;
+        margin-top: 4px;
+
+        mat-icon {
+            font-size: 14px;
+            width: 14px;
+            height: 14px;
+            color: var(--xl-green-mid);
+        }
+    }
+
+    /* Remplacement du bleu par un vert sombre pour le pilotage */
+    &.pilotage {
+        border-left: 4px solid var(--xl-green);
+    }
+
+    &.support {
+        border-left: 4px solid var(--text-muted);
+    }
+}
+
+.items-row {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.empty-state-mini {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+.loading-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 100px 0;
+    gap: 16px;
+    color: #888;
+}

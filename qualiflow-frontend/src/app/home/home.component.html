@@ -1,0 +1,193 @@
+<div class="home-page">
+  <app-header-home (sectionChange)="setSection($event)"></app-header-home>
+
+  <main>
+    <div *ngIf="currentSection === 'all' || currentSection === 'accueil'">
+      <app-accueil-home id="accueil" class="reveal"></app-accueil-home>
+    </div>
+
+    <div *ngIf="currentSection === 'all' || currentSection === 'services'">
+      <app-services-home id="services" class="reveal"></app-services-home>
+      <app-features-home id="fonctionnalites" class="reveal"></app-features-home>
+    </div>
+
+    <div *ngIf="currentSection === 'all' || currentSection === 'iso'">
+      <app-news-home id="iso-21001" class="reveal"></app-news-home>
+      <app-why-home class="reveal"></app-why-home>
+      <app-stats-home class="reveal"></app-stats-home>
+    </div>
+
+    <div *ngIf="currentSection === 'all' || currentSection === 'request-org'">
+      <!-- Section Demande d'organisation en ligne -->
+      <section id="request-org" class="section request-org-section reveal">
+        <div class="section-title">
+          <h2>Créer ou Acheter un Espace Organisation</h2>
+          <p>Profitez d'un espace QualiFlow entièrement dédié et automatisé pour gérer votre système qualité et conformité ISO 21001.</p>
+        </div>
+
+        <div class="request-layout">
+          <!-- Avantages de la plateforme -->
+          <div class="benefits-box">
+            <p class="intro-text">
+              Rejoignez les leaders de la qualité en digitalisant vos processus métier, vos documents GED et vos indicateurs de performance dans un espace hautement sécurisé et intelligent.
+            </p>
+
+            <div class="benefit-item">
+              <div class="icon-wrapper">
+                <mat-icon>verified</mat-icon>
+              </div>
+              <div class="benefit-content">
+                <h3>Conformité aux Standards ISO</h3>
+                <p>Structure clé en main conçue spécifiquement pour répondre aux exigences des audits de certification ISO 9001 et ISO 21001.</p>
+              </div>
+            </div>
+
+            <div class="benefit-item">
+              <div class="icon-wrapper">
+                <mat-icon>psychology</mat-icon>
+              </div>
+              <div class="benefit-content">
+                <h3>Intelligence Artificielle Assistante 24/7</h3>
+                <p>Un assistant virtuel basé sur Google Gemini et Groq pour guider vos collaborateurs dans la conformité des procédures et documents.</p>
+              </div>
+            </div>
+
+            <div class="benefit-item">
+              <div class="icon-wrapper">
+                <mat-icon>notifications_active</mat-icon>
+              </div>
+              <div class="benefit-content">
+                <h3>Alertes & Notifications en Temps Réel</h3>
+                <p>Notifications push web, in-app et e-mails asynchrones pour ne rater aucune non-conformité ou expiration documentaire.</p>
+              </div>
+            </div>
+
+            <div class="benefit-item">
+              <div class="icon-wrapper">
+                <mat-icon>cloud_done</mat-icon>
+              </div>
+              <div class="benefit-content">
+                <h3>Espace Privé Sécurisé Multi-Tenant</h3>
+                <p>Vos données organisationnelles, vos processus et vos documents GED sont totalement isolés et sécurisés.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Formulaire de demande en ligne -->
+          <div class="form-box">
+            <form [formGroup]="requestForm" (ngSubmit)="onSubmitRequest()" class="request-form-inline">
+              <div class="form-grid">
+                <mat-form-field appearance="outline">
+                  <mat-label>Nom complet</mat-label>
+                  <input matInput formControlName="fullName" placeholder="Ex: Jean Dupont">
+                  <mat-icon matPrefix>person</mat-icon>
+                  <mat-error *ngIf="requestForm.get('fullName')?.hasError('required')">Le nom est obligatoire</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Poste / Fonction</mat-label>
+                  <input matInput formControlName="jobTitle" placeholder="Ex: Responsable Qualité">
+                  <mat-icon matPrefix>badge</mat-icon>
+                  <mat-error *ngIf="requestForm.get('jobTitle')?.hasError('required')">Le poste est obligatoire</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width with-button">
+                  <mat-label>Email professionnel</mat-label>
+                  <input matInput formControlName="email" type="email" placeholder="email@votre-entreprise.com">
+                  <mat-icon matPrefix>email</mat-icon>
+                  <button mat-flat-button color="accent" matSuffix 
+                          (click)="onSendCode()" 
+                          type="button"
+                          [disabled]="requestForm.get('email')?.invalid || codeSent">
+                    {{ codeSent ? 'Code envoyé' : 'Vérifier' }}
+                  </button>
+                  <mat-error *ngIf="requestForm.get('email')?.hasError('required')">L'email est obligatoire</mat-error>
+                  <mat-error *ngIf="requestForm.get('email')?.hasError('email')">Email invalide</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width with-button" *ngIf="codeSent">
+                  <mat-label>Code de validation (6 chiffres reçu par e-mail)</mat-label>
+                  <input matInput formControlName="validationCode" placeholder="Entrez le code reçu" maxlength="6">
+                  <mat-icon matPrefix>verified_user</mat-icon>
+                  <button mat-flat-button color="primary" matSuffix 
+                          (click)="onVerifyCode()" 
+                          type="button"
+                          [disabled]="requestForm.get('validationCode')?.invalid || emailValidated">
+                    {{ emailValidated ? 'E-mail validé' : 'Valider' }}
+                  </button>
+                  <mat-error *ngIf="requestForm.get('validationCode')?.hasError('required')">Le code est obligatoire</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Pays</mat-label>
+                  <mat-select formControlName="country" (selectionChange)="onCountryChange($event.value)">
+                    <mat-option *ngFor="let country of countries" [value]="country.name">
+                      {{ country.name }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-icon matPrefix>public</mat-icon>
+                  <mat-error *ngIf="requestForm.get('country')?.hasError('required')">Le pays est obligatoire</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Téléphone</mat-label>
+                  <input matInput formControlName="phone" placeholder="+212 ...">
+                  <mat-icon matPrefix>phone</mat-icon>
+                  <mat-error *ngIf="requestForm.get('phone')?.hasError('required')">Le téléphone est obligatoire</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Nom de votre organisation</mat-label>
+                  <input matInput formControlName="organizationName" placeholder="Ex: Ma Société S.A.R.L">
+                  <mat-icon matPrefix>corporate_fare</mat-icon>
+                  <mat-error *ngIf="requestForm.get('organizationName')?.hasError('required')">Le nom de l'organisation est obligatoire</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Type de l'organisation</mat-label>
+                  <mat-select formControlName="organizationType">
+                    <mat-option *ngFor="let opt of organizationTypes" [value]="opt.value">
+                      {{ opt.label }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-icon matPrefix>lan</mat-icon>
+                  <mat-error *ngIf="requestForm.get('organizationType')?.hasError('required')">Le type d'organisation est obligatoire</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Votre message / Besoins spécifiques</mat-label>
+                  <textarea matInput formControlName="message" rows="3" placeholder="Décrivez brièvement vos besoins..."></textarea>
+                  <mat-icon matPrefix>message</mat-icon>
+                  <mat-error *ngIf="requestForm.get('message')?.hasError('required')">Le message est obligatoire</mat-error>
+                </mat-form-field>
+              </div>
+
+              <div class="form-actions" *ngIf="emailValidated">
+                <button mat-flat-button color="primary" type="submit" [disabled]="requestForm.invalid || loading" class="submit-btn">
+                  <mat-icon *ngIf="!loading">send</mat-icon>
+                  <mat-spinner diameter="20" *ngIf="loading"></mat-spinner>
+                  <span>Envoyer la demande d'achat</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div *ngIf="currentSection === 'all' || currentSection === 'contact'">
+      <app-contact-home id="contact" class="reveal"></app-contact-home>
+    </div>
+  </main>
+
+  <app-footer-home></app-footer-home>
+
+  <div class="fixed-request-container">
+    <button mat-fab class="request-fab animate-bounce-slow" 
+            (click)="openRequestDialog()"
+            matTooltip="Demander une organisation"
+            matTooltipPosition="left">
+      <mat-icon>add_business</mat-icon>
+    </button>
+  </div>
+</div>

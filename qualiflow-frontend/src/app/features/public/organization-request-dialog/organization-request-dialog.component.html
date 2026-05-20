@@ -1,0 +1,113 @@
+<div class="org-request-container">
+  <div class="dialog-header">
+    <div class="icon-box">
+      <mat-icon>business</mat-icon>
+    </div>
+    <div class="title-box">
+      <h2>Demander une organisation</h2>
+      <p>Remplissez ce formulaire pour créer votre propre espace QualiFlow.</p>
+    </div>
+    <button mat-icon-button (click)="onClose()" class="close-btn">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <form [formGroup]="requestForm" (ngSubmit)="onSubmit()" class="request-form">
+    <mat-dialog-content>
+      <div class="form-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Nom complet</mat-label>
+          <input matInput formControlName="fullName" placeholder="Ex: Jean Dupont">
+          <mat-icon matPrefix>person</mat-icon>
+          <mat-error *ngIf="requestForm.get('fullName')?.hasError('required')">Le nom est obligatoire</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Poste / Fonction</mat-label>
+          <input matInput formControlName="jobTitle" placeholder="Ex: Directeur Technique">
+          <mat-icon matPrefix>badge</mat-icon>
+          <mat-error *ngIf="requestForm.get('jobTitle')?.hasError('required')">Le poste est obligatoire</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width with-button">
+          <mat-label>Email professionnel</mat-label>
+          <input matInput formControlName="email" type="email" placeholder="email@votre-entreprise.com">
+          <mat-icon matPrefix>email</mat-icon>
+          <button mat-flat-button color="accent" matSuffix 
+                  (click)="onSendCode()" 
+                  type="button"
+                  [disabled]="requestForm.get('email')?.invalid || codeSent">
+            {{ codeSent ? 'Code envoyé' : 'Vérifier' }}
+          </button>
+          <mat-error *ngIf="requestForm.get('email')?.hasError('required')">L'email est obligatoire</mat-error>
+          <mat-error *ngIf="requestForm.get('email')?.hasError('email')">Email invalide</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width with-button" *ngIf="codeSent">
+          <mat-label>Code de validation (6 chiffres)</mat-label>
+          <input matInput formControlName="validationCode" placeholder="Enter code" maxlength="6">
+          <mat-icon matPrefix>verified_user</mat-icon>
+          <button mat-flat-button color="primary" matSuffix 
+                  (click)="onVerifyCode()" 
+                  type="button"
+                  [disabled]="requestForm.get('validationCode')?.invalid || emailValidated">
+            {{ emailValidated ? 'E-mail validé' : 'Valider' }}
+          </button>
+          <mat-error *ngIf="requestForm.get('validationCode')?.hasError('required')">Le code est obligatoire</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Pays</mat-label>
+          <mat-select formControlName="country" (selectionChange)="onCountryChange($event.value)">
+            <mat-option *ngFor="let country of countries" [value]="country.name">
+              {{ country.name }}
+            </mat-option>
+          </mat-select>
+          <mat-icon matPrefix>public</mat-icon>
+          <mat-error *ngIf="requestForm.get('country')?.hasError('required')">Le pays est obligatoire</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Téléphone</mat-label>
+          <input matInput formControlName="phone" placeholder="+212 ...">
+          <mat-icon matPrefix>phone</mat-icon>
+          <mat-error *ngIf="requestForm.get('phone')?.hasError('required')">Le téléphone est obligatoire</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Nom de votre organisation</mat-label>
+          <input matInput formControlName="organizationName" placeholder="Ex: Ma Société S.A.R.L">
+          <mat-icon matPrefix>corporate_fare</mat-icon>
+          <mat-error *ngIf="requestForm.get('organizationName')?.hasError('required')">Le nom de l'organisation est obligatoire</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Type de l'organisation</mat-label>
+          <mat-select formControlName="organizationType">
+            <mat-option *ngFor="let opt of organizationTypes" [value]="opt.value">
+              {{ opt.label }}
+            </mat-option>
+          </mat-select>
+          <mat-icon matPrefix>lan</mat-icon>
+          <mat-error *ngIf="requestForm.get('organizationType')?.hasError('required')">Le type d'organisation est obligatoire</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Votre message / Besoins spécifiques</mat-label>
+          <textarea matInput formControlName="message" rows="4" placeholder="Décrivez brièvement vos besoins..."></textarea>
+          <mat-icon matPrefix>message</mat-icon>
+          <mat-error *ngIf="requestForm.get('message')?.hasError('required')">Le message est obligatoire</mat-error>
+        </mat-form-field>
+      </div>
+    </mat-dialog-content>
+
+    <mat-dialog-actions align="end">
+      <button mat-button (click)="onClose()" type="button" [disabled]="loading">Annuler</button>
+      <button mat-flat-button color="primary" type="submit" [disabled]="requestForm.invalid || loading" class="submit-btn" *ngIf="emailValidated">
+        <mat-icon *ngIf="!loading">send</mat-icon>
+        <mat-spinner diameter="20" *ngIf="loading"></mat-spinner>
+        <span>Envoyer la demande</span>
+      </button>
+    </mat-dialog-actions>
+  </form>
+</div>

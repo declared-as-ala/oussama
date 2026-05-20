@@ -1,0 +1,21 @@
+namespace DocApi.Domain.Enums
+{
+    public enum NotificationType
+    {
+        DOCUMENT_APPROVAL_REQUIRED = 1,
+        DOCUMENT_EXPIRED = 2,
+        DOCUMENT_NEW_VERSION = 3,
+        PROCESS_WITHOUT_PILOT = 4,
+        PROCEDURE_WITHOUT_RESPONSIBLE = 5,
+        NONCONFORMITY_CREATED = 6,
+        NONCONFORMITY_CRITICAL = 7,
+        CORRECTIVE_ACTION_ASSIGNED = 8,
+        CORRECTIVE_ACTION_DUE_SOON = 9,
+        CORRECTIVE_ACTION_OVERDUE = 10,
+        INDICATOR_ALERT = 11,
+        USER_CREATED = 12,
+        USER_DISABLED = 13,
+        ORGANIZATION_SUSPENDED = 14,
+        SYSTEM_ALERT = 15
+    }
+}

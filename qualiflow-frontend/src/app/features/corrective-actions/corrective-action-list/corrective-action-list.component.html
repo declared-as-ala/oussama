@@ -1,0 +1,274 @@
+<section class="ca-list-page">
+  <!-- MODERN HEADER -->
+  <div class="glass-header shadow-sm">
+    <div class="header-main">
+      <div class="title-section">
+        <h1><span class="highlight">Actions correctives</span></h1>
+        <p class="subtitle">Planification, suivi et vérification des actions de traitement</p>
+      </div>
+      <div class="header-actions">
+        <button *ngIf="canWrite" mat-flat-button color="primary" class="btn-create" (click)="create()">
+          <mat-icon>add</mat-icon>
+          Nouvelle action
+        </button>
+      </div>
+    </div>
+
+    <!-- MODERN FILTERS -->
+    <form class="glass-filters" [formGroup]="filtersForm" (ngSubmit)="onSearch()">
+      <div class="filter-grid">
+        <div class="filter-item">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Recherche</mat-label>
+            <mat-icon matPrefix>search</mat-icon>
+            <input matInput formControlName="search" placeholder="Titre, description, NC ou responsable" />
+          </mat-form-field>
+        </div>
+
+        <div class="filter-item">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Statut</mat-label>
+            <mat-select formControlName="status">
+              <mat-option value="">Tous les statuts</mat-option>
+              <mat-option *ngFor="let option of statusOptions" [value]="option.value">{{ option.label }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="filter-item">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Type</mat-label>
+            <mat-select formControlName="type">
+              <mat-option value="">Tous les types</mat-option>
+              <mat-option *ngFor="let option of typeOptions" [value]="option.value">{{ option.label }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="filter-item">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Responsable</mat-label>
+            <mat-select formControlName="responsibleUserId">
+              <mat-option [value]="null">Tous les responsables</mat-option>
+              <mat-option *ngFor="let user of users" [value]="user.id">
+                {{ user.firstName }} {{ user.lastName }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="filter-buttons">
+          <button mat-flat-button class="btn-apply" type="submit">
+            <mat-icon>filter_list</mat-icon>
+            Filtrer
+          </button>
+          <button mat-stroked-button class="btn-reset" type="button" (click)="clearFilters()">
+            <mat-icon>restart_alt</mat-icon>
+            Réinitialiser
+          </button>
+        </div>
+      </div>
+
+      <!-- Advanced Filters Toggle (Optional/Future) -->
+      <div class="filter-grid" style="margin-top: 12px; grid-template-columns: repeat(4, 1fr);">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Non-conformité</mat-label>
+          <mat-select formControlName="nonConformityId">
+            <mat-option [value]="null">Toutes les NC</mat-option>
+            <mat-option *ngFor="let nc of nonConformities" [value]="nc.id">
+              {{ nc.code }} - {{ nc.title }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Retard</mat-label>
+          <mat-select formControlName="isOverdue">
+            <mat-option value="">Tous</mat-option>
+            <mat-option value="true">En retard</mat-option>
+            <mat-option value="false">À jour</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Du</mat-label>
+          <input matInput type="date" formControlName="fromDate" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Au</mat-label>
+          <input matInput type="date" formControlName="toDate" />
+        </mat-form-field>
+      </div>
+    </form>
+  </div>
+
+  <!-- SUMMARY CARDS -->
+  <div class="summary-cards" *ngIf="statistics">
+    <div class="summary-card shadow-sm">
+      <span class="sc-label">Total</span>
+      <div class="sc-value">
+        <mat-icon class="icon-neutral">assignment_turned_in</mat-icon>
+        {{ statistics.total }}
+      </div>
+      <span class="sc-subtext">Actions enregistrées</span>
+    </div>
+
+    <div class="summary-card shadow-sm">
+      <span class="sc-label">Planifiées</span>
+      <div class="sc-value">
+        <mat-icon class="icon-warning">schedule</mat-icon>
+        {{ statistics.planned }}
+      </div>
+      <span class="sc-subtext">En attente de démarrage</span>
+    </div>
+
+    <div class="summary-card shadow-sm">
+      <span class="sc-label">En cours</span>
+      <div class="sc-value">
+        <mat-icon class="icon-warning" style="color: #217346;">pending_actions</mat-icon>
+        {{ statistics.inProgress }}
+      </div>
+      <span class="sc-subtext">Actions actives</span>
+    </div>
+
+    <div class="summary-card card-danger shadow-sm" [class.active]="statistics.overdue > 0">
+      <span class="sc-label">En retard</span>
+      <div class="sc-value">
+        <mat-icon class="icon-danger">event_busy</mat-icon>
+        {{ statistics.overdue }}
+      </div>
+      <span class="sc-subtext">Échéances dépassées</span>
+    </div>
+  </div>
+
+  <mat-card class="catalog-content-card shadow-sm">
+    <div class="loading-box" *ngIf="loading">
+      <mat-spinner diameter="38"></mat-spinner>
+      <span>Palanification en cours...</span>
+    </div>
+
+    <ng-container *ngIf="!loading">
+      <div class="empty-box" *ngIf="items.length === 0">
+        <mat-icon>task_alt</mat-icon>
+        <h3>Aucune action corrective</h3>
+        <p>Ajuste les filtres ou crée une nouvelle action.</p>
+      </div>
+
+      <div class="table-container" *ngIf="items.length > 0">
+        <table mat-table [dataSource]="items" [trackBy]="trackById" class="ca-table">
+          <ng-container matColumnDef="title">
+            <th mat-header-cell *matHeaderCellDef>Titre & Description</th>
+            <td mat-cell *matCellDef="let item">
+              <div class="title-cell">
+                <span class="ca-title-text">{{ item.title }}</span>
+                <span class="ca-desc-text">{{ item.description || '-' }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="nonConformity">
+            <th mat-header-cell *matHeaderCellDef>Non-conformité</th>
+            <td mat-cell *matCellDef="let item">
+              <span class="nc-link-badge">
+                <mat-icon>report_problem</mat-icon>
+                {{ item.nonConformityCode || ('NC-' + item.nonConformityId) }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="type">
+            <th mat-header-cell *matHeaderCellDef>Type</th>
+            <td mat-cell *matCellDef="let item">
+              <span class="tag-type">{{ getTypeLabel(item.type) }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="responsible">
+            <th mat-header-cell *matHeaderCellDef>Responsable</th>
+            <td mat-cell *matCellDef="let item">
+              <div class="responsible-cell">
+                <div class="resp-avatar-small">{{ (item.responsibleFullName || 'U').charAt(0) }}</div>
+                <span>{{ item.responsibleFullName || ('User ' + item.responsibleUserId) }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="dueDate">
+            <th mat-header-cell *matHeaderCellDef>Échéance</th>
+            <td mat-cell *matCellDef="let item">
+              <span class="date-badge" [class.overdue]="item.isOverdue">
+                {{ item.dueDate | date: 'dd/MM/yyyy' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Statut</th>
+            <td mat-cell *matCellDef="let item">
+              <span class="tag-status" [ngClass]="item.status.toLowerCase()">{{ getStatusLabel(item.status) }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="overdue">
+            <th mat-header-cell *matHeaderCellDef>Retard</th>
+            <td mat-cell *matCellDef="let item">
+              <span class="overdue-pill" *ngIf="item.isOverdue">
+                <mat-icon>warning</mat-icon> En retard
+              </span>
+              <span class="ok-pill" *ngIf="!item.isOverdue">
+                <mat-icon>check_circle</mat-icon> Ok
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="createdAt">
+            <th mat-header-cell *matHeaderCellDef>Création</th>
+            <td mat-cell *matCellDef="let item">{{ item.createdAt | date: 'dd/MM/yyyy' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef style="width: 180px;"></th>
+            <td mat-cell *matCellDef="let item">
+              <div class="table-actions">
+                <button mat-icon-button class="action-btn view-btn" matTooltip="Voir" (click)="view(item)">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+                <button *ngIf="canWrite" mat-icon-button class="action-btn edit-btn" matTooltip="Modifier"
+                  (click)="edit(item)">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button *ngIf="canWrite" mat-icon-button class="action-btn status-btn" [matMenuTriggerFor]="statusMenu"
+                  (click)="selectForStatus(item)" matTooltip="Changer statut">
+                  <mat-icon>published_with_changes</mat-icon>
+                </button>
+                <button *ngIf="canWrite" mat-icon-button class="action-btn verify-btn" matTooltip="Vérifier efficacité"
+                  [disabled]="item.status !== 'REALISEE' && item.status !== 'VERIFIEE'" (click)="verify(item)">
+                  <mat-icon>fact_check</mat-icon>
+                </button>
+                <button *ngIf="canWrite" mat-icon-button class="action-btn delete-btn" matTooltip="Supprimer"
+                  (click)="delete(item)">
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns" class="clickable-row"></tr>
+        </table>
+
+        <mat-menu #statusMenu="matMenu" class="status-modern-menu">
+          <button mat-menu-item *ngFor="let status of statusOptions" (click)="applyStatus(status.value)">
+            <mat-icon>radio_button_checked</mat-icon>
+            {{ status.label }}
+          </button>
+        </mat-menu>
+
+        <mat-paginator [length]="total" [pageSize]="pageSize" [pageIndex]="pageNumber - 1"
+          [pageSizeOptions]="[5, 10, 20, 50]" showFirstLastButtons (page)="onPageChanged($event)">
+        </mat-paginator>
+      </div>
+    </ng-container>
+  </mat-card>
+</section>

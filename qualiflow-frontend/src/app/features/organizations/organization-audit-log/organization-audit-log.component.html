@@ -1,0 +1,66 @@
+<div class="audit-log-page">
+  <div class="page-header-bar">
+    <div class="header-left">
+      <h1>{{ 'sidebar.orgAdmin' | t }}</h1>
+      <div class="sub">Journal d'actions de l'organisation</div>
+    </div>
+    <div class="header-right">
+      <button mat-flat-button class="refresh-btn" (click)="loadActivities()">
+        <mat-icon>refresh</mat-icon>
+        Actualiser
+      </button>
+    </div>
+  </div>
+
+  <div class="content-body">
+    <!-- LOADING STATE -->
+    <div *ngIf="loading" class="loading-state">
+      <mat-spinner diameter="40"></mat-spinner>
+      <span>Récupération des activités...</span>
+    </div>
+
+    <!-- TIMELINE -->
+    <div *ngIf="!loading && activities.length > 0" class="timeline-container">
+      <div class="timeline-item" *ngFor="let act of activities">
+        <div class="timeline-left">
+          <div class="timeline-icon" [style.background-color]="getActivityColor(act.type)">
+            <mat-icon>{{ getActivityIcon(act.type) }}</mat-icon>
+          </div>
+          <div class="timeline-line"></div>
+        </div>
+        
+        <div class="timeline-card">
+          <div class="card-header">
+            <span class="module-tag">{{ getModuleLabel(act.module) }}</span>
+            <span class="time-stamp">{{ act.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+          
+          <div class="card-content">
+            <h3>{{ act.title }}</h3>
+            <p>{{ act.description }}</p>
+          </div>
+          
+          <div class="card-footer">
+            <div class="actor-info">
+              <div class="actor-avatar" *ngIf="act.actorName">
+                {{ act.actorName.charAt(0) }}
+              </div>
+              <span class="actor-name">{{ act.actorName || 'Système' }}</span>
+            </div>
+            <mat-icon class="arrow-icon">arrow_forward</mat-icon>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div *ngIf="!loading && activities.length === 0" class="empty-state">
+      <div class="empty-glass-box">
+        <mat-icon>history_toggle_off</mat-icon>
+        <h2>Aucune activité récente</h2>
+        <p>Les actions de votre organisation apparaîtront ici au fur et à mesure.</p>
+        <button mat-stroked-button (click)="loadActivities()">Vérifier à nouveau</button>
+      </div>
+    </div>
+  </div>
+</div>

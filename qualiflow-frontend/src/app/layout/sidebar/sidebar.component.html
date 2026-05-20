@@ -1,0 +1,177 @@
+<nav class="sidebar" [class.open]="sidebarOpen">
+  <div class="nav-section">
+    <div class="nav-section-title">{{ 'sidebar.general' | t }}</div>
+    <a [routerLink]="homeRoute" class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}"
+      (click)="onNavClick()">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="7" height="7" rx="1" />
+        <rect x="14" y="3" width="7" height="7" rx="1" />
+        <rect x="14" y="14" width="7" height="7" rx="1" />
+        <rect x="3" y="14" width="7" height="7" rx="1" />
+      </svg>
+      {{ 'sidebar.home' | t }}
+    </a>
+
+    <a *ngIf="canReadNotifications" routerLink="/notifications" class="nav-item" routerLinkActive="active"
+      (click)="onNavClick()">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path
+          d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5">
+        </path>
+        <path d="M9 17a3 3 0 006 0"></path>
+      </svg>
+      {{ 'sidebar.notifications' | t }}
+    </a>
+
+    <a routerLink="/chatbot" class="nav-item" routerLinkActive="active" (click)="onNavClick()">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M8 10h8M8 14h5"></path>
+        <path d="M6 5h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-5l-4 3v-3H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"></path>
+      </svg>
+      {{ 'sidebar.chatbot' | t }}
+    </a>
+  </div>
+
+  <div class="nav-section" *ngIf="isSuperAdmin">
+    
+
+    <a routerLink="/super-admin/organizations" class="nav-item" routerLinkActive="active" (click)="onNavClick()">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M3 21h18M5 21V7l7-4 7 4v14M9 10h6M9 14h6" />
+      </svg>
+      {{ 'sidebar.organizations' | t }}
+    </a>
+
+    <a routerLink="/super-admin/requests" class="nav-item" routerLinkActive="active" (click)="onNavClick()">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M9 12h6M9 16h6M7 6h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V8a2 2 0 012-2z" />
+      </svg>
+      Demandes d'achat
+    </a>
+  </div>
+
+  <div class="nav-section" *ngIf="canAccessQuality">
+    <div class="nav-section-title">{{ 'sidebar.qualityManagement' | t }}</div>
+    <a *ngIf="canReadProcesses" routerLink="/processes" class="nav-item" routerLinkActive="active"
+      (click)="onNavClick()">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path
+          d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+      </svg>
+      {{ 'sidebar.processes' | t }}
+    </a>
+
+    <a *ngIf="canReadProcesses" routerLink="/processes/map" class="nav-item" routerLinkActive="active"
+      (click)="onNavClick()">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M4 6h6v6H4zM14 6h6v6h-6zM9 12h6M12 12v6M4 18h6v-6H4zM14 18h6v-6h-6z" />
+      </svg>
+      {{ 'sidebar.mapping' | t }}
+    </a>
+
+    <a *ngIf="canReadProcedures" routerLink="/procedures" class="nav-item" routerLinkActive="active"
+      (click)="onNavClick()">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M7 3h8l4 4v14H5V3h2z"></path>
+        <path d="M8 11h8M8 15h8M8 7h3"></path>
+      </svg>
+      {{ 'sidebar.procedures' | t }}
+    </a>
+
+    <a *ngIf="canReadNonConformities" routerLink="/non-conformities" class="nav-item" routerLinkActive="active"
+      (click)="onNavClick()">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M12 9v4"></path>
+        <path d="M12 17h.01"></path>
+        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path>
+      </svg>
+      {{ 'sidebar.nonConformities' | t }}
+    </a>
+
+    <a *ngIf="canReadCorrectiveActions" routerLink="/corrective-actions" class="nav-item" routerLinkActive="active"
+      (click)="onNavClick()">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M9 11l3 3L22 4"></path>
+        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+      </svg>
+      {{ 'sidebar.correctiveActions' | t }}
+    </a>
+
+    <a *ngIf="canReadIndicators" routerLink="/indicators" class="nav-item" routerLinkActive="active"
+      (click)="onNavClick()">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M3 3v18h18"></path>
+        <path d="M7 14l4-4 3 3 4-6"></path>
+      </svg>
+      {{ 'sidebar.kpiIndicators' | t }}
+    </a>
+
+    <a *ngIf="canAccessDocuments" routerLink="/documents" class="nav-item" routerLinkActive="active"
+      (click)="onNavClick()">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path
+          d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+      </svg>
+      {{ 'sidebar.documents' | t }}
+    </a>
+
+    <a *ngIf="canReadDepartments" routerLink="/departments" class="nav-item" routerLinkActive="active"
+      (click)="onNavClick()">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M4 21h16M5 21V7l7-4 7 4v14M9 10h6M9 14h6" />
+      </svg>
+      {{ 'sidebar.departments' | t }}
+    </a>
+  </div>
+
+  <div class="nav-section" *ngIf="isAdminOrg">
+    <div class="nav-section-title">{{ 'sidebar.orgAdmin' | t }}</div>
+    <a routerLink="/profile" [queryParams]="{ view: 'organization' }" class="nav-item" routerLinkActive="active" (click)="onNavClick()">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M3 21h18M5 21V7l7-4 7 4v14M9 10h6M9 14h6" />
+      </svg>
+      {{ 'sidebar.myOrganization' | t }}
+    </a>
+
+    <a routerLink="/users" class="nav-item" routerLinkActive="active" (click)="onNavClick()">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M23 21v-2a4 4 0 00-3-3.87"></path>
+        <path d="M16 3.13a4 4 0 010 7.75"></path>
+      </svg>
+      {{ 'sidebar.usersRoles' | t }}
+    </a>
+
+    <a routerLink="/organization/audit-log" class="nav-item" routerLinkActive="active" (click)="onNavClick()">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      {{ 'sidebar.auditLog' | t }}
+    </a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">{{ 'sidebar.account' | t }}</div>
+    <a routerLink="/profile" [queryParams]="{ view: 'profile' }" class="nav-item" routerLinkActive="active" (click)="onNavClick()">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M20 21a8 8 0 10-16 0" />
+        <circle cx="12" cy="7" r="4" />
+      </svg>
+      {{ 'sidebar.profile' | t }}
+    </a>
+
+    <a routerLink="/settings" class="nav-item" routerLinkActive="active" (click)="onNavClick()">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path
+          d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z" />
+        <circle cx="12" cy="12" r="3" />
+      </svg>
+      {{ 'sidebar.settings' | t }}
+    </a>
+  </div>
+
+  <div class="sidebar-footer">
+    © 2026 QualiFlow
+  </div>
+</nav>

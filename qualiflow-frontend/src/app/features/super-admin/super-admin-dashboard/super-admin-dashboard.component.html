@@ -1,0 +1,343 @@
+<div class="page-container">
+  <!-- PAGE HEADER -->
+  <div class="page-header-bar">
+    <div class="ph-info">
+      <h1>Tableau de bord stratégique</h1>
+      <div class="sub">Gérez l'écosystème QualiFlow et surveillez la performance globale des organisations.</div>
+    </div>
+    <form [formGroup]="filterForm" class="ph-actions">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="period-select">
+        <mat-label>Période d'analyse</mat-label>
+        <mat-select formControlName="period" (selectionChange)="applyFilters()">
+          <mat-option *ngFor="let p of periods" [value]="p.value">{{ p.label }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      
+      <button class="btn btn-primary btn-refresh" (click)="refresh()" [disabled]="loading">
+        <mat-icon [class.animate-spin]="loading">sync</mat-icon>
+        <span>Actualiser</span>
+      </button>
+      
+      <button mat-icon-button (click)="resetFilters()" matTooltip="Réinitialiser les filtres" class="btn-reset-icon">
+        <mat-icon>filter_alt_off</mat-icon>
+      </button>
+    </form>
+  </div>
+
+  <div class="content-scroll">
+    <div class="loading-overlay" *ngIf="loading">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+
+    <!-- DASHBOARD DATA WITH TABS -->
+    <mat-tab-group *ngIf="!loading && dashboard as data" class="dashboard-tabs" animationDuration="200ms">
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">dashboard_customize</mat-icon>
+          <span>Vue d'ensemble</span>
+        </ng-template>
+
+        <div class="tab-content">
+          <!-- KPI GRID -->
+          <div class="stats-grid">
+            <div class="stat-card glass-card fade-in" *ngFor="let card of getKpiCards(data.kpis); let i = index"
+              [style.animation-delay]="(i * 0.05) + 's'" [ngClass]="card.tone">
+              <div class="st-icon-box">
+                <mat-icon>{{ card.icon }}</mat-icon>
+              </div>
+              <div class="st-content">
+                <div class="st-label">{{ card.title }}</div>
+                <div class="st-value">{{ card.value | number }}</div>
+                <div class="st-foot">{{ card.hint }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dashboard-panels">
+            <!-- ORGANIZATIONS BY STATUS (APEX) -->
+            <div class="panel-card glass-card">
+              <div class="panel-header">
+                <div class="ph-title">
+                  <mat-icon>business</mat-icon>
+                  <h3>Organisations par statut</h3>
+                </div>
+              </div>
+              <div class="panel-body">
+                <div class="chart-container">
+                  <apx-chart *ngIf="statusChartOptions"
+                    [series]="statusChartOptions.series"
+                    [chart]="statusChartOptions.chart"
+                    [labels]="statusChartOptions.labels"
+                    [colors]="statusChartOptions.colors"
+                    [legend]="statusChartOptions.legend"
+                    [plotOptions]="statusChartOptions.plotOptions"
+                    [stroke]="statusChartOptions.stroke"
+                    [dataLabels]="statusChartOptions.dataLabels">
+                  </apx-chart>
+                </div>
+              </div>
+            </div>
+
+            <!-- USERS BY ROLE (APEX) -->
+            <div class="panel-card glass-card">
+              <div class="panel-header">
+                <div class="ph-title">
+                  <mat-icon>people_alt</mat-icon>
+                  <h3>Répartition des rôles</h3>
+                </div>
+              </div>
+              <div class="panel-body">
+                <div class="chart-container">
+                  <apx-chart *ngIf="roleChartOptions"
+                    [series]="roleChartOptions.series"
+                    [chart]="roleChartOptions.chart"
+                    [labels]="roleChartOptions.labels"
+                    [colors]="roleChartOptions.colors"
+                    [legend]="roleChartOptions.legend"
+                    [plotOptions]="roleChartOptions.plotOptions">
+                  </apx-chart>
+                </div>
+              </div>
+            </div>
+
+            <!-- GLOBAL TRENDS (APEX COMBINED) -->
+            <div class="panel-card glass-card full-width">
+              <div class="panel-header">
+                <div class="ph-title">
+                  <mat-icon>analytics</mat-icon>
+                  <h3>Évolution de l'écosystème</h3>
+                </div>
+                <div class="panel-actions">
+                  <span class="legend-badge org">Organisations</span>
+                  <span class="legend-badge user">Utilisateurs</span>
+                  <span class="legend-badge nc">NC</span>
+                </div>
+              </div>
+              <div class="panel-body">
+                <div class="chart-container wide p-16">
+                  <apx-chart *ngIf="trendChartOptions"
+                    [series]="trendChartOptions.series"
+                    [chart]="trendChartOptions.chart"
+                    [xaxis]="trendChartOptions.xaxis"
+                    [yaxis]="trendChartOptions.yaxis"
+                    [stroke]="trendChartOptions.stroke"
+                    [fill]="trendChartOptions.fill"
+                    [labels]="trendChartOptions.labels"
+                    [plotOptions]="trendChartOptions.plotOptions"
+                    [markers]="trendChartOptions.markers"
+                    [tooltip]="trendChartOptions.tooltip"
+                    [colors]="trendChartOptions.colors">
+                  </apx-chart>
+                </div>
+              </div>
+            </div>
+
+            <!-- TRAFFIC & DEVICES -->
+            <div class="panel-card glass-card full-width traffic-analytics-card">
+              <div class="traffic-layout">
+                <div class="visitor-panel">
+                  <div class="ph-title">
+                    <mat-icon>show_chart</mat-icon>
+                    <h3>Nouveaux comptes</h3>
+                  </div>
+                  <div class="chart-container">
+                    <apx-chart *ngIf="visitorChartOptions"
+                      [series]="visitorChartOptions.series"
+                      [chart]="visitorChartOptions.chart"
+                      [xaxis]="visitorChartOptions.xaxis"
+                      [yaxis]="visitorChartOptions.yaxis"
+                      [stroke]="visitorChartOptions.stroke"
+                      [fill]="visitorChartOptions.fill"
+                      [colors]="visitorChartOptions.colors"
+                      [dataLabels]="visitorChartOptions.dataLabels"
+                      [grid]="visitorChartOptions.grid">
+                    </apx-chart>
+                  </div>
+                </div>
+
+                <div class="traffic-side-panels">
+                  <div class="mini-panel">
+                    <div class="mini-head">
+                      <h3>Appareils</h3>
+                      <strong>{{ devicesTotal }}</strong>
+                    </div>
+                    <div class="mini-chart">
+                      <apx-chart *ngIf="deviceChartOptions"
+                        [series]="deviceChartOptions.series"
+                        [chart]="deviceChartOptions.chart"
+                        [labels]="deviceChartOptions.labels"
+                        [colors]="deviceChartOptions.colors"
+                        [stroke]="deviceChartOptions.stroke"
+                        [plotOptions]="deviceChartOptions.plotOptions"
+                        [tooltip]="deviceChartOptions.tooltip">
+                      </apx-chart>
+                    </div>
+                    <div class="device-legend">
+                      <div class="legend-item" *ngFor="let item of deviceBreakdown">
+                        <span class="dot" [style.background]="item.color"></span>
+                        <span class="lbl">{{ item.label }}</span>
+                        <strong>{{ item.percent }}%</strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- PERFORMANCE RANKINGS -->
+            <div class="panel-card glass-card full-width">
+              <div class="panel-header">
+                <div class="ph-title">
+                  <mat-icon>military_tech</mat-icon>
+                  <h3>Top Performances</h3>
+                </div>
+              </div>
+              
+              <div class="panel-body p-24">
+                <div class="rankings-grid">
+                  <div class="ranking-box" *ngFor="let rank of [
+                    {title: 'Top Utilisateurs', list: asTopOrganizations(data.charts.topOrganizationsByUsers), key: 'usersCount', icon: 'groups'},
+                    {title: 'Top Documents', list: asTopOrganizations(data.charts.topOrganizationsByDocuments), key: 'documentsCount', icon: 'description'},
+                    {title: 'Top Non-conformités', list: asTopOrganizations(data.charts.topOrganizationsByNonConformities), key: 'nonConformitiesCount', icon: 'report_problem'}
+                  ]">
+                    <div class="rank-head">
+                      <mat-icon>{{ rank.icon }}</mat-icon>
+                      <h3>{{ rank.title }}</h3>
+                    </div>
+                    <div class="rank-list">
+                      <div class="rank-item" *ngFor="let org of rank.list; let i = index">
+                        <div class="rank-num">{{ i + 1 }}</div>
+                        <span class="org-name">{{ org.organizationName }}</span>
+                        <strong class="org-val">{{ getOrgValue(org, rank.key) }}</strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="table-container">
+                  <table class="modern-table">
+                    <thead>
+                      <tr>
+                        <th>Organisation</th>
+                        <th>Membres</th>
+                        <th>Documents</th>
+                        <th>Non-conformités</th>
+                        <th class="text-right">Statut</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let org of data.topOrganizations">
+                        <td>
+                          <div class="org-cell">
+                            <div class="org-avatar">{{ org.organizationName[0] }}</div>
+                            <strong>{{ org.organizationName }}</strong>
+                          </div>
+                        </td>
+                        <td>{{ org.usersCount }}</td>
+                        <td>{{ org.documentsCount }}</td>
+                        <td><span class="nc-badge">{{ org.nonConformitiesCount }}</span></td>
+                        <td class="text-right">
+                          <span class="status-chip active">Actif</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">history_edu</mat-icon>
+          <span>Journal d'activités</span>
+        </ng-template>
+
+        <div class="tab-content">
+          <div class="dashboard-panels">
+            <div class="panel-card glass-card full-width">
+              <div class="panel-header">
+                <div class="ph-title">
+                  <mat-icon>history</mat-icon>
+                  <h3>Événements récents du système</h3>
+                </div>
+              </div>
+              
+              <div class="panel-body p-24">
+                <div class="modern-timeline" *ngIf="data.recentActivities.length > 0; else emptyAct">
+                  <div class="timeline-entry" *ngFor="let act of data.recentActivities">
+                    <div class="timeline-marker">
+                      <div class="dot"></div>
+                      <div class="line"></div>
+                    </div>
+                    <div class="timeline-content">
+                      <div class="act-header">
+                        <strong>{{ act.title }}</strong>
+                        <span class="act-date">{{ act.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+                      </div>
+                      <p>{{ act.description }}</p>
+                      <div class="act-footer">
+                        <mat-icon>person</mat-icon> {{ act.actorName || 'Système' }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <ng-template #emptyAct>
+                  <div class="empty-msg">
+                    <mat-icon>history_toggle_off</mat-icon>
+                    <p>Aucune activité enregistrée.</p>
+                  </div>
+                </ng-template>
+              </div>
+            </div>
+
+            <!-- ACTIONS STRATÉGIQUES -->
+            <div class="panel-card glass-card full-width">
+              <div class="panel-header">
+                <div class="ph-title">
+                  <mat-icon>bolt</mat-icon>
+                  <h3>Actions stratégiques</h3>
+                </div>
+              </div>
+              <div class="panel-body p-24">
+                <div class="action-grid">
+                  <div class="action-card highlight" (click)="goToCreateOrganization()">
+                    <mat-icon>domain_add</mat-icon>
+                    <div class="action-info">
+                      <strong>Nouvelle Organisation</strong>
+                      <p>Déployer une instance</p>
+                    </div>
+                  </div>
+                  <div class="action-card normal" (click)="goToOrganizations()">
+                    <mat-icon class="blue">list_alt</mat-icon>
+                    <div class="action-info">
+                      <strong>Gérer plateformes</strong>
+                      <p>Liste complète</p>
+                    </div>
+                  </div>
+                  <div class="action-card normal" (click)="goToSuspendedOrganizations()">
+                    <mat-icon class="orange">gpp_maybe</mat-icon>
+                    <div class="action-info">
+                      <strong>Suspensions</strong>
+                      <p>Révision des accès</p>
+                    </div>
+                  </div>
+                  <div class="action-card normal" (click)="goToRequests()">
+                    <mat-icon class="purple">mail_outline</mat-icon>
+                    <div class="action-info">
+                      <strong>Demandes</strong>
+                      <p>Traiter les achats</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+</div>

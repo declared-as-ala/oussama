@@ -1,0 +1,183 @@
+﻿<section class="org-form-wrapper">
+  <div class="form-container">
+    <header class="form-header">
+      <div class="header-icon">
+        <mat-icon>{{ isEdit ? 'edit' : 'add_business' }}</mat-icon>
+      </div>
+      <div class="header-text">
+        <h1>{{ isEdit ? 'Modifier l\'organisation' : 'Nouvelle Organisation' }}</h1>
+        <p>{{ isEdit ? 'Mettez à jour les informations de cet institut' : 'Configurez un nouvel institut ou une
+          organisation' }}</p>
+      </div>
+    </header>
+
+    <div *ngIf="loading" class="loading-overlay">
+      <mat-spinner diameter="40"></mat-spinner>
+      <span>Récupération des données...</span>
+    </div>
+
+    <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="submit()" class="modern-form">
+      <!-- Section: Informations de base -->
+      <div class="form-section">
+        <div class="section-header">
+          <mat-icon>info_outline</mat-icon>
+          <h3>Informations Générales</h3>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="flex-2">
+            <mat-label>Nom de l'organisation</mat-label>
+            <input matInput formControlName="name" placeholder="Ex: Faculté des Sciences" />
+            <mat-icon matPrefix>business</mat-icon>
+            <mat-error *ngIf="form.controls.name.invalid">Le nom est requis</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="flex-1">
+            <mat-label>Code / Sigle</mat-label>
+            <input matInput formControlName="code" placeholder="Ex: FSM" />
+            <mat-icon matPrefix>label</mat-icon>
+            <mat-error *ngIf="form.controls.code.invalid">Code requis</mat-error>
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Description</mat-label>
+          <textarea matInput rows="3" formControlName="description"
+            placeholder="Brève description de l'organisation..."></textarea>
+          <mat-icon matPrefix>description</mat-icon>
+        </mat-form-field>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Type d'établissement</mat-label>
+            <mat-select formControlName="type">
+              <mat-select-trigger>
+                <div class="select-trigger-content">
+                  <mat-icon>category</mat-icon>
+                  <span>{{ getTypeLabel(form.controls.type.value) }}</span>
+                </div>
+              </mat-select-trigger>
+              <mat-option *ngFor="let option of typeOptions" [value]="option.value">
+                {{ option.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Statut</mat-label>
+            <mat-select formControlName="status">
+              <mat-select-trigger>
+                <div class="select-trigger-content">
+                  <mat-icon>check_circle_outline</mat-icon>
+                  <span>{{ getStatusLabel(form.controls.status.value) }}</span>
+                </div>
+              </mat-select-trigger>
+              <mat-option *ngFor="let option of statusOptions" [value]="option.value">
+                {{ option.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="section-header">
+          <mat-icon>schedule</mat-icon>
+          <h3>Abonnement</h3>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Jours restants abonnement</mat-label>
+            <input matInput type="number" min="0" formControlName="subscriptionDaysRemaining" />
+            <mat-icon matPrefix>timer</mat-icon>
+            <mat-error *ngIf="form.controls.subscriptionDaysRemaining.invalid">
+              Entrez une valeur >= 0
+            </mat-error>
+          </mat-form-field>
+
+          <div class="toggle-inline">
+            <mat-slide-toggle color="primary" formControlName="subscriptionMonitorEnabled">
+              Moniteur auto abonnement
+            </mat-slide-toggle>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Coordonnées -->
+      <div class="form-section">
+        <div class="section-header">
+          <mat-icon>contact_mail</mat-icon>
+          <h3>Contact & Localisation</h3>
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Adresse complète</mat-label>
+          <input matInput formControlName="address" placeholder="Rue, Ville, Code Postal" />
+          <mat-icon matPrefix>place</mat-icon>
+        </mat-form-field>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Email officiel</mat-label>
+            <input matInput formControlName="email" type="email" placeholder="contact@org.tn" />
+            <mat-icon matPrefix>alternate_email</mat-icon>
+            <mat-error *ngIf="form.controls.email.invalid">Email non valide</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Téléphone</mat-label>
+            <input matInput formControlName="phone" placeholder="+216 -- --- ---" />
+            <mat-icon matPrefix>phone</mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- Section: Administrateur (Optionnel à la création) -->
+      <div *ngIf="!isEdit" class="form-section admin-section" [class.active]="form.controls.createFirstAdmin.value">
+        <div class="section-header-toggle">
+          <div class="header-left">
+            <mat-icon>person_add</mat-icon>
+            <h3>Premier Administrateur</h3>
+          </div>
+          <mat-slide-toggle formControlName="createFirstAdmin" color="primary"></mat-slide-toggle>
+        </div>
+
+        <div class="admin-fields-grid" *ngIf="form.controls.createFirstAdmin.value">
+          <mat-form-field appearance="outline">
+            <mat-label>Prénom</mat-label>
+            <input matInput formControlName="firstAdminFirstName" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Nom</mat-label>
+            <input matInput formControlName="firstAdminLastName" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Email de l'admin</mat-label>
+            <input matInput formControlName="firstAdminEmail" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Mot de passe temporaire</mat-label>
+            <input matInput type="password" formControlName="firstAdminTemporaryPassword" />
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <footer class="form-actions">
+        <button mat-button type="button" class="btn-cancel" (click)="goBack()" [disabled]="saving">
+          Annuler
+        </button>
+        <button mat-flat-button color="primary" type="submit" class="btn-save" [disabled]="form.invalid || saving">
+          <div class="btn-content">
+            <mat-spinner *ngIf="saving" diameter="20" color="accent"></mat-spinner>
+            <span>{{ isEdit ? 'Enregistrer les modifications' : 'Créer l\'organisation' }}</span>
+          </div>
+        </button>
+      </footer>
+    </form>
+  </div>
+</section>

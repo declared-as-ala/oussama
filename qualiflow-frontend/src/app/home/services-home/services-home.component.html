@@ -1,0 +1,32 @@
+<section class="services-section" id="services">
+  <div class="container">
+    <div class="section-intro">
+      <span class="badge">Innovation Qualité</span>
+      <h2>L'excellence opérationnelle au cœur de votre métier</h2>
+      <p class="description">Plus qu'une simple GED, QualiFlow est le copilote de votre conformité ISO, transformant vos contraintes réglementaires en leviers de performance.</p>
+    </div>
+  
+    <div class="services-grid">
+      <div class="service-card" *ngFor="let service of services" [style.--accent]="service.color">
+        <div class="card-glow"></div>
+        <div class="card-content">
+          <div class="icon-wrapper">
+            <mat-icon>{{ service.icon }}</mat-icon>
+          </div>
+          <div class="title-group">
+            <span class="subtitle">{{ service.subtitle }}</span>
+            <h3>{{ service.title }}</h3>
+          </div>
+          <p class="summary">{{ service.description }}</p>
+          
+          <ul class="feature-list">
+            <li *ngFor="let feat of service.features">
+              <mat-icon>check_circle</mat-icon>
+              <span>{{ feat }}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

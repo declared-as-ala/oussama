@@ -1,0 +1,155 @@
+<div class="notification-center-page">
+  <div class="header-banner shadow-sm">
+    <div class="banner-info">
+      <h1>Centre de notifications</h1>
+      <p>Retrouvez toutes les alertes et evenements de votre organisation</p>
+      <p class="role-view">{{ roleViewLabel }}</p>
+    </div>
+    <div class="banner-actions">
+      <button mat-stroked-button class="btn-reset" (click)="clearFilters()">
+        <mat-icon>restart_alt</mat-icon>
+        Reinitialiser
+      </button>
+      <button mat-flat-button class="btn-mark-all" (click)="markAllAsRead()">
+        <mat-icon>done_all</mat-icon>
+        Tout marquer comme lu
+      </button>
+    </div>
+  </div>
+
+  <div class="kpi-row" *ngIf="statistics">
+    <div class="kpi-card total shadow-xs">
+      <div class="kpi-icon"><mat-icon>notifications</mat-icon></div>
+      <div class="kpi-data">
+        <span>Total</span>
+        <strong>{{ statistics.total }}</strong>
+      </div>
+    </div>
+    <div class="kpi-card unread shadow-xs">
+      <div class="kpi-icon"><mat-icon>mark_chat_unread</mat-icon></div>
+      <div class="kpi-data">
+        <span>Non lues</span>
+        <strong>{{ statistics.unread }}</strong>
+      </div>
+    </div>
+    <div class="kpi-card critical shadow-xs">
+      <div class="kpi-icon"><mat-icon>error_outline</mat-icon></div>
+      <div class="kpi-data">
+        <span>Critiques</span>
+        <strong>{{ statistics.critical }}</strong>
+      </div>
+    </div>
+    <div class="kpi-card high shadow-xs">
+      <div class="kpi-icon"><mat-icon>priority_high</mat-icon></div>
+      <div class="kpi-data">
+        <span>Priorite haute</span>
+        <strong>{{ statistics.high }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <mat-card class="system-alerts-card shadow-sm" *ngIf="isSuperAdmin && systemAlerts.length > 0">
+    <div class="alerts-header">
+      <h2><mat-icon>gpp_maybe</mat-icon> Alertes systeme globales</h2>
+      <button mat-button color="warn" (click)="loadData()">
+        <mat-icon>refresh</mat-icon>
+        Rafraichir
+      </button>
+    </div>
+    <div class="alerts-timeline">
+      <div class="alert-item" *ngFor="let alert of systemAlerts">
+        <div class="alert-icon" [ngClass]="alert.severity">
+          <mat-icon>{{ getSeverityIcon(alert) }}</mat-icon>
+        </div>
+        <div class="alert-body">
+          <div class="alert-header">
+            <strong>{{ alert.title }}</strong>
+            <span class="severity-badge" [ngClass]="alert.severity">{{ getSeverityLabel(alert) }}</span>
+          </div>
+          <p>{{ alert.description }}</p>
+          <div class="alert-footer">
+            <span><mat-icon>calendar_today</mat-icon> {{ alert.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </mat-card>
+
+  <mat-card class="filters-card shadow-sm">
+    <form class="filters-grid" [formGroup]="filtersForm" (ngSubmit)="onFilter()">
+      <mat-form-field appearance="outline">
+        <mat-label>Recherche rapide</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput formControlName="search" placeholder="Mot-cle, titre...">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Etat de lecture</mat-label>
+        <mat-select formControlName="isRead">
+          <mat-option value="">Toutes</mat-option>
+          <mat-option value="false">Non lues</mat-option>
+          <mat-option value="true">Lues uniquement</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Categorie</mat-label>
+        <mat-select formControlName="category">
+          <mat-option value="">Toutes les categories</mat-option>
+          <mat-option *ngFor="let option of categoryOptions" [value]="option.value">{{ option.label }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Priorite</mat-label>
+        <mat-select formControlName="priority">
+          <mat-option value="">Tous niveaux</mat-option>
+          <mat-option *ngFor="let option of priorityOptions" [value]="option.value">{{ option.label }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Type</mat-label>
+        <mat-select formControlName="type">
+          <mat-option value="">Tous les types</mat-option>
+          <mat-option *ngFor="let option of typeOptions" [value]="option.value">{{ option.label }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Date de debut</mat-label>
+        <input matInput type="date" formControlName="fromDate">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Date de fin</mat-label>
+        <input matInput type="date" formControlName="toDate">
+      </mat-form-field>
+
+      <div class="filters-actions">
+        <button mat-flat-button color="primary" type="submit">
+          Appliquer les filtres
+        </button>
+      </div>
+    </form>
+  </mat-card>
+
+  <mat-card class="content-card shadow-sm">
+    <app-notification-list
+      [loading]="loading"
+      [notifications]="notifications"
+      (openNotification)="onOpen($event)"
+      (markRead)="onMarkRead($event)"
+      (archive)="onArchive($event)">
+    </app-notification-list>
+
+    <mat-paginator
+      [length]="total"
+      [pageSize]="pageSize"
+      [pageIndex]="pageNumber - 1"
+      [pageSizeOptions]="[5, 10, 20, 50]"
+      showFirstLastButtons
+      (page)="onPageChanged($event)">
+    </mat-paginator>
+  </mat-card>
+</div>

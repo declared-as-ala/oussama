@@ -1,0 +1,129 @@
+<div class="page-container">
+  <!-- PAGE HEADER -->
+  <div class="page-header-bar">
+    <div>
+      <h1>Dashboard Qualité</h1>
+      <div class="sub">Indicateurs — Performance globale et points de vigilance</div>
+    </div>
+    <div class="ph-actions">
+      <button class="btn btn-primary" (click)="goToList()">
+        <mat-icon>list</mat-icon>
+        Voir la liste complète
+      </button>
+    </div>
+  </div>
+
+  <div class="content-scroll">
+    <div class="loading-overlay" *ngIf="loading">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+
+    <!-- STATS GRID -->
+    <div class="stats-grid" *ngIf="statistics">
+      <div class="stat-card glass-card">
+        <div class="st-icon-box">
+          <mat-icon>dashboard</mat-icon>
+        </div>
+        <div class="st-content">
+          <div class="st-label">Total Indicateurs</div>
+          <div class="st-value">{{ statistics.total }}</div>
+          <div class="st-foot">Inventaire complet</div>
+        </div>
+      </div>
+      <div class="stat-card glass-card active-bg">
+        <div class="st-icon-box">
+          <mat-icon>check_circle</mat-icon>
+        </div>
+        <div class="st-content">
+          <div class="st-label">En activité</div>
+          <div class="st-value">{{ statistics.active }}</div>
+          <div class="st-foot">Suivi opérationnel</div>
+        </div>
+      </div>
+      <div class="stat-card glass-card alert-bg" [class.danger]="statistics.inAlert > 0">
+        <div class="st-icon-box">
+          <mat-icon>warning</mat-icon>
+        </div>
+        <div class="st-content">
+          <div class="st-label">En Alerte</div>
+          <div class="st-value">{{ statistics.inAlert }}</div>
+          <div class="st-foot">{{ statistics.inAlert > 0 ? 'Action corrective requise' : 'Aucune dérive' }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD PANELS -->
+    <div class="dashboard-panels">
+      <!-- ALERTS PANEL -->
+      <div class="panel-card glass-card">
+        <div class="panel-header">
+          <div class="ph-title">
+            <mat-icon>notifications_active</mat-icon>
+            <h3>Alertes critiques</h3>
+          </div>
+          <span class="count-badge" *ngIf="alerts.length > 0">{{ alerts.length }}</span>
+        </div>
+
+        <div class="panel-body">
+          <div class="empty-msg" *ngIf="alerts.length === 0">
+            <mat-icon>verified</mat-icon>
+            <p>Aucune anomalie détectée sur le réseau</p>
+          </div>
+
+          <div class="alerts-list" *ngIf="alerts.length > 0">
+            <div class="alert-item" *ngFor="let alert of alerts.slice(0, 10)"
+              (click)="openIndicator(alert.indicatorId)">
+              <div class="alert-marker"></div>
+              <div class="alert-content">
+                <div class="alert-top">
+                  <span class="code">{{ alert.indicatorCode || 'IND' }}</span>
+                  <span class="date">{{ alert.measuredAt | date: 'dd/MM' }}</span>
+                </div>
+                <div class="name">{{ alert.indicatorName }}</div>
+                <div class="msg">{{ alert.message }}</div>
+              </div>
+              <mat-icon class="chevron">chevron_right</mat-icon>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRENDS PANEL -->
+      <div class="panel-card glass-card">
+        <div class="panel-header">
+          <div class="ph-title">
+            <mat-icon>trending_up</mat-icon>
+            <h3>Tendances récentes</h3>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="empty-msg" *ngIf="trends.length === 0">
+            <mat-icon>show_chart</mat-icon>
+            <p>En attente de données historiques</p>
+          </div>
+
+          <div class="trends-list" *ngIf="trends.length > 0">
+            <div class="trend-item" *ngFor="let trend of trends" (click)="openIndicator(trend.indicator.id)">
+              <div class="trend-info">
+                <div class="trend-top">
+                  <span class="code">{{ trend.indicator.code }}</span>
+                  <span class="dot" [class.alert]="trend.indicator.isInAlert"></span>
+                </div>
+                <div class="name">{{ trend.indicator.name }}</div>
+              </div>
+              <div class="trend-visual">
+                <apx-chart
+                  [series]="trend.chartOptions.series"
+                  [chart]="trend.chartOptions.chart"
+                  [stroke]="trend.chartOptions.stroke"
+                  [fill]="trend.chartOptions.fill"
+                  [tooltip]="trend.chartOptions.tooltip">
+                </apx-chart>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

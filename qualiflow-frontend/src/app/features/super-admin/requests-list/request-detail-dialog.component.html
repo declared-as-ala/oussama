@@ -1,0 +1,135 @@
+<div class="dialog-container">
+  <div class="dialog-header">
+    <div class="title-wrap">
+      <mat-icon class="header-icon">description</mat-icon>
+      <h2>Détails de la demande</h2>
+    </div>
+    <button mat-icon-button (click)="onAction('close')" class="close-btn">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-dialog-content class="dialog-content">
+    <!-- Organisation details section -->
+    <div class="section-card">
+      <div class="section-title">
+        <mat-icon>business</mat-icon>
+        <h3>Organisation demandée</h3>
+      </div>
+      <div class="detail-grid">
+        <div class="detail-item full-width">
+          <label>Nom de l'organisation</label>
+          <div class="value-with-copy">
+            <span class="value-highlight">{{ data.request.organizationName }}</span>
+            <button mat-icon-button (click)="copyToClipboard(data.request.organizationName, 'Nom')" matTooltip="Copier le nom">
+              <mat-icon>content_copy</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <div class="detail-item">
+          <label>Type d'organisation</label>
+          <div class="value-wrap">
+            <mat-chip-row [class.chip-univ]="data.request.organizationType === 'UNIVERSITE' || data.request.organizationType === 'Université'"
+                          [class.chip-inst]="data.request.organizationType === 'INSTITUT' || data.request.organizationType === 'Institut'">
+              {{ data.request.organizationType }}
+            </mat-chip-row>
+          </div>
+        </div>
+
+        <div class="detail-item" *ngIf="data.request.country && data.request.country !== 'N/A'">
+          <label>Pays de résidence</label>
+          <div class="value-wrap text-icon">
+            <mat-icon class="inline-icon">place</mat-icon>
+            <span>{{ data.request.country }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Client / Submitter details section -->
+    <div class="section-card">
+      <div class="section-title">
+        <mat-icon>person</mat-icon>
+        <h3>Informations sur le client</h3>
+      </div>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <label>Nom complet</label>
+          <div class="value-with-copy">
+            <span class="font-medium">{{ data.request.fullName }}</span>
+            <button mat-icon-button (click)="copyToClipboard(data.request.fullName, 'Nom du client')" matTooltip="Copier le nom">
+              <mat-icon>content_copy</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <div class="detail-item">
+          <label>Poste / Titre</label>
+          <div class="value-wrap">
+            <span class="text-secondary">{{ data.request.jobTitle }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contacts section -->
+    <div class="section-card">
+      <div class="section-title">
+        <mat-icon>contact_phone</mat-icon>
+        <h3>Coordonnées de contact</h3>
+      </div>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <label>Adresse e-mail</label>
+          <div class="value-with-copy">
+            <a href="mailto:{{ data.request.email }}" class="contact-link">
+              <mat-icon class="inline-icon">email</mat-icon>
+              {{ data.request.email }}
+            </a>
+            <button mat-icon-button (click)="copyToClipboard(data.request.email, 'Adresse e-mail')" matTooltip="Copier l'e-mail">
+              <mat-icon>content_copy</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <div class="detail-item">
+          <label>Numéro de téléphone</label>
+          <div class="value-with-copy" *ngIf="data.request.phone && data.request.phone !== 'N/A'; else noPhone">
+            <a href="tel:{{ data.request.phone }}" class="contact-link">
+              <mat-icon class="inline-icon">phone</mat-icon>
+              {{ data.request.phone }}
+            </a>
+            <button mat-icon-button (click)="copyToClipboard(data.request.phone, 'Téléphone')" matTooltip="Copier le téléphone">
+              <mat-icon>content_copy</mat-icon>
+            </button>
+          </div>
+          <ng-template #noPhone>
+            <span class="text-muted">— Non renseigné</span>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submission time footer details -->
+    <div class="submission-footer">
+      <mat-icon class="footer-icon">schedule</mat-icon>
+      <span>Demande reçue le {{ data.request.createdAt | date: 'dd MMMM yyyy à HH:mm' }}</span>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="dialog-actions">
+    <button mat-stroked-button (click)="onAction('close')">
+      Fermer
+    </button>
+    <div class="action-spacer"></div>
+    <button mat-flat-button color="warn" (click)="onAction('reject')">
+      <mat-icon>delete</mat-icon>
+      Rejeter
+    </button>
+    <button mat-flat-button color="primary" (click)="onAction('approve')">
+      <mat-icon>check_circle</mat-icon>
+      Créer l'organisation
+    </button>
+  </mat-dialog-actions>
+</div>

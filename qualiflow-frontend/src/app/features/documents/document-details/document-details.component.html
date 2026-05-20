@@ -1,0 +1,249 @@
+<section class="document-details-page">
+  <!-- PAGE HEADER BAR -->
+  <div class="page-header-bar" *ngIf="hasData && details as model">
+    <div class="page-header-left">
+      <div class="page-subtitle">
+        <button type="button" class="btn-back" (click)="backToList()">
+          <mat-icon>arrow_back</mat-icon> Retour
+        </button>
+      </div>
+      <h1 class="page-title">{{ model.document.title }}</h1>
+    </div>
+
+    <div class="page-header-right">
+      <button mat-stroked-button type="button" (click)="openVersions()">
+        <mat-icon>history</mat-icon> {{ 'detail.document.versions' | t }}
+      </button>
+      <button *ngIf="canWrite" mat-stroked-button type="button" (click)="editDocument()">
+        <mat-icon>edit</mat-icon> {{ 'common.edit' | t }}
+      </button>
+      <button *ngIf="canWrite" mat-stroked-button type="button" color="warn" (click)="deleteDocument($event)">
+        <mat-icon>delete_outline</mat-icon> Supprimer
+      </button>
+      <button mat-flat-button color="primary" type="button" (click)="downloadCurrent()">
+        <mat-icon>download</mat-icon> {{ 'common.download' | t }}
+      </button>
+    </div>
+  </div>
+
+  <!-- LOADING STATE -->
+  <div class="loading-overlay" *ngIf="loading">
+    <mat-spinner diameter="40"></mat-spinner>
+    <span>{{ 'detail.document.loading' | t }}</span>
+  </div>
+
+  <!-- CONTENT -->
+  <ng-container *ngIf="!loading && details as model">
+    <!-- SUMMARY INFO CARDS -->
+    <div class="summary-cards">
+      <div class="summary-card">
+        <span class="sc-label">{{ 'detail.document.identifier' | t }}</span>
+        <div class="sc-value">{{ model.document.code }}</div>
+        <span class="sc-subtext">{{ 'detail.document.uniqueRefCode' | t }}</span>
+      </div>
+      <div class="summary-card">
+        <span class="sc-label">{{ 'detail.document.typeNature' | t }}</span>
+        <div class="sc-value">{{ getTypeLabel(model.document.type) }}</div>
+        <span class="sc-subtext">{{ model.document.category || ('detail.document.noCategory' | t) }}</span>
+      </div>
+      <div class="summary-card">
+        <span class="sc-label">{{ 'detail.document.activeVersion' | t }}</span>
+        <div class="sc-value">
+          <span class="revision-badge">{{ model.currentVersion?.versionNumber || 'v1.0' }}</span>
+        </div>
+        <span class="tag-status mini" [ngClass]="(model.currentVersion?.status || 'BROUILLON').toLowerCase()">
+          {{ getStatusLabel(model.currentVersion?.status || 'BROUILLON') }}
+        </span>
+      </div>
+      <div class="summary-card">
+        <span class="sc-label">{{ 'common.responsible' | t }}</span>
+        <div class="sc-value doc-owner">
+          <div class="pilote-avatar">{{ getOwnerInitials(model.document.ownerFullName) }}</div>
+          <span>{{ model.document.ownerFullName || ('common.toDefine' | t) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="details-main-grid">
+      <!-- DESCRIPTION & CONTEXT -->
+      <div class="info-column">
+        <mat-card class="info-card">
+          <div class="card-header-clean">
+            <h2>{{ 'detail.document.descriptionContext' | t }}</h2>
+            <mat-icon>info_outline</mat-icon>
+          </div>
+          <div class="info-grid">
+            <div class="info-item">
+              <label>{{ 'detail.document.summaryNotes' | t }}</label>
+              <p>{{ model.document.description || ('detail.document.noDescription' | t) }}</p>
+            </div>
+            <div class="info-item">
+              <label>{{ 'detail.document.processLink' | t }}</label>
+              <div class="link-display" *ngIf="model.document.processId">
+                <mat-icon>hub</mat-icon>
+                <strong>{{ model.document.processCode }}</strong>
+                <span>{{ model.document.processName }}</span>
+              </div>
+              <p *ngIf="!model.document.processId" class="text-muted italic">{{ 'detail.document.noProcessLinked' | t }}
+              </p>
+            </div>
+            <div class="info-item">
+              <label>{{ 'detail.document.procedureLink' | t }}</label>
+              <div class="link-display" *ngIf="model.document.procedureId">
+                <mat-icon>assignment</mat-icon>
+                <strong>{{ model.document.procedureCode }}</strong>
+                <span>{{ model.document.procedureTitle }}</span>
+              </div>
+              <p *ngIf="!model.document.procedureId" class="text-muted italic">{{ 'detail.document.noProcedureLinked' |
+                t }}</p>
+            </div>
+            <div class="info-item">
+              <label>{{ 'detail.document.keywords' | t }}</label>
+              <div class="keyword-tags">
+                <span class="k-tag" *ngFor="let k of (model.document.keywords || '').split(',')">
+                  {{ k.trim() }}
+                </span>
+                <span *ngIf="!model.document.keywords" class="text-muted italic">{{ 'detail.document.noKeyword' | t
+                  }}</span>
+              </div>
+            </div>
+          </div>
+        </mat-card>
+      </div>
+
+      <!-- VERSIONS HISTORY -->
+      <div class="history-column">
+        <mat-card class="info-card">
+          <div class="card-header-clean">
+            <h2>{{ 'detail.document.versionHistory' | t }}</h2>
+            <div class="header-actions-inline">
+              <button mat-icon-button (click)="previewCurrent()"
+                [matTooltip]="'detail.document.previewActiveVersion' | t">
+                <mat-icon>visibility</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          <div class="table-container-mini">
+            <table mat-table [dataSource]="model.versions" class="modern-table-compact">
+              <ng-container matColumnDef="version">
+                <th mat-header-cell *matHeaderCellDef>{{ 'list.documents.revision' | t }}</th>
+                <td mat-cell *matCellDef="let row"><strong>{{ row.versionNumber }}</strong></td>
+              </ng-container>
+
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>{{ 'list.nonconformities.state' | t }}</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="tag-status mini" [ngClass]="row.status.toLowerCase()">
+                    {{ getStatusLabel(row.status) }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="file">
+                <th mat-header-cell *matHeaderCellDef>Fichier</th>
+                <td mat-cell *matCellDef="let row" class="text-truncate" style="max-width: 170px;">
+                  {{ row.originalFileName || row.fileName || '-' }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="date">
+                <th mat-header-cell *matHeaderCellDef>{{ 'detail.document.date' | t }}</th>
+                <td mat-cell *matCellDef="let row">{{ row.createdAt | date: 'dd/MM/yy' }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="author">
+                <th mat-header-cell *matHeaderCellDef>{{ 'detail.document.author' | t }}</th>
+                <td mat-cell *matCellDef="let row" class="text-truncate" style="max-width: 120px;">
+                  {{ row.establishedByUser || ('detail.document.system' | t) }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef></th>
+                <td mat-cell *matCellDef="let row">
+                  <button mat-icon-button class="action-btn-mini" (click)="downloadVersion(row)"
+                    [matTooltip]="'detail.document.downloadVersion' | t">
+                    <mat-icon>download</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedVersionColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedVersionColumns"></tr>
+            </table>
+
+            <div class="empty-state-mid" *ngIf="model.versions.length === 0">
+              <mat-icon>history_toggle_off</mat-icon>
+              <p>{{ 'detail.document.noVersionHistory' | t }}</p>
+            </div>
+          </div>
+        </mat-card>
+      </div>
+    </div>
+
+    <mat-card class="info-card action-log-card">
+      <div class="card-header-clean">
+        <h2>Journal d'actions</h2>
+        <button mat-icon-button type="button" (click)="loadActionLogs()" matTooltip="Actualiser le journal">
+          <mat-icon>refresh</mat-icon>
+        </button>
+      </div>
+
+      <div class="action-log-loading" *ngIf="actionLogsLoading">
+        <mat-spinner diameter="28"></mat-spinner>
+      </div>
+
+      <div class="table-container-mini action-log-table" *ngIf="!actionLogsLoading">
+        <table mat-table [dataSource]="actionLogs" class="modern-table-compact">
+          <ng-container matColumnDef="action">
+            <th mat-header-cell *matHeaderCellDef>Action</th>
+            <td mat-cell *matCellDef="let row">
+              <div class="action-cell">
+                <span class="action-icon">
+                  <mat-icon>{{ getActionIcon(row.actionType) }}</mat-icon>
+                </span>
+                <span>{{ getActionLabel(row.actionType) }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="version">
+            <th mat-header-cell *matHeaderCellDef>Version</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="revision-badge" *ngIf="row.versionNumber">{{ row.versionNumber }}</span>
+              <span class="text-muted" *ngIf="!row.versionNumber">-</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="user">
+            <th mat-header-cell *matHeaderCellDef>Utilisateur</th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.performedByFullName || ('Utilisateur #' + row.performedByUserId) }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="date">
+            <th mat-header-cell *matHeaderCellDef>Date</th>
+            <td mat-cell *matCellDef="let row">{{ row.performedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="comment">
+            <th mat-header-cell *matHeaderCellDef>Commentaire</th>
+            <td mat-cell *matCellDef="let row">
+              <span>{{ row.comment || row.newValue || '-' }}</span>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedActionLogColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedActionLogColumns"></tr>
+        </table>
+
+        <div class="empty-state-mid" *ngIf="actionLogs.length === 0">
+          <mat-icon>history_toggle_off</mat-icon>
+          <p>Aucune action enregistree pour ce document.</p>
+        </div>
+      </div>
+    </mat-card>
+  </ng-container>
+</section>

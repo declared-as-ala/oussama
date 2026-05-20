@@ -1,0 +1,247 @@
+﻿<div class="login-container">
+  <div class="login-box">
+    <h2>QualiFlow - Authentification</h2>
+    
+    <!-- Toggle between Email and Phone login -->
+    <div class="login-mode-toggle mb-3">
+      <div class="btn-group w-100" role="group">
+        <button 
+          type="button" 
+          class="btn btn-outline-primary"
+          [class.active]="loginMode === 'email'"
+          (click)="toggleLoginMode()"
+          *ngIf="loginMode === 'phone'">
+          📧 Email
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-outline-primary"
+          [class.active]="loginMode === 'phone'"
+          (click)="toggleLoginMode()"
+          *ngIf="loginMode === 'email'">
+          📱 Téléphone
+        </button>
+      </div>
+    </div>
+    
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      
+      <!-- Email input -->
+      <div class="form-group" *ngIf="loginMode === 'email'">
+        <label for="email">Email</label>
+        <input 
+          type="email" 
+          id="email" 
+          class="form-control" 
+          formControlName="email"
+          placeholder="admin@demo.local"
+          [class.is-invalid]="email?.invalid && email?.touched">
+        <div class="invalid-feedback" *ngIf="email?.invalid && email?.touched">
+          <div *ngIf="email?.errors?.['required']">Email est requis</div>
+          <div *ngIf="email?.errors?.['email']">Format email invalide</div>
+        </div>
+      </div>
+
+      <!-- Phone input -->
+      <div class="form-group" *ngIf="loginMode === 'phone'">
+        <label for="phoneNumber">Numéro de téléphone</label>
+        <input 
+          type="tel" 
+          id="phoneNumber" 
+          class="form-control" 
+          formControlName="phoneNumber"
+          placeholder="+33612345678"
+          [class.is-invalid]="phoneNumber?.invalid && phoneNumber?.touched">
+        <div class="invalid-feedback" *ngIf="phoneNumber?.invalid && phoneNumber?.touched">
+          <div *ngIf="phoneNumber?.errors?.['required']">Numéro de téléphone est requis</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Mot de passe</label>
+        <input 
+          type="password" 
+          id="password" 
+          class="form-control" 
+          formControlName="password"
+          placeholder="Votre mot de passe"
+          [class.is-invalid]="password?.invalid && password?.touched">
+        <div class="invalid-feedback" *ngIf="password?.invalid && password?.touched">
+          <div *ngIf="password?.errors?.['required']">Mot de passe est requis</div>
+          <div *ngIf="password?.errors?.['minlength']">Minimum 6 caractères</div>
+        </div>
+      </div>
+
+      <div class="alert alert-danger" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+
+      <button 
+        type="submit" 
+        class="btn btn-primary w-100" 
+        [disabled]="isLoading || loginForm.invalid">
+        <span *ngIf="!isLoading">Se connecter</span>
+        <span *ngIf="isLoading">
+          <span class="spinner-border spinner-border-sm me-2"></span>
+          Connexion en cours...
+        </span>
+      </button>
+
+      <div class="demo-credentials mt-3">
+        <p class="text-muted text-sm">Comptes de démonstration:</p>
+        <ul class="text-sm">
+          <li>SUPER_ADMIN: superadmin@demo.local / SuperAdmin@123</li>
+          <li>ADMIN_ORG: admin@demo.local / Admin@123</li>
+          <li>UTILISATEUR: user@demo.local / User@123</li>
+        </ul>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<style>
+  .login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  .login-box {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .login-box h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: #333;
+  }
+
+  .login-mode-toggle {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .btn-group {
+    display: flex;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .btn-group .btn {
+    flex: 1;
+    border-radius: 0;
+  }
+
+  .btn-group .btn.active {
+    background-color: #667eea;
+    color: white;
+    border-color: #667eea;
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #333;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+  }
+
+  .form-control:focus {
+    border-color: #667eea;
+    outline: none;
+    box-shadow: 0 0 3px rgba(102, 126, 234, 0.3);
+  }
+
+  .form-control.is-invalid {
+    border-color: #dc3545;
+  }
+
+  .invalid-feedback {
+    display: block;
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+
+  .btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .btn-primary {  
+    background-color: #667eea;
+    color: white;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background-color: #5568d3;
+  }
+
+  .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .alert {
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+  }
+
+  .alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+  }
+
+  .demo-credentials {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 4px;
+    border-left: 3px solid #667eea;
+  }
+
+  .text-sm {
+    font-size: 0.875rem;
+  }
+
+  .text-muted {
+    color: #6c757d;
+  }
+
+  .me-2 {
+    margin-right: 0.5rem;
+  }
+
+  .mt-3 {
+    margin-top: 1rem;
+  }
+
+  .w-100 {
+    width: 100%;
+  }
+</style>
+

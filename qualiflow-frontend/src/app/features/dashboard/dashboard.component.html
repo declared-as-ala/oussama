@@ -1,0 +1,165 @@
+<div class="page-header-bar">
+  <div>
+    <h1>Dashboard Qualite</h1>
+    <div class="sub">Pilotage des processus, procedures, documents et non-conformites</div>
+  </div>
+
+  <div class="ph-actions">
+    <button type="button" class="btn btn-ghost" (click)="reload()">Rafraichir</button>
+    <a *ngIf="canWriteQuality" class="btn btn-primary" routerLink="/processes/new">Nouveau processus</a>
+    <a *ngIf="canWriteQuality" class="btn btn-primary" routerLink="/procedures/new">Nouvelle procedure</a>
+    <a *ngIf="canWriteQuality" class="btn btn-primary" routerLink="/non-conformities/new">Nouvelle non-conformite</a>
+  </div>
+</div>
+
+<div class="content-scroll" *ngIf="!loading; else loadingTpl">
+  <div class="kpi-grid">
+    <article class="kpi-card" *ngIf="canReadProcesses">
+      <div class="kpi-label">Processus</div>
+      <div class="kpi-value">{{ processStats?.total ?? 0 }}</div>
+      <div class="kpi-sub">{{ processStats?.active ?? 0 }} actifs</div>
+    </article>
+
+    <article class="kpi-card" *ngIf="canReadProcedures">
+      <div class="kpi-label">Procedures</div>
+      <div class="kpi-value">{{ procedureStats?.total ?? 0 }}</div>
+      <div class="kpi-sub">{{ procedureStats?.active ?? 0 }} actives</div>
+    </article>
+
+    <article class="kpi-card" *ngIf="canReadNonConformities">
+      <div class="kpi-label">Non-conformites</div>
+      <div class="kpi-value">{{ nonConformityStats?.opened ?? 0 }}</div>
+      <div class="kpi-sub">{{ nonConformityStats?.critical ?? 0 }} critiques</div>
+    </article>
+
+    <article class="kpi-card" *ngIf="canReadDocuments">
+      <div class="kpi-label">Documents</div>
+      <div class="kpi-value">{{ documentStats?.total ?? 0 }}</div>
+      <div class="kpi-sub">{{ documentStats?.approved ?? 0 }} approuves</div>
+    </article>
+  </div>
+
+  <div class="module-grid">
+    <section class="module-card" *ngIf="canReadProcesses">
+      <div class="module-head">
+        <h2>Processus</h2>
+        <a routerLink="/processes">Voir tout</a>
+      </div>
+
+      <div class="empty-state" *ngIf="processes.length === 0">Aucun processus disponible.</div>
+
+      <div class="table-wrap" *ngIf="processes.length > 0">
+        <table class="dash-table">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Nom</th>
+              <th>Type</th>
+              <th>Pilote</th>
+              <th>Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of processes; trackBy: trackById">
+              <td>{{ item.code }}</td>
+              <td>{{ item.name }}</td>
+              <td>{{ getProcessTypeLabel(item.type) }}</td>
+              <td>{{ item.pilotFullName || '-' }}</td>
+              <td>
+                <span class="badge" [ngClass]="getProcessStatusClass(item.status)">
+                  {{ getProcessStatusLabel(item.status) }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="module-card" *ngIf="canReadProcedures">
+      <div class="module-head">
+        <h2>Procedures</h2>
+        <a routerLink="/procedures">Voir tout</a>
+      </div>
+
+      <div class="empty-state" *ngIf="procedures.length === 0">Aucune procedure disponible.</div>
+
+      <div class="table-wrap" *ngIf="procedures.length > 0">
+        <table class="dash-table">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Titre</th>
+              <th>Processus</th>
+              <th>Responsable</th>
+              <th>Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of procedures; trackBy: trackById">
+              <td>{{ item.code }}</td>
+              <td>{{ item.title }}</td>
+              <td>{{ item.processCode }} - {{ item.processName }}</td>
+              <td>{{ item.responsibleFullName || '-' }}</td>
+              <td>
+                <span class="badge" [ngClass]="getProcedureStatusClass(item.status)">
+                  {{ getProcedureStatusLabel(item.status) }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="module-card" *ngIf="canReadNonConformities">
+      <div class="module-head">
+        <h2>Non-conformites ouvertes</h2>
+        <a routerLink="/non-conformities">Voir tout</a>
+      </div>
+
+      <div class="empty-state" *ngIf="nonConformities.length === 0">Aucune non-conformite ouverte.</div>
+
+      <div class="table-wrap" *ngIf="nonConformities.length > 0">
+        <table class="dash-table">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Titre</th>
+              <th>Severite</th>
+              <th>Responsable</th>
+              <th>Date</th>
+              <th>Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of nonConformities; trackBy: trackById">
+              <td>{{ item.code }}</td>
+              <td>{{ item.title }}</td>
+              <td>
+                <span class="badge" [ngClass]="getSeverityClass(item.severity)">
+                  {{ getSeverityLabel(item.severity) }}
+                </span>
+              </td>
+              <td>{{ item.responsibleFullName || '-' }}</td>
+              <td>{{ formatDate(item.detectedDate) }}</td>
+              <td>
+                <span class="badge" [ngClass]="getNonConformityStatusClass(item.status)">
+                  {{ getNonConformityStatusLabel(item.status) }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div class="empty-state" *ngIf="!canReadProcesses && !canReadProcedures && !canReadNonConformities">
+    Aucun module qualite disponible pour votre role.
+  </div>
+</div>
+
+<ng-template #loadingTpl>
+  <div class="loading-state">Chargement du dashboard qualite...</div>
+</ng-template>

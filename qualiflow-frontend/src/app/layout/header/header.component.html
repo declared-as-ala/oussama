@@ -1,0 +1,35 @@
+<div class="topbar-user">
+  <div class="user-trigger" [matMenuTriggerFor]="userMenu">
+    <div class="user-meta">
+      <span class="user-name">{{ getDisplayName() }}</span>
+      <span class="user-role">{{ currentUser?.role || 'Utilisateur' }}</span>
+    </div>
+
+    <div class="user-avatar" [class.no-image]="!profilePhotoObjectUrl">
+      <img *ngIf="profilePhotoObjectUrl; else initialsTpl" [src]="profilePhotoObjectUrl" alt="Profil" />
+      <ng-template #initialsTpl>{{ getInitials() }}</ng-template>
+    </div>
+    <i class="fas fa-chevron-down trigger-icon"></i>
+  </div>
+
+  <mat-menu #userMenu="matMenu" class="modern-user-menu" xPosition="before">
+    <div class="menu-header">
+      <div class="menu-user-info">
+        <div class="menu-user-name">{{ getDisplayName() }}</div>
+        <div class="menu-user-email">{{ currentUser?.email }}</div>
+      </div>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <button mat-menu-item (click)="goToProfile()">
+      <mat-icon>person</mat-icon>
+      <span>Mon Profil</span>
+    </button>
+
+    <button mat-menu-item (click)="logout()" class="logout-item">
+      <mat-icon>logout</mat-icon>
+      <span>Déconnexion</span>
+    </button>
+  </mat-menu>
+</div>

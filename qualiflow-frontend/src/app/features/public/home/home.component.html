@@ -1,0 +1,153 @@
+<nav class="navbar" [class.scrolled]="isScrolled">
+  <div class="container nav-inner">
+    <button class="logo" (click)="scrollToSection('home')" aria-label="Aller en haut">
+      <img src="assets/logo2.png" alt="QualiFlow" class="main-logo">
+    </button>
+
+    <div class="nav-links" [class.open]="isMenuOpen">
+      <a (click)="scrollToSection('home')">Accueil</a>
+      <a (click)="scrollToSection('about')">À propos</a>
+      <a (click)="scrollToSection('features')">Fonctionnalités</a>
+      <a (click)="scrollToSection('workflow')">Étapes</a>
+      <a (click)="scrollToSection('contact')">Contact</a>
+      <div class="mobile-actions">
+        <button class="btn btn-outline" routerLink="/login">Connexion</button>
+        <button class="btn btn-primary" routerLink="/register">Commencer</button>
+      </div>
+    </div>
+
+    <div class="desktop-actions">
+      <button class="btn btn-outline" routerLink="/login">Connexion</button>
+      <button class="btn btn-primary" routerLink="/register">Commencer</button>
+    </div>
+
+    <button class="menu-toggle" (click)="toggleMenu()" aria-label="Ouvrir le menu">
+      <i class="material-icons">{{ isMenuOpen ? 'close' : 'menu' }}</i>
+    </button>
+  </div>
+</nav>
+
+<main class="home-page">
+  <section id="home" class="hero section">
+    <div class="container hero-grid">
+      <div>
+        <span class="kicker">Plateforme Qualité tout-en-un</span>
+        <h1>Une seule page d’accueil claire pour présenter QualiFlow</h1>
+        <p>
+          Centralisez vos processus, documents, non-conformités et indicateurs dans une solution moderne,
+          collaborative et traçable.
+        </p>
+        <div class="hero-actions">
+          <button class="btn btn-primary" routerLink="/register">Créer un compte</button>
+          <button class="btn btn-outline" routerLink="/login">Accéder au portail</button>
+        </div>
+      </div>
+
+      <div class="preview-card">
+        <img src="assets/dashboard-preview.png" alt="Aperçu dashboard QualiFlow">
+      </div>
+    </div>
+  </section>
+
+  <section id="about" class="section section-soft">
+    <div class="container">
+      <div class="section-head">
+        <h2>Pourquoi QualiFlow</h2>
+        <p>Un socle unique pour piloter la qualité, réduire les erreurs et accélérer les revues.</p>
+      </div>
+
+      <div class="stats">
+        <article>
+          <strong>100%</strong>
+          <span>Traçabilité</span>
+        </article>
+        <article>
+          <strong>24/7</strong>
+          <span>Disponibilité</span>
+        </article>
+        <article>
+          <strong>0 Papier</strong>
+          <span>GED centralisée</span>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="features" class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>Fonctionnalités clés</h2>
+        <p>Les briques essentielles de votre management qualité numérique.</p>
+      </div>
+
+      <div class="feature-grid">
+        <article class="feature-card" *ngFor="let f of features">
+          <i class="material-icons">{{ f.icon }}</i>
+          <h3>{{ f.title }}</h3>
+          <p>{{ f.description }}</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="modules" class="section section-soft">
+    <div class="container">
+      <div class="section-head">
+        <h2>Modules principaux</h2>
+        <p>Une architecture modulaire pour grandir avec votre organisation.</p>
+      </div>
+
+      <div class="module-grid">
+        <article class="module-card" *ngFor="let m of modules">
+          <div class="module-icon"><i class="material-icons">{{ m.icon }}</i></div>
+          <div>
+            <h3>{{ m.name }}</h3>
+            <p>{{ m.description }}</p>
+            <small>{{ m.benefit }}</small>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="workflow" class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>Mise en place en 4 étapes</h2>
+        <p>Un démarrage simple pour déployer rapidement votre gouvernance qualité.</p>
+      </div>
+
+      <div class="step-grid">
+        <article class="step" *ngFor="let s of steps; let i = index">
+          <span class="step-index">{{ i + 1 }}</span>
+          <h3>{{ s.title }}</h3>
+          <p>{{ s.desc }}</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact" class="section cta">
+    <div class="container cta-inner">
+      <div>
+        <h2>Prêt à transformer votre gestion qualité ?</h2>
+        <p>Créez votre espace QualiFlow et centralisez vos opérations dans une plateforme unique.</p>
+      </div>
+      <div class="cta-actions">
+        <button class="btn btn-primary" routerLink="/register">Démarrer maintenant</button>
+        <button class="btn btn-outline light" routerLink="/login">Se connecter</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container footer-inner">
+    <p>© {{ getYear() }} QualiFlow. Tous droits réservés.</p>
+    <div class="footer-links">
+      <a (click)="scrollToSection('home')">Accueil</a>
+      <a (click)="scrollToSection('features')">Fonctionnalités</a>
+      <a (click)="scrollToSection('contact')">Contact</a>
+    </div>
+  </div>
+</footer>

@@ -1,0 +1,233 @@
+<section class="process-catalog-page">
+  <!-- MODERN HEADER -->
+  <div class="glass-header shadow-sm">
+    <div class="header-main">
+      <div class="title-section">
+        <h1><span class="highlight">{{ 'list.processes.title' | t }}</span></h1>
+        <p class="subtitle">
+          <button type="button" class="link-button" (click)="openMap()">{{ 'list.processes.mapping' | t }}</button>
+          <span class="subtitle-sep">—</span>
+          <span>{{ activeCount }} {{ 'list.processes.activeCount' | t }}</span>
+        </p>
+      </div>
+      <div class="header-actions">
+        <div class="view-mode-toggle">
+          <button class="toggle-btn" [class.active]="viewMode === 'cards'" (click)="viewMode = 'cards'" matTooltip="Vue Cartes">
+            <mat-icon>grid_view</mat-icon>
+          </button>
+          <button class="toggle-btn" [class.active]="viewMode === 'table'" (click)="viewMode = 'table'" matTooltip="Vue Tableau">
+            <mat-icon>view_list</mat-icon>
+          </button>
+        </div>
+
+        <button *ngIf="canWrite" mat-flat-button color="primary" class="btn-create" (click)="createProcess()">
+          <mat-icon>add</mat-icon>
+          {{ 'list.processes.new' | t }}
+        </button>
+      </div>
+    </div>
+
+    <!-- MODERN FILTERS -->
+    <form class="glass-filters" [formGroup]="filtersForm" (ngSubmit)="onSearch()">
+      <div class="filter-grid">
+        <div class="filter-item">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'common.search' | t }}</mat-label>
+            <mat-icon matPrefix>search</mat-icon>
+            <input matInput formControlName="search" [placeholder]="'list.processes.searchPlaceholder' | t" />
+          </mat-form-field>
+        </div>
+
+        <div class="filter-item">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'common.type' | t }}</mat-label>
+            <mat-select formControlName="type">
+              <mat-option value="">{{ 'common.allTypes' | t }}</mat-option>
+              <mat-option *ngFor="let option of typeOptions" [value]="option.value">{{ option.label }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="filter-item">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'common.status' | t }}</mat-label>
+            <mat-select formControlName="status">
+              <mat-option value="">{{ 'common.allStatuses' | t }}</mat-option>
+              <mat-option *ngFor="let option of statusOptions" [value]="option.value">{{ option.label }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="filter-item">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'list.processes.pilot' | t }}</mat-label>
+            <mat-select formControlName="pilotUserId">
+              <mat-option [value]="null">{{ 'list.processes.allPilots' | t }}</mat-option>
+              <mat-option *ngFor="let pilot of pilots" [value]="pilot.id">
+                {{ pilot.firstName }} {{ pilot.lastName }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="filter-buttons">
+          <button mat-flat-button class="btn-apply" type="submit">
+            <mat-icon>filter_list</mat-icon>
+            {{ 'common.filter' | t }}
+          </button>
+          <button mat-stroked-button class="btn-reset" type="button" (click)="clearFilters()">
+            <mat-icon>restart_alt</mat-icon>
+            {{ 'common.reset' | t }}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <mat-card class="catalog-content-card shadow-sm">
+    <div class="loading-box" *ngIf="loading">
+      <mat-spinner diameter="38"></mat-spinner>
+      <span>{{ 'list.processes.loading' | t }}</span>
+    </div>
+
+    <ng-container *ngIf="!loading">
+      <div class="empty-box" *ngIf="items.length === 0">
+        <mat-icon>inbox</mat-icon>
+        <h3>{{ 'list.processes.emptyTitle' | t }}</h3>
+        <p>{{ 'list.processes.emptyText' | t }}</p>
+      </div>
+
+      <!-- CARDS VIEW -->
+      <div class="process-cards-grid" *ngIf="items.length > 0 && viewMode === 'cards'">
+        <div class="process-card glass-card" *ngFor="let item of items; trackBy: trackByProcessId" (click)="viewProcess(item)">
+          <div class="card-header">
+            <div class="code-badge">{{ item.code }}</div>
+            <span class="status-dot" [ngClass]="item.status === 'ACTIF' ? 'active' : 'inactive'"></span>
+          </div>
+          
+          <div class="card-main">
+            <h3>{{ item.name }}</h3>
+            <span class="type-tag">{{ getTypeLabel(item.type) }}</span>
+          </div>
+
+          <div class="card-performance">
+            <div class="perf-label">
+              <span>Performance</span>
+              <span [ngClass]="'text-' + getTone(item)">{{ getScore(item) }}%</span>
+            </div>
+            <div class="perf-bar">
+              <div class="perf-fill" [ngClass]="'bg-' + getTone(item)" [style.width.%]="getScore(item)"></div>
+            </div>
+          </div>
+
+          <div class="card-footer">
+            <div class="pilot-info" *ngIf="item.pilotFullName">
+              <div class="pilot-avatar">{{ item.pilotFullName.charAt(0) }}</div>
+              <span>{{ item.pilotFullName }}</span>
+            </div>
+            <div class="pilot-info" *ngIf="!item.pilotFullName">
+              <mat-icon>person_outline</mat-icon>
+              <span class="empty-text">Non assigné</span>
+            </div>
+            <div class="actions">
+              <button mat-icon-button (click)="$event.stopPropagation(); editProcess(item)" *ngIf="canWrite">
+                <mat-icon>edit</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABLE VIEW -->
+      <div class="table-container" *ngIf="items.length > 0 && viewMode === 'table'">
+        <table mat-table [dataSource]="items" class="process-table" [trackBy]="trackByProcessId">
+          <!-- Code Column -->
+          <ng-container matColumnDef="code">
+            <th mat-header-cell *matHeaderCellDef>{{ 'common.code' | t }}</th>
+            <td mat-cell *matCellDef="let item">
+              <span class="process-code-inline">{{ item.code }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Nom Column -->
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>{{ 'list.processes.title' | t }}</th>
+            <td mat-cell *matCellDef="let item">
+              <div class="name-cell" (click)="viewProcess(item)">
+                <span class="process-name-text">{{ item.name }}</span>
+                <span class="process-type-subtext">{{ getTypeDescription(item.type) }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Pilote Column -->
+          <ng-container matColumnDef="pilot">
+            <th mat-header-cell *matHeaderCellDef>{{ 'list.processes.pilot' | t }}</th>
+            <td mat-cell *matCellDef="let item">
+              <div class="pilot-cell" *ngIf="item.pilotFullName; else noPilot">
+                <div class="pilot-avatar-small">{{ item.pilotFullName.charAt(0) }}</div>
+                <span>{{ item.pilotFullName }}</span>
+              </div>
+              <ng-template #noPilot><span class="empty-text">{{ 'common.toDefine' | t }}</span></ng-template>
+            </td>
+          </ng-container>
+
+          <!-- Performance Column -->
+          <ng-container matColumnDef="performance">
+            <th mat-header-cell *matHeaderCellDef>{{ 'list.processes.performance' | t }}</th>
+            <td mat-cell *matCellDef="let item">
+              <div class="perf-cell">
+                <div class="perf-bar-track">
+                  <div class="perf-bar-fill" [ngClass]="'tone-' + getTone(item)" [style.width.%]="getScore(item)"></div>
+                </div>
+                <span class="perf-value">{{ getScore(item) }}%</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Statut Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>{{ 'common.status' | t }}</th>
+            <td mat-cell *matCellDef="let item">
+              <span class="tag-status" [ngClass]="item.status === 'ACTIF' ? 'conforme' : 'perime'">
+                {{ getStatusLabel(item.status) }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef style="width: 140px;"></th>
+            <td mat-cell *matCellDef="let item">
+              <div class="table-actions">
+                <button mat-icon-button class="action-btn view-btn" matTooltip="Voir"
+                  (click)="$event.stopPropagation(); viewProcess(item)">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+                <button *ngIf="canWrite" mat-icon-button class="action-btn edit-btn" matTooltip="Modifier"
+                  (click)="$event.stopPropagation(); editProcess(item)">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button *ngIf="canWrite" mat-icon-button class="action-btn status-btn"
+                  [matTooltip]="item.status === 'ACTIF' ? 'Désactiver' : 'Activer'"
+                  (click)="$event.stopPropagation(); toggleStatus(item)">
+                  <mat-icon>{{ item.status === 'ACTIF' ? 'toggle_on' : 'toggle_off' }}</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="['code', 'name', 'pilot', 'performance', 'status', 'actions']"></tr>
+          <tr mat-row *matRowDef="let row; columns: ['code', 'name', 'pilot', 'performance', 'status', 'actions']"
+            class="clickable-row" (click)="viewProcess(row)"></tr>
+        </table>
+
+        <mat-paginator [length]="total" [pageSize]="pageSize" [pageIndex]="pageNumber - 1"
+          [pageSizeOptions]="[5, 10, 20, 50]" showFirstLastButtons (page)="onPageChanged($event)">
+        </mat-paginator>
+      </div>
+
+    </ng-container>
+  </mat-card>
+
+</section>

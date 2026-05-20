@@ -1,0 +1,120 @@
+/* SIDEBAR */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: 100%;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 0;
+
+  /* Custom Scrollbar for modern look */
+  &::-webkit-scrollbar {
+    width: 5px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 10px;
+  }
+}
+
+.nav-section {
+  padding: 16px 0 4px;
+}
+
+.nav-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  padding: 0 16px 6px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-secondary);
+  transition: background 0.1s, color 0.1s;
+  border-left: 3px solid transparent;
+  user-select: none;
+  text-decoration: none;
+  min-width: 0;
+}
+
+.nav-item:hover {
+  background: var(--xl-green-hover);
+  color: var(--xl-green);
+}
+
+.nav-item.active {
+  background: var(--xl-green-xlight);
+  border-left-color: var(--xl-green-mid);
+  color: var(--xl-green);
+  font-weight: 600;
+}
+
+.nav-item svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.nav-badge {
+  margin-left: auto;
+  background: var(--s-red);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 14px 16px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* ======================== RESPONSIVE ======================== */
+
+/* Mobile / Small Tablet (≤768px) */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    top: var(--topbar-h);
+    left: 0;
+    height: calc(100vh - var(--topbar-h));
+    height: calc(100dvh - var(--topbar-h));
+    width: min(82vw, 280px);
+    z-index: 200;
+    transform: translateX(-100%);
+    box-shadow: none;
+    overflow-y: auto;
+
+    &.open {
+      transform: translateX(0);
+      box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+    }
+  }
+
+  .nav-item {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+
+  .nav-section-title {
+    padding: 0 14px 6px;
+  }
+}

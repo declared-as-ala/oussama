@@ -1,0 +1,160 @@
+﻿<section class="process-form-page">
+  <!-- PAGE HEADER BAR -->
+  <div class="page-header-bar">
+    <div class="page-header-left">
+      <div class="page-subtitle">
+        <button type="button" class="btn-back" (click)="goBack()">
+          <mat-icon>arrow_back</mat-icon> Retour
+        </button>
+      </div>
+      <h1 class="page-title">{{ isEdit ? ('form.process.editTitle' | t) : ('form.process.newTitle' | t) }}</h1>
+    </div>
+
+    <div class="page-header-right">
+      <button mat-stroked-button type="button" class="cancel-btn" (click)="goBack()" [disabled]="saving">
+        {{ 'common.cancel' | t }}
+      </button>
+      <button mat-flat-button color="primary" class="new-process-btn" (click)="submit()"
+        [disabled]="saving || processForm.invalid">
+        <mat-spinner *ngIf="saving" diameter="18" style="margin-right: 8px;"></mat-spinner>
+        {{ isEdit ? ('common.save' | t) : ('form.process.create' | t) }}
+      </button>
+    </div>
+  </div>
+
+  <!-- COMPLETION PROGRESS BAR -->
+  <div class="form-progress-bar">
+    <div class="progress-info">
+      <span>{{ 'common.formCompletion' | t }}</span>
+      <strong>{{ completionPercent }}%</strong>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" [style.width.%]="completionPercent"></div>
+    </div>
+  </div>
+
+  <div class="loading-box" *ngIf="loading">
+    <mat-spinner diameter="38"></mat-spinner>
+    <span>{{ 'common.loadingForm' | t }}</span>
+  </div>
+
+  <form *ngIf="!loading" [formGroup]="processForm" (ngSubmit)="submit()" class="form-body">
+    <div class="form-container">
+
+      <!-- SECTION 1: INFOS -->
+      <div class="form-section-clean">
+        <div class="section-header">
+          <mat-icon>info_outline</mat-icon>
+          <div>
+            <h2>{{ 'form.process.generalInfo' | t }}</h2>
+            <p>{{ 'form.process.generalInfoDesc' | t }}</p>
+          </div>
+        </div>
+
+        <div class="section-content grid-two">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'common.code' | t }}</mat-label>
+            <input matInput formControlName="code" placeholder="PIL-001" />
+            <mat-error *ngIf="isInvalid('code')">{{ 'form.process.codeError' | t }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'form.process.name' | t }}</mat-label>
+            <input matInput formControlName="name" [placeholder]="'form.process.namePlaceholder' | t" />
+            <mat-error *ngIf="isInvalid('name')">{{ 'form.process.nameError' | t }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'common.type' | t }}</mat-label>
+            <mat-select formControlName="type">
+              <mat-option *ngFor="let option of typeOptions" [value]="option.value">{{ option.label }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'common.status' | t }}</mat-label>
+            <mat-select formControlName="status">
+              <mat-option *ngFor="let option of statusOptions" [value]="option.value">{{ option.label }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'form.process.pilotOwner' | t }}</mat-label>
+            <mat-select formControlName="pilotUserId">
+              <mat-option [value]="null">{{ 'common.toDefine' | t }}</mat-option>
+              <mat-option *ngFor="let pilot of pilots" [value]="pilot.id">
+                {{ pilot.firstName }} {{ pilot.lastName }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'form.process.descriptionScope' | t }}</mat-label>
+            <textarea matInput rows="2" formControlName="description"></textarea>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- SECTION 2: CARTOGRAPHIE -->
+      <div class="form-section-clean">
+        <div class="section-header">
+          <mat-icon>lan</mat-icon>
+          <div>
+            <h2>{{ 'form.process.mappingInterfaces' | t }}</h2>
+            <p>{{ 'form.process.mappingInterfacesDesc' | t }}</p>
+          </div>
+        </div>
+
+        <div class="section-content chip-grid">
+          <div class="chip-input-group" *ngFor="let field of interfaceFields">
+            <div class="field-meta">
+              <label>{{ getMeta(field).label }}</label>
+              <span class="count-badge">{{ getListValues(field).length }}</span>
+            </div>
+            <mat-form-field appearance="outline" class="chip-form-field minimal">
+              <mat-chip-grid #chipGrid [formControlName]="field">
+                <mat-chip-row *ngFor="let item of getListValues(field)" (removed)="removeChip(field, item)">
+                  {{ item }}
+                  <button matChipRemove type="button"><mat-icon>close</mat-icon></button>
+                </mat-chip-row>
+                <input [matChipInputFor]="chipGrid" [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                  (matChipInputTokenEnd)="addChip(field, $event)" />
+              </mat-chip-grid>
+            </mat-form-field>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 3: PERFORMANCE -->
+      <div class="form-section-clean">
+        <div class="section-header">
+          <mat-icon>insights</mat-icon>
+          <div>
+            <h2>{{ 'form.process.pilotPerformance' | t }}</h2>
+            <p>{{ 'form.process.pilotPerformanceDesc' | t }}</p>
+          </div>
+        </div>
+
+        <div class="section-content chip-grid">
+          <div class="chip-input-group" *ngFor="let field of performanceFields">
+            <div class="field-meta">
+              <label>{{ getMeta(field).label }}</label>
+              <span class="count-badge">{{ getListValues(field).length }}</span>
+            </div>
+            <mat-form-field appearance="outline" class="chip-form-field minimal">
+              <mat-chip-grid #chipGrid [formControlName]="field">
+                <mat-chip-row *ngFor="let item of getListValues(field)" (removed)="removeChip(field, item)">
+                  {{ item }}
+                  <button matChipRemove type="button"><mat-icon>close</mat-icon></button>
+                </mat-chip-row>
+                <input [matChipInputFor]="chipGrid" [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                  (matChipInputTokenEnd)="addChip(field, $event)" />
+              </mat-chip-grid>
+            </mat-form-field>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </form>
+</section>

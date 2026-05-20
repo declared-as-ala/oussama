@@ -1,0 +1,202 @@
+<section class="document-versions-page">
+  <!-- Premium Header -->
+  <mat-card class="header-card" *ngIf="details as model">
+    <mat-card-content>
+      <div class="header-top">
+        <div>
+          <h1>Versions du document</h1>
+          <p>{{ model.document.code }} · {{ model.document.title }}</p>
+        </div>
+
+        <div class="header-actions">
+          <button mat-stroked-button type="button" (click)="backToDocument()">
+            <mat-icon>arrow_back</mat-icon>
+            Retour au détail
+          </button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Loading State -->
+  <mat-card *ngIf="loading" class="loading-card">
+    <mat-card-content>
+      <mat-spinner diameter="40"></mat-spinner>
+      <span>Chargement des versions...</span>
+    </mat-card-content>
+  </mat-card>
+
+  <ng-container *ngIf="!loading && details as model">
+    <!-- Creation Form Card -->
+    <mat-card class="create-card" *ngIf="canWrite">
+      <h2><mat-icon>history_edu</mat-icon> Nouvelle version</h2>
+
+      <form [formGroup]="createVersionForm" (ngSubmit)="submitVersion()">
+        <div class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Numéro de version</mat-label>
+            <input matInput formControlName="versionNumber" placeholder="ex: v1.1" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Statut</mat-label>
+            <mat-select formControlName="status">
+              <mat-option *ngFor="let status of statusOptions" [value]="status.value">
+                {{ status.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Date d'effet</mat-label>
+            <input matInput type="date" formControlName="effectiveDate" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Date d'expiration</mat-label>
+            <input matInput type="date" formControlName="expiryDate" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Commentaire de révision</mat-label>
+            <textarea matInput rows="2" formControlName="revisionComment"
+              placeholder="Décrivez les modifications..."></textarea>
+          </mat-form-field>
+
+          <!-- Styled Dropzone -->
+          <div class="full-width">
+            <div class="dropzone" (click)="fileInput.click()" (dragover)="onDragOver($event)"
+              (dragleave)="onDragLeave($event)" (drop)="onDrop($event)" [class.dragover]="isDragging">
+
+              <mat-icon>cloud_upload</mat-icon>
+              <div class="dropzone-text">
+                <p>Cliquez ou glissez un fichier ici</p>
+                <span>Fichier (optionnel)</span>
+              </div>
+              <input #fileInput type="file" style="display: none;" (change)="onFileSelected($event)" />
+            </div>
+
+            <div class="file-chip" *ngIf="selectedFile">
+              <div class="file-info">
+                <mat-icon>description</mat-icon>
+                <span>{{ selectedFile.name }} ({{ selectedFile.size / 1024 | number: '1.0-0' }} Ko)</span>
+              </div>
+              <button mat-icon-button type="button" color="warn" (click)="clearSelectedFile()">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          <!-- Signature Pad Section -->
+          <div class="full-width signature-section">
+            <label><mat-icon>border_color</mat-icon> Signature d'approbation (Optionnelle)</label>
+            <div class="signature-container">
+              <canvas #signatureCanvas width="600" height="150" (mousedown)="startDrawing($event)"
+                (mousemove)="draw($event)" (mouseup)="stopDrawing()" (mouseleave)="stopDrawing()"
+                (touchstart)="startDrawing($event)" (touchmove)="draw($event)" (touchend)="stopDrawing()">
+              </canvas>
+              <div class="signature-actions">
+                <button mat-icon-button type="button" (click)="clearSignature()" title="Effacer">
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="create-actions">
+          <button mat-flat-button color="primary" type="submit" [disabled]="submitting">
+            <mat-icon *ngIf="!submitting">check_circle</mat-icon>
+            <mat-spinner *ngIf="submitting" diameter="18"></mat-spinner>
+            Ajouter la version
+          </button>
+        </div>
+      </form>
+    </mat-card>
+
+    <!-- Versions History Table -->
+    <mat-card class="table-card">
+      <h2><mat-icon>history</mat-icon> Historique des versions</h2>
+
+      <div class="empty-box" *ngIf="model.versions.length === 0">
+        <mat-icon>history_toggle_off</mat-icon>
+        <p>Aucune version disponible pour ce document.</p>
+      </div>
+
+      <div class="table-wrapper" *ngIf="model.versions.length > 0">
+        <table mat-table [dataSource]="model.versions" class="versions-table">
+          <ng-container matColumnDef="version">
+            <th mat-header-cell *matHeaderCellDef>Version</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="version-cell">
+                {{ row.versionNumber }}
+                <small *ngIf="row.isCurrent">Active</small>
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Statut</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="status-badge" [ngClass]="'status-' + row.status.toLowerCase()">
+                {{ getStatusLabel(row.status) }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="file">
+            <th mat-header-cell *matHeaderCellDef>Fichier</th>
+            <td mat-cell *matCellDef="let row">
+              <div *ngIf="row.originalFileName" style="display: flex; align-items: center; gap: 6px;">
+                <mat-icon style="font-size: 18px; width: 18px; height: 18px; color: #64748b;">attachment</mat-icon>
+                {{ row.originalFileName }}
+              </div>
+              <span *ngIf="!row.originalFileName" style="color: #cbd5e1;">-</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="effectiveDate">
+            <th mat-header-cell *matHeaderCellDef>Date d'effet</th>
+            <td mat-cell *matCellDef="let row">
+              {{ (row.effectiveDate || row.createdAt) | date: 'dd/MM/yyyy' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="author">
+            <th mat-header-cell *matHeaderCellDef>Établi par</th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.establishedByUser || ('Utilisateur #' + row.establishedByUserId) }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="comment">
+            <th mat-header-cell *matHeaderCellDef>Commentaire</th>
+            <td mat-cell *matCellDef="let row">
+              <div class="comment-cell">
+                {{ row.revisionComment || '-' }}
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let row">
+              <div class="actions">
+                <button mat-icon-button type="button" (click)="downloadVersion(row)" title="Télécharger">
+                  <mat-icon>download</mat-icon>
+                </button>
+                <button *ngIf="canWrite" mat-icon-button color="primary" type="button" title="Mettre à jour statut"
+                  (click)="updateVersionStatus(row)">
+                  <mat-icon>edit_note</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+      </div>
+    </mat-card>
+  </ng-container>
+</section>

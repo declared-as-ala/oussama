@@ -1,0 +1,81 @@
+<section class="hero" id="accueil">
+  <div class="hero-content">
+    <div class="badge-new animate__animated animate__fadeInDown">
+      <span class="pulse"></span>
+      Nouveauté : Conformité ISO 21001 & 9001
+    </div>
+    <h1 class="animate__animated animate__fadeInLeft">
+      Le futur du <span>Management Qualité</span> est ici.
+    </h1>
+    <p class="subtitle animate__animated animate__fadeInLeft animate__delay-1s">
+      QualiFlow transforme votre gestion documentaire en un écosystème intelligent. Centralisez, automatisez et pilotez
+      votre conformité avec une précision inégalée.
+    </p>
+
+    <div class="hero-actions animate__animated animate__fadeInUp animate__delay-1s">
+      <a class="btn btn-primary-modern" routerLink="/register">
+        <span>Découvrir la plateforme</span>
+        <mat-icon>arrow_forward</mat-icon>
+      </a>
+      <a class="btn btn-outline-modern" href="#services">
+        <mat-icon>play_circle</mat-icon>
+        Voir la démo
+      </a>
+    </div>
+
+    <div class="hero-trust">
+      <p>Propulsé par une IA au service de la qualité</p>
+      <div class="trust-icons">
+        <mat-icon [matTooltip]="'Sécurité des données'">verified_user</mat-icon>
+        <mat-icon [matTooltip]="'Conformité Normative'">fact_check</mat-icon>
+        <mat-icon [matTooltip]="'Analytique Avancée'">insights</mat-icon>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-visual">
+    <div class="glass-platform">
+      <div class="browser-header">
+        <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+        <div class="url-bar">qualiflow.app/dashboard</div>
+      </div>
+      <img src="assets/dashboard-preview.png" alt="Aperçu QualiFlow" class="dashboard-mockup" />
+
+      <!-- Cartes flottantes interactives -->
+      <div class="floating-data-card card-1 animate-float">
+        <div class="icon-box"><mat-icon>description</mat-icon></div>
+        <div class="text">
+          <span class="label">Documents Approuvés</span>
+          <span class="value">98.4%</span>
+        </div>
+      </div>
+
+      <div class="floating-data-card card-2 animate-float-delayed">
+        <div class="icon-box warning"><mat-icon>warning</mat-icon></div>
+        <div class="text">
+          <span class="label">NC Résolues</span>
+          <span class="value">124</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-bg-glow"></div>
+  </div>
+</section>
+
+<!-- SECTION FONCTIONNALITÉS -->
+<section class="features-grid-section" id="services">
+  <div class="section-header">
+    <span class="eyebrow">Modules intégrés</span>
+    <h2>Une approche à 360° de la Qualité</h2>
+  </div>
+
+  <div class="features-container">
+    <div class="feature-card" *ngFor="let feature of features">
+      <div class="feature-icon" [style.background]="feature.color">
+        <mat-icon>{{ feature.icon }}</mat-icon>
+      </div>
+      <h3>{{ feature.title }}</h3>
+      <p>{{ feature.description }}</p>
+    </div>
+  </div>
+</section>

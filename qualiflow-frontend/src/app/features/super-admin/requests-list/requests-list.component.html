@@ -1,0 +1,117 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-title-section">
+      <h1 class="page-title">Demandes d'organisation</h1>
+      <p class="page-subtitle">Gérez les demandes d'achat et d'inscription d'organisation soumises sur la plateforme.</p>
+    </div>
+    <div class="header-actions">
+      <button mat-flat-button color="primary" routerLink="/super-admin/dashboard">
+        <mat-icon>dashboard</mat-icon>
+        Dashboard
+      </button>
+    </div>
+  </div>
+
+  <mat-card class="table-card">
+    <div class="card-loading-overlay" *ngIf="loading">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+
+    <div class="table-container">
+      <table mat-table [dataSource]="requests" class="requests-table">
+        <!-- Full Name Column -->
+        <ng-container matColumnDef="fullName">
+          <th mat-header-cell *matHeaderCellDef>Client</th>
+          <td mat-cell *matCellDef="let element">
+            <div class="client-info">
+              <span class="client-name">{{ element.fullName }}</span>
+              <span class="client-title">{{ element.jobTitle }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Organization Name Column -->
+        <ng-container matColumnDef="organizationName">
+          <th mat-header-cell *matHeaderCellDef>Organisation</th>
+          <td mat-cell *matCellDef="let element">
+            <div class="org-info">
+              <span class="org-name">{{ element.organizationName }}</span>
+              <span class="org-country" *ngIf="element.country && element.country !== 'N/A'">
+                <mat-icon class="country-icon">place</mat-icon>
+                {{ element.country }}
+              </span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Organization Type Column -->
+        <ng-container matColumnDef="organizationType">
+          <th mat-header-cell *matHeaderCellDef>Type</th>
+          <td mat-cell *matCellDef="let element">
+            <mat-chip-row [class.chip-univ]="element.organizationType === 'UNIVERSITE' || element.organizationType === 'Université'"
+                          [class.chip-inst]="element.organizationType === 'INSTITUT' || element.organizationType === 'Institut'">
+              {{ element.organizationType }}
+            </mat-chip-row>
+          </td>
+        </ng-container>
+
+        <!-- Email Column -->
+        <ng-container matColumnDef="email">
+          <th mat-header-cell *matHeaderCellDef>Email</th>
+          <td mat-cell *matCellDef="let element">
+            <a href="mailto:{{ element.email }}" class="contact-link">
+              <mat-icon>email</mat-icon>
+              {{ element.email }}
+            </a>
+          </td>
+        </ng-container>
+
+        <!-- Phone Column -->
+        <ng-container matColumnDef="phone">
+          <th mat-header-cell *matHeaderCellDef>Téléphone</th>
+          <td mat-cell *matCellDef="let element">
+            <span class="phone-number" *ngIf="element.phone && element.phone !== 'N/A'">
+              <mat-icon>phone</mat-icon>
+              {{ element.phone }}
+            </span>
+            <span class="no-phone" *ngIf="!element.phone || element.phone === 'N/A'">—</span>
+          </td>
+        </ng-container>
+
+        <!-- Created At Column -->
+        <ng-container matColumnDef="createdAt">
+          <th mat-header-cell *matHeaderCellDef>Date de demande</th>
+          <td mat-cell *matCellDef="let element">
+            {{ element.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-header">Actions</th>
+          <td mat-cell *matCellDef="let element" class="actions-cell">
+            <button mat-icon-button color="accent" matTooltip="Voir les détails de la demande" (click)="viewDetails(element)">
+              <mat-icon>visibility</mat-icon>
+            </button>
+            <button mat-icon-button color="primary" matTooltip="Approuver & Créer l'organisation" (click)="approveRequest(element); $event.stopPropagation()">
+              <mat-icon>check_circle</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" matTooltip="Rejeter / Supprimer la demande" (click)="rejectRequest(element); $event.stopPropagation()">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" (click)="viewDetails(row)" style="cursor: pointer;"></tr>
+      </table>
+
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="requests.length === 0 && !loading">
+        <mat-icon class="empty-icon">mail_outline</mat-icon>
+        <h3>Aucune demande d'organisation</h3>
+        <p>Il n'y a actuellement aucune demande de création d'organisation en attente de traitement.</p>
+      </div>
+    </div>
+  </mat-card>
+</div>

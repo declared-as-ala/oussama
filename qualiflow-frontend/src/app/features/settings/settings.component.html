@@ -1,0 +1,181 @@
+﻿<section class="settings-page">
+  <!-- SETTINGS HEADER BANNER -->
+  <div class="dashboard-header-card">
+    <div class="header-content">
+      <div class="title-section">
+        <h1>{{ 'settings.title' | t }}</h1>
+        <p>{{ 'settings.subtitle' | t }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-content">
+    <div class="settings-grid">
+      <mat-card class="panel-card settings-section-card full-width">
+        <div class="section-title">
+          <mat-icon>tune</mat-icon>
+          <div>
+            <h2>Général</h2>
+            <p>Paramètres principaux de l'interface.</p>
+          </div>
+        </div>
+
+        <div class="setting-list grouped-list">
+          <div class="setting-item grouped-item">
+            <div class="item-heading">
+              <mat-icon>palette</mat-icon>
+              <div class="item-info">
+                <strong>{{ 'settings.appearance' | t }}</strong>
+                <p>{{ 'settings.darkModeDesc' | t }}</p>
+              </div>
+            </div>
+            <div class="item-control">
+              <span>{{ 'settings.darkMode' | t }}</span>
+              <mat-slide-toggle [checked]="isDarkMode$ | async" (change)="toggleTheme()" color="primary">
+              </mat-slide-toggle>
+            </div>
+          </div>
+
+          <div class="setting-item grouped-item">
+            <div class="item-heading">
+              <mat-icon>translate</mat-icon>
+              <div class="item-info">
+                <strong>{{ 'settings.language' | t }}</strong>
+                <p>{{ 'settings.preferredLanguageDesc' | t }}</p>
+              </div>
+            </div>
+            <mat-form-field appearance="outline" class="language-field">
+              <mat-label>{{ 'settings.selectLanguage' | t }}</mat-label>
+              <mat-select [value]="selectedLanguage" [disabled]="isSavingLanguage"
+                (selectionChange)="onLanguageChange($event.value)">
+                <mat-option *ngFor="let lang of languages" [value]="lang.value">
+                  <span class="flag-icon">{{ lang.flag }}</span> {{ lang.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </div>
+      </mat-card>
+
+      <mat-card class="panel-card settings-section-card full-width">
+        <div class="section-title">
+          <mat-icon>notifications_active</mat-icon>
+          <div>
+            <h2>Notifications</h2>
+            <p>Paramètres des alertes dans l'application et par email.</p>
+          </div>
+        </div>
+
+        <div class="setting-list" *ngIf="!notificationPreferencesLoading; else notificationPrefsLoadingTpl">
+          <div class="notification-pref-head">
+            <span>Type de notification</span>
+            <span>Dans l'application</span>
+            <span>Email</span>
+          </div>
+
+          <div class="notification-pref-row" *ngFor="let option of notificationPreferenceOptions">
+            <div class="item-info">
+              <strong>{{ option.label }}</strong>
+              <p>{{ option.description }}</p>
+            </div>
+
+            <mat-slide-toggle [formControl]="notificationPreferencesForm.controls[option.type + '_inApp']" color="primary">
+            </mat-slide-toggle>
+
+            <mat-slide-toggle [formControl]="notificationPreferencesForm.controls[option.type + '_email']" color="primary">
+            </mat-slide-toggle>
+          </div>
+
+          <div class="notification-pref-actions">
+            <button mat-flat-button color="primary" type="button" (click)="saveNotificationPreferences()"
+              [disabled]="notificationPreferencesSaving">
+              <mat-icon>save</mat-icon>
+              {{ notificationPreferencesSaving ? 'Enregistrement...' : 'Enregistrer les notifications' }}
+            </button>
+          </div>
+        </div>
+      </mat-card>
+
+      <!-- ABOUT THE PLATFORM -->
+      <mat-card class="panel-card about-panel full-width">
+        <h2><mat-icon>info</mat-icon> {{ 'settings.about' | t }}</h2>
+        <div class="about-container">
+          <div class="about-branding">
+            <div class="logo-circle">QF</div>
+            <div class="branding-info">
+              <h3>QualiFlow QMS</h3>
+              <span class="version-tag">Version 2.2.0-stable</span>
+            </div>
+          </div>
+
+          <div class="about-text">
+            <p>{{ 'settings.aboutText' | t }}</p>
+          </div>
+
+          <div class="about-actions">
+            <button mat-stroked-button color="primary">
+              <mat-icon>description</mat-icon> {{ 'settings.documentation' | t }}
+            </button>
+            <button mat-stroked-button color="primary" (click)="toggleSupportPanel()">
+              <mat-icon>support_agent</mat-icon> {{ 'settings.support' | t }}
+            </button>
+          </div>
+
+          <div class="support-panel" *ngIf="isSupportPanelOpen">
+            <div class="support-contact-card">
+              <h3>Contacter l'assistant technique</h3>
+              <p class="support-description">
+                Vous pouvez déclarer un problème. Le ticket sera envoyé au super administrateur (notification + email).
+              </p>
+              <div class="assistant-info" *ngIf="supportContact as contact">
+                <div><strong>Assistant:</strong> {{ contact.assistantName }}</div>
+                <div><strong>Email:</strong> {{ contact.assistantEmail }}</div>
+                <div><strong>Téléphone:</strong> {{ contact.assistantPhone }}</div>
+              </div>
+            </div>
+
+            <form class="support-form" [formGroup]="supportForm" (ngSubmit)="submitSupportTicket()">
+              <div class="support-form-grid">
+                <mat-form-field appearance="outline">
+                  <mat-label>Email</mat-label>
+                  <input matInput formControlName="email" type="email" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Nom de l'organisation</mat-label>
+                  <input matInput formControlName="organizationName" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Type de problème</mat-label>
+                  <mat-select formControlName="problemType">
+                    <mat-option *ngFor="let type of supportProblemTypes" [value]="type">{{ type }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              <mat-form-field appearance="outline" class="support-description-field">
+                <mat-label>Description du problème</mat-label>
+                <textarea matInput formControlName="description" rows="6"></textarea>
+              </mat-form-field>
+
+              <div class="support-actions">
+                <button mat-flat-button color="primary" type="submit" [disabled]="supportForm.invalid || isSendingSupport">
+                  <mat-icon>send</mat-icon>
+                  {{ isSendingSupport ? 'Envoi...' : 'Envoyer au super admin' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </mat-card>
+    </div>
+  </div>
+
+  <ng-template #notificationPrefsLoadingTpl>
+    <div class="loading-notification-prefs">
+      <mat-icon>notifications</mat-icon>
+      <span>Chargement des préférences de notification...</span>
+    </div>
+  </ng-template>
+</section>

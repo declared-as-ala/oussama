@@ -1,0 +1,395 @@
+.document-form-page {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-body);
+  min-height: 100vh;
+}
+
+/* ── PAGE HEADER BAR ── */
+.page-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-white);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+}
+
+.page-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.page-subtitle {}
+
+.form-status-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ── MODERN FORM ── */
+.modern-form-container {
+  padding: 24px 24px 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.form-section-clean {
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  padding: 0 !important;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+
+  .section-header {
+    background: #f8f9fa;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    mat-icon {
+      color: var(--xl-green-mid);
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    p {
+      margin: 2px 0 0;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+  }
+
+  .section-content {
+    padding: 24px;
+  }
+
+  .grid-2-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 24px;
+  }
+
+  .full-width {
+    grid-column: 1 / -1;
+  }
+}
+
+.toggle-control {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding-top: 10px;
+}
+
+/* ── UPLOAD ZONE ── */
+.upload-zone {
+  margin-top: 10px;
+}
+
+.file-input-hidden {
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  z-index: -1;
+}
+
+.upload-label {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border: 2px dashed #e0e6ed;
+  border-radius: 8px;
+  background: #fcfdfe;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+
+  mat-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    color: #94a3b8;
+    transition: color 0.2s;
+  }
+
+  .file-icon {
+    color: var(--xl-green-mid);
+  }
+
+  .label-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    .main-text {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .sub-text {
+      font-size: 0.78rem;
+      color: #94a3b8;
+    }
+  }
+
+  &:hover {
+    background: #f8fafc;
+    border-color: var(--xl-green-mid);
+
+    mat-icon {
+      color: var(--xl-green-mid);
+    }
+  }
+
+  &.has-file {
+    border-style: solid;
+    border-color: var(--xl-green-mid);
+    background: #f0fdf4;
+  }
+
+  .clear-file {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    color: var(--s-red);
+  }
+}
+
+/* ── ACTIONS BAR ── */
+.form-actions-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
+  z-index: 100;
+
+  .spacer {
+    flex: 1;
+  }
+
+  .submit-btn {
+    background: var(--xl-green-mid) !important;
+    color: white !important;
+    font-weight: 600;
+    padding: 0 24px;
+    height: 44px;
+    border-radius: 4px !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
+.loading-overlay {
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #888;
+}
+
+@media (max-width: 768px) {
+  .page-header-bar {
+    padding: 10px 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .modern-form-container {
+    padding: 12px 12px 120px;
+    gap: 14px;
+  }
+
+  .form-section-clean .section-content {
+    padding: 14px;
+  }
+
+  .form-section-clean .section-header {
+    padding: 12px 14px;
+  }
+
+  .grid-2-cols {
+    grid-template-columns: 1fr !important;
+  }
+
+  .form-actions-bar {
+    padding: 10px 12px;
+  }
+
+  .submit-btn {
+    padding: 0 14px !important;
+  }
+
+  .signature-pad-wrapper {
+    height: 170px;
+  }
+
+  .signature-actions {
+    flex-wrap: wrap;
+  }
+}
+
+/* ── SIGNATURE PAD ── */
+.signature-pad-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 500px;
+}
+
+.signature-pad-wrapper {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+
+  &:hover {
+    border-color: var(--xl-green-mid);
+  }
+
+  .signature-pad {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: crosshair;
+    touch-action: none;
+  }
+
+  .signature-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    color: #94a3b8;
+    gap: 8px;
+
+    mat-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+      opacity: 0.5;
+    }
+
+    span {
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+  }
+
+  .signature-overlay {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: rgba(0, 135, 90, 0.1);
+    /* xl-green-mid approximation */
+    color: #00875a;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    pointer-events: none;
+  }
+
+  .signature-result-preview {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: white;
+    padding: 10px;
+  }
+}
+
+.signature-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  button {
+    height: 36px;
+    line-height: 36px;
+    font-size: 0.85rem;
+    font-weight: 600;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  .signature-saved-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #00875a;
+    font-size: 0.85rem;
+    font-weight: 600;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+}
+
+.signature-hint {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin: 0;
+  font-style: italic;
+}

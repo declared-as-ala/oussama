@@ -1,0 +1,54 @@
+<button mat-icon-button [matMenuTriggerFor]="notificationMenu" xPosition="before" matBadgeColor="warn"
+  [matBadgeHidden]="unreadCount === 0" [matBadge]="unreadCount > 99 ? '99+' : unreadCount" matBadgeSize="small"
+  class="notif-button" (menuOpened)="onMenuOpened()" aria-label="Notifications">
+  <mat-icon>notifications</mat-icon>
+</button>
+
+<mat-menu #notificationMenu="matMenu" class="notification-menu-panel">
+  <div class="notif-container" (click)="$event.stopPropagation()">
+    <div class="notif-header">
+      <div class="title-group">
+        <h2>Notifications</h2>
+        <span class="count-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
+      </div>
+      <button mat-button class="mark-all-btn" (click)="markAllAsRead($event)">
+        Tout marquer comme lu
+      </button>
+    </div>
+
+    <div class="notif-content custom-scrollbar">
+      <div *ngIf="loading" class="notif-loading">
+        <mat-spinner diameter="28"></mat-spinner>
+      </div>
+
+      <div *ngIf="!loading && recentNotifications.length === 0" class="notif-empty">
+        <mat-icon>notifications_none</mat-icon>
+        <p>Aucune notification</p>
+      </div>
+
+      <div *ngFor="let item of recentNotifications; trackBy: trackById" class="notif-item" [class.unread]="!item.isRead"
+        (click)="openNotification(item)">
+
+        <div class="notif-icon" [ngClass]="getCategoryClass(item)">
+          <mat-icon>{{ getIcon(item) }}</mat-icon>
+        </div>
+
+        <div class="notif-body">
+          <div class="notif-top">
+            <span class="notif-title">{{ item.title }}</span>
+            <span class="notif-time">{{ getTimeAgo(item.createdAt) }}</span>
+          </div>
+          <p class="notif-msg">{{ item.message }}</p>
+
+          <div class="notif-unread-dot" *ngIf="!item.isRead"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notif-footer">
+      <button mat-button class="view-all-btn" (click)="openCenter()">
+        Voir tout l'historique
+      </button>
+    </div>
+  </div>
+</mat-menu>

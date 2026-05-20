@@ -1,0 +1,115 @@
+<section class="users-form-page">
+  <!-- PAGE HEADER BAR -->
+  <div class="page-header-bar">
+    <div class="page-header-left">
+      <div class="page-subtitle">
+        <button type="button" class="btn-back" (click)="goBack()">
+          <mat-icon>arrow_back</mat-icon> Retour
+        </button>
+      </div>
+      <h1 class="page-title">{{ isEditMode ? 'Modifier' : 'Ajouter' }} un utilisateur</h1>
+    </div>
+
+    <div class="page-header-right">
+      <button mat-stroked-button type="button" class="cancel-btn" (click)="goBack()" [disabled]="isLoading">
+        Annuler
+      </button>
+      <button mat-flat-button color="primary" class="submit-btn" (click)="onSubmit()"
+        [disabled]="isLoading || userForm.invalid">
+        <mat-spinner *ngIf="isLoading" diameter="18" style="margin-right: 8px; display: inline-block;"></mat-spinner>
+        <mat-icon *ngIf="!isLoading">{{ isEditMode ? 'save' : 'person_add' }}</mat-icon>
+        <span>{{ isLoading ? 'Enregistrement...' : (isEditMode ? 'Enregistrer' : 'Créer l\'utilisateur') }}</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="form-body">
+    <form [formGroup]="userForm" (ngSubmit)="onSubmit()" class="form-container">
+
+      <!-- SECTION 1: Informations Personnelles -->
+      <div class="form-section-clean">
+        <div class="section-header">
+          <mat-icon>person_outline</mat-icon>
+          <div>
+            <h2>Informations personnelles</h2>
+            <p>Saisissez les informations de base de l'utilisateur.</p>
+          </div>
+        </div>
+
+        <div class="section-content grid-two">
+          <mat-form-field appearance="outline">
+            <mat-label>Prénom</mat-label>
+            <input matInput formControlName="firstName" placeholder="Ex: Jean" />
+            <mat-error *ngIf="userForm.get('firstName')?.hasError('required')">Le prénom est requis</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Nom</mat-label>
+            <input matInput formControlName="lastName" placeholder="Ex: Dupont" />
+            <mat-error *ngIf="userForm.get('lastName')?.hasError('required')">Le nom est requis</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Email professionnel</mat-label>
+            <input matInput type="email" formControlName="email" placeholder="jean.dupont@entreprise.com" />
+            <mat-error *ngIf="userForm.get('email')?.hasError('required')">L'email est requis</mat-error>
+            <mat-error *ngIf="userForm.get('email')?.hasError('email')">Format d'email invalide</mat-error>
+          </mat-form-field>
+
+          <mat-form-field *ngIf="!isEditMode" appearance="outline" class="full-width">
+            <mat-label>Mot de passe temporaire</mat-label>
+            <input matInput type="password" formControlName="password" placeholder="Minimum 6 caractères" />
+            <mat-hint>L'utilisateur devra changer ce mot de passe à sa première connexion.</mat-hint>
+            <mat-error *ngIf="userForm.get('password')?.hasError('required')">Le mot de passe est requis</mat-error>
+            <mat-error *ngIf="userForm.get('password')?.hasError('minlength')">Minimum 6 caractères</mat-error>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- SECTION 2: Rôle et Affectation -->
+      <div class="form-section-clean">
+        <div class="section-header">
+          <mat-icon>admin_panel_settings</mat-icon>
+          <div>
+            <h2>Rôle et affectation</h2>
+            <p>Définissez les permissions et le département de l'utilisateur.</p>
+          </div>
+        </div>
+
+        <div class="section-content grid-two">
+          <mat-form-field appearance="outline">
+            <mat-label>Rôle</mat-label>
+            <mat-select formControlName="role">
+              <mat-option *ngFor="let role of roleOptions" [value]="role.value">{{ role.label }}</mat-option>
+            </mat-select>
+            <mat-error *ngIf="userForm.get('role')?.hasError('required')">Le rôle est requis</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Statut</mat-label>
+            <mat-select formControlName="isActive">
+              <mat-option [value]="true">Actif</mat-option>
+              <mat-option [value]="false">Inactif</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Fonction / Poste</mat-label>
+            <input matInput formControlName="function" placeholder="Ex: Responsable Qualité" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Département / Unité</mat-label>
+            <mat-select formControlName="department">
+              <mat-option [value]="''">-- Sélectionner un département --</mat-option>
+              <mat-option *ngFor="let dept of departments" [value]="dept.name">
+                {{ dept.name }} ({{ dept.code }})
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+
+    </form>
+  </div>
+</section>

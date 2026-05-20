@@ -1,0 +1,117 @@
+.section {
+  padding: 4.5rem 4vw 1.2rem;
+}
+
+.section-title h2 {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.7vw, 2rem);
+  color: var(--color-primary-dark);
+}
+
+.section-title p {
+  margin: 0.8rem 0 0;
+  max-width: 70ch;
+  color: var(--color-muted);
+  line-height: 1.7;
+}
+
+.title-icon {
+  vertical-align: middle;
+  color: var(--color-primary);
+  margin-right: 0.3rem;
+}
+
+.cards-grid {
+  margin-top: 1.5rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.iso-content-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 2rem;
+  margin-top: 3rem;
+  align-items: center;
+
+  @media (max-width: 992px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.iso-info-card {
+  background: white;
+  padding: 2.5rem;
+  border-radius: 2rem;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.04);
+  border: 1px solid var(--color-border);
+
+  h3 {
+    color: var(--color-primary);
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+  }
+
+  p {
+    color: var(--color-muted);
+    line-height: 1.8;
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+  }
+}
+
+.iso-benefits-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    color: var(--color-text);
+    font-weight: 500;
+
+    .material-symbols-outlined {
+      color: var(--color-accent);
+    }
+  }
+}
+
+.iso-visual-card {
+  text-align: center;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  color: white;
+  padding: 3rem;
+  border-radius: 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+
+  .iso-seal {
+    .material-symbols-outlined {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+    p {
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 700;
+    }
+  }
+
+  .iso-quote {
+    font-style: italic;
+    opacity: 0.9;
+    font-size: 1.1rem;
+    line-height: 1.6;
+  }
+}

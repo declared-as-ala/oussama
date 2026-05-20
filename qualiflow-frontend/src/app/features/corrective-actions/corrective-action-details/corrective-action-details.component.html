@@ -1,0 +1,225 @@
+<section class="ca-details-page">
+  <div class="loading-box" *ngIf="loading">
+    <mat-spinner diameter="38"></mat-spinner>
+    <span>Analyse de l'action corrective...</span>
+  </div>
+
+  <ng-container *ngIf="!loading && details">
+    <!-- MODERN HEADER -->
+    <div class="glass-header shadow-sm">
+      <div class="header-main">
+        <div class="title-section">
+          <button mat-button type="button" class="btn-back" (click)="goBack()">
+            <mat-icon>arrow_back</mat-icon>
+            Retour
+          </button>
+          <h1><span class="highlight">{{ details.action.title }}</span></h1>
+          <p class="subtitle">
+            <mat-icon>report_problem</mat-icon>
+            {{ details.nonConformity.code || ('NC-' + details.nonConformity.id) }} — {{ details.nonConformity.title }}
+          </p>
+        </div>
+
+        <div class="header-actions" *ngIf="canWrite">
+          <button mat-flat-button color="primary" class="btn-edit" (click)="edit()">
+            <mat-icon>edit</mat-icon>
+            Modifier l'action
+          </button>
+          <button mat-stroked-button color="warn" class="btn-delete" (click)="delete()">
+            <mat-icon>delete_outline</mat-icon>
+            Supprimer
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUMMARY TILES -->
+    <div class="summary-tiles">
+      <div class="tile shadow-sm">
+        <span class="tile-label">Statut Actuel</span>
+        <div class="tile-content">
+          <span class="tag-status" [ngClass]="details.action.status.toLowerCase()">
+            {{ statusLabel }}
+          </span>
+        </div>
+      </div>
+
+      <div class="tile shadow-sm" [class.overdue-tile]="details.action.isOverdue">
+        <span class="tile-label">Échéance</span>
+        <div class="tile-content">
+          <mat-icon [class.text-danger]="details.action.isOverdue">event</mat-icon>
+          <span class="tile-value">{{ details.action.dueDate | date: 'dd/MM/yyyy' }}</span>
+          <span class="overdue-tag" *ngIf="details.action.isOverdue">En retard</span>
+        </div>
+      </div>
+
+      <div class="tile shadow-sm">
+        <span class="tile-label">Pilote Responsable</span>
+        <div class="tile-content user-tile">
+          <div class="resp-avatar">{{ (details.responsible.fullName || 'U').charAt(0) }}</div>
+          <span class="tile-value">{{ details.responsible.fullName || ('User ' + details.responsible.id) }}</span>
+        </div>
+      </div>
+
+      <div class="tile shadow-sm">
+        <span class="tile-label">Type d'Action</span>
+        <div class="tile-content">
+          <span class="tag-type">{{ details.action.type }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="details-grid">
+      <!-- MAIN INFO -->
+      <div class="main-column">
+        <mat-card class="details-card shadow-sm">
+          <div class="card-header">
+            <mat-icon>description</mat-icon>
+            <h2>Détails de l'Action</h2>
+          </div>
+          <div class="card-body">
+            <div class="description-box">
+              <p>{{ details.action.description || 'Aucune description fournie.' }}</p>
+            </div>
+
+            <div class="meta-info-grid">
+              <div class="info-item">
+                <label>Date de création</label>
+                <p>{{ details.action.createdAt | date: 'dd/MM/yyyy à HH:mm' }}</p>
+              </div>
+              <div class="info-item">
+                <label>Date de réalisation effective</label>
+                <p>{{ details.action.completionDate ? (details.action.completionDate | date: 'dd/MM/yyyy') : 'Non
+                  réalisée' }}</p>
+              </div>
+              <div class="info-item full-width">
+                <label>Preuve de réalisation (Enregistrement)</label>
+                <div class="proof-box" *ngIf="details.proof; else noProof">
+                  <mat-icon>attachment</mat-icon>
+                  <strong>{{ details.proof.code }}</strong>
+                  <span>{{ details.proof.title }}</span>
+                </div>
+                <ng-template #noProof>
+                  <p class="text-muted">Aucune preuve associée.</p>
+                </ng-template>
+              </div>
+            </div>
+          </div>
+        </mat-card>
+
+        <!-- HISTORY -->
+        <mat-card class="details-card shadow-sm history-card">
+          <div class="card-header">
+            <mat-icon>history</mat-icon>
+            <h2>Historique des modifications</h2>
+          </div>
+          <div class="card-body">
+            <div class="empty-state" *ngIf="details.history.length === 0">
+              <mat-icon>update_disabled</mat-icon>
+              <p>Aucun changement historisé pour le moment.</p>
+            </div>
+
+            <div class="table-container" *ngIf="details.history.length > 0">
+              <table mat-table [dataSource]="details.history" class="modern-table">
+                <ng-container matColumnDef="oldStatus">
+                  <th mat-header-cell *matHeaderCellDef>Ancien statut</th>
+                  <td mat-cell *matCellDef="let item">
+                    <span class="status-mini" *ngIf="item.oldStatus">{{ getStatusLabel(item.oldStatus) }}</span>
+                    <span *ngIf="!item.oldStatus">-</span>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="newStatus">
+                  <th mat-header-cell *matHeaderCellDef>Nouveau statut</th>
+                  <td mat-cell *matCellDef="let item">
+                    <span class="status-mini highlight">{{ getStatusLabel(item.newStatus) }}</span>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="comment">
+                  <th mat-header-cell *matHeaderCellDef>Commentaire</th>
+                  <td mat-cell *matCellDef="let item" class="comment-cell">{{ item.comment || '-' }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="user">
+                  <th mat-header-cell *matHeaderCellDef>Par</th>
+                  <td mat-cell *matCellDef="let item">{{ item.changedByFullName || ('User ' + item.changedByUserId) }}
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="date">
+                  <th mat-header-cell *matHeaderCellDef>Date</th>
+                  <td mat-cell *matCellDef="let item">{{ item.changedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="historyColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: historyColumns"></tr>
+              </table>
+            </div>
+          </div>
+        </mat-card>
+      </div>
+
+      <!-- SIDE ACTIONS -->
+      <div class="side-column" *ngIf="canWrite">
+        <mat-card class="details-card shadow-sm status-card">
+          <div class="card-header">
+            <mat-icon>published_with_changes</mat-icon>
+            <h2>Mise à jour du statut</h2>
+          </div>
+          <div class="card-body">
+            <div class="status-grid">
+              <button mat-stroked-button *ngFor="let option of statusOptions"
+                [class.active]="details.action.status === option.value" (click)="changeStatus(option.value)">
+                {{ option.label }}
+              </button>
+            </div>
+          </div>
+        </mat-card>
+
+        <mat-card class="details-card shadow-sm verification-card">
+          <div class="card-header">
+            <mat-icon>fact_check</mat-icon>
+            <h2>Vérification d'efficacité</h2>
+          </div>
+          <div class="card-body">
+            <form [formGroup]="verificationForm" (ngSubmit)="submitVerification()" *ngIf="canVerify; else cannotVerify"
+              class="verification-form">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Résultat de la vérification</mat-label>
+                <mat-select formControlName="effectivenessVerified">
+                  <mat-option [value]="true">Action Efficace</mat-option>
+                  <mat-option [value]="false">Action Non efficace</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Commentaire de vérification *</mat-label>
+                <textarea matInput rows="4" formControlName="effectivenessComment"
+                  placeholder="Détaillez le résultat de la vérification..."></textarea>
+                <mat-error *ngIf="verificationForm.controls.effectivenessComment.invalid">
+                  Le commentaire est obligatoire pour valider la vérification.
+                </mat-error>
+              </mat-form-field>
+
+              <button mat-flat-button color="primary" class="btn-verify-submit" type="submit"
+                [disabled]="savingVerification || verificationForm.invalid">
+                <mat-spinner *ngIf="savingVerification" diameter="18"></mat-spinner>
+                <mat-icon *ngIf="!savingVerification">verified</mat-icon>
+                <span>Enregistrer la vérification</span>
+              </button>
+            </form>
+
+            <ng-template #cannotVerify>
+              <div class="info-alert">
+                <mat-icon>info</mat-icon>
+                <p>La vérification d'efficacité devient disponible dès que l'action est marquée comme
+                  <strong>RÉALISÉE</strong>.</p>
+              </div>
+            </ng-template>
+          </div>
+        </mat-card>
+      </div>
+    </div>
+  </ng-container>
+</section>

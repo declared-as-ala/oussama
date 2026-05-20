@@ -1,0 +1,265 @@
+<section class="document-form-page">
+  <!-- PAGE HEADER BAR -->
+  <div class="page-header-bar">
+    <div class="page-header-left">
+      <div class="page-subtitle">
+        <button type="button" class="btn-back" (click)="goBack()">
+          <mat-icon>arrow_back</mat-icon> Retour
+        </button>
+      </div>
+      <h1 class="page-title">{{ isEdit ? ('form.document.editTitle' | t) : ('form.document.newTitle' | t) }}</h1>
+    </div>
+    <div class="page-header-right">
+      <span class="form-status-hint">{{ 'common.requiredHint' | t }}</span>
+    </div>
+  </div>
+
+  <!-- LOADING STATE -->
+  <div class="loading-overlay" *ngIf="loading">
+    <mat-spinner diameter="40"></mat-spinner>
+    <span>{{ 'common.initializing' | t }}</span>
+  </div>
+
+  <!-- FORM CONTAINER -->
+  <form *ngIf="!loading" [formGroup]="documentForm" (ngSubmit)="submit()" class="modern-form-container">
+
+    <!-- SECTION 1: IDENTIFICATION & METADONNÉES -->
+    <mat-card class="form-section-clean">
+      <div class="section-header">
+        <mat-icon>description</mat-icon>
+        <div class="header-text">
+          <h3>Identification & Métadonnées</h3>
+          <p>Définissez les propriétés fondamentales du document.</p>
+        </div>
+      </div>
+
+      <div class="section-content grid-2-cols">
+        <mat-form-field appearance="outline">
+          <mat-label>Code Document *</mat-label>
+          <input matInput formControlName="code" placeholder="ex: DOC-QUA-001" />
+          <mat-error *ngIf="documentForm.get('code')?.invalid">Code requis (lettres, chiffres, -, _)</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Type de document</mat-label>
+          <mat-select formControlName="type">
+            <mat-option *ngFor="let type of typeOptions" [value]="type.value">{{ type.label }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Titre du document *</mat-label>
+          <input matInput formControlName="title" placeholder="ex: Manuel de Management de la Qualité" />
+          <mat-error *ngIf="documentForm.get('title')?.invalid">Un titre est obligatoire</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Description / Résumé</mat-label>
+          <textarea matInput rows="3" formControlName="description"
+            placeholder="Courte description du contenu..."></textarea>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Catégorie métier</mat-label>
+          <input matInput formControlName="category" placeholder="ex: SMQ, RH, Achats" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Mots-clés (tags)</mat-label>
+          <input matInput formControlName="keywords" placeholder="virgule comme séparateur" />
+        </mat-form-field>
+      </div>
+    </mat-card>
+
+    <!-- SECTION 2: LIAISONS & RESPONSABILITÉ -->
+    <mat-card class="form-section-clean">
+      <div class="section-header">
+        <mat-icon>hub</mat-icon>
+        <div class="header-text">
+          <h3>Liaisons & Responsabilité</h3>
+          <p>Rattachez le document à l'organisation et au responsable.</p>
+        </div>
+      </div>
+
+      <div class="section-content grid-2-cols">
+        <mat-form-field appearance="outline">
+          <mat-label>Processus associé</mat-label>
+          <mat-select formControlName="processId" (selectionChange)="onProcessChanged()">
+            <mat-option [value]="null">-- Aucun processus --</mat-option>
+            <mat-option *ngFor="let p of processes" [value]="p.id">{{ p.code }} - {{ p.name }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Procédure liée</mat-label>
+          <mat-select formControlName="procedureId">
+            <mat-option [value]="null">-- Aucune procédure --</mat-option>
+            <mat-option *ngFor="let proc of procedures" [value]="proc.id">{{ proc.code }} - {{ proc.title
+              }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Responsable GED</mat-label>
+          <mat-select formControlName="ownerUserId">
+            <mat-option [value]="null">-- Non assigné --</mat-option>
+            <mat-option *ngFor="let user of owners" [value]="user.id">
+              {{ user.firstName }} {{ user.lastName }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Departement (optionnel)</mat-label>
+          <mat-select formControlName="departmentId">
+            <mat-option [value]="null">-- Aucun departement --</mat-option>
+            <mat-option *ngFor="let department of departments" [value]="department.id">
+              {{ department.code }} - {{ department.name }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <div class="toggle-control">
+          <mat-slide-toggle formControlName="isActive">Document actif dans le référentiel</mat-slide-toggle>
+        </div>
+      </div>
+    </mat-card>
+
+    <!-- SECTION 4: SIGNATURE -->
+    <mat-card class="form-section-clean">
+      <div class="section-header">
+        <mat-icon>draw</mat-icon>
+        <div class="header-text">
+          <h3>Signature du document</h3>
+          <p>Signez directement ci-dessous pour valider le document.</p>
+        </div>
+      </div>
+
+      <div class="section-content">
+        <div class="signature-pad-container">
+          <div class="signature-pad-wrapper">
+            <canvas #signatureCanvas class="signature-pad" (mousedown)="startDrawing($event)" (mousemove)="draw($event)"
+              (mouseup)="stopDrawing()" (mouseleave)="stopDrawing()" (touchstart)="startDrawingTouch($event)"
+              (touchmove)="drawTouch($event)" (touchend)="stopDrawing()">
+            </canvas>
+
+            <div class="signature-overlay" *ngIf="!isCanvasEmpty && !signaturePreview">
+              <span>Signature en cours...</span>
+            </div>
+
+            <div class="signature-placeholder" *ngIf="isCanvasEmpty && !signaturePreview">
+              <mat-icon>gesture</mat-icon>
+              <span>Signez ici avec votre souris ou votre doigt</span>
+            </div>
+
+            <img [src]="signaturePreview" *ngIf="signaturePreview" class="signature-result-preview"
+              alt="Signature enregistrée" />
+          </div>
+
+          <div class="signature-actions">
+            <button mat-stroked-button type="button" (click)="clearSignaturePad()"
+              [disabled]="isCanvasEmpty && !signaturePreview">
+              <mat-icon>refresh</mat-icon>
+              Effacer
+            </button>
+            <button mat-flat-button type="button" color="primary" (click)="saveSignatureFromPad()"
+              *ngIf="!isCanvasEmpty && !signaturePreview">
+              <mat-icon>check</mat-icon>
+              Valider la signature
+            </button>
+            <span class="signature-saved-badge" *ngIf="signaturePreview">
+              <mat-icon>verified</mat-icon>
+              Signature enregistrée
+            </span>
+          </div>
+
+          <p class="signature-hint">La signature sera intégrée automatiquement au PDF lors de la validation finale du
+            document.</p>
+        </div>
+      </div>
+    </mat-card>
+
+    <!-- SECTION 3: VERSION & FICHIER -->
+    <mat-card class="form-section-clean">
+      <div class="section-header">
+        <mat-icon>history</mat-icon>
+        <div class="header-text">
+          <h3>Version & Fichier source</h3>
+          <p>Définissez la version initiale et téléversez le document.</p>
+        </div>
+      </div>
+
+      <div class="section-content grid-2-cols">
+        <mat-form-field appearance="outline">
+          <mat-label>N° de version</mat-label>
+          <input matInput formControlName="initialVersionNumber" placeholder="v1.0" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Statut de la version</mat-label>
+          <mat-select formControlName="initialVersionStatus">
+            <mat-option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <p class="full-width" *ngIf="!canValidateStatus">
+          Le document sera déposé en statut <strong>En révision</strong> et publié après validation du responsable.
+        </p>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Date d'effet</mat-label>
+          <input matInput [matDatepicker]="effectiveDatePicker" formControlName="initialEffectiveDate" />
+          <mat-datepicker-toggle matSuffix [for]="effectiveDatePicker"></mat-datepicker-toggle>
+          <mat-datepicker #effectiveDatePicker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Date d'expiration</mat-label>
+          <input matInput [matDatepicker]="expiryDatePicker" formControlName="initialExpiryDate" />
+          <mat-datepicker-toggle matSuffix [for]="expiryDatePicker"></mat-datepicker-toggle>
+          <mat-datepicker #expiryDatePicker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Commentaire de révision</mat-label>
+          <textarea matInput rows="2" formControlName="initialRevisionComment"
+            placeholder="Notes sur cette version spécifique..."></textarea>
+        </mat-form-field>
+
+        <!-- UPLOAD ZONE -->
+        <div class="upload-zone full-width" [class.has-file]="selectedFile">
+          <input type="file" id="file-input" (change)="onFileSelected($event)" class="file-input-hidden" />
+          <label for="file-input" class="upload-label">
+            <mat-icon *ngIf="!selectedFile">cloud_upload</mat-icon>
+            <mat-icon *ngIf="selectedFile" class="file-icon">description</mat-icon>
+
+            <div class="label-text" *ngIf="!selectedFile">
+              <span class="main-text">Cliquez ici pour sélectionner un fichier</span>
+              <span class="sub-text">PDF, DOCX, XLSX ou JPG (Max 50Mo)</span>
+            </div>
+
+            <div class="label-text" *ngIf="selectedFile">
+              <span class="main-text">{{ selectedFile.name }}</span>
+              <span class="sub-text">{{ selectedFile.size / 1024 | number:'1.0-1' }} KB</span>
+            </div>
+
+            <button mat-icon-button type="button" class="clear-file" (click)="$event.preventDefault(); clearFile()"
+              *ngIf="selectedFile">
+              <mat-icon>close</mat-icon>
+            </button>
+          </label>
+        </div>
+      </div>
+    </mat-card>
+
+    <!-- FORM ACTIONS BAR -->
+    <div class="form-actions-bar">
+      <button mat-button type="button" (click)="goBack()" [disabled]="saving">{{ 'common.cancel' | t }}</button>
+      <div class="spacer"></div>
+      <button mat-flat-button color="primary" type="submit" class="submit-btn" [disabled]="saving">
+        <mat-icon *ngIf="!saving">check_circle</mat-icon>
+        <mat-spinner *ngIf="saving" diameter="20"></mat-spinner>
+        <span>{{ isEdit ? ('form.document.saveChanges' | t) : ('form.document.create' | t) }}</span>
+      </button>
+    </div>
+  </form>
+</section>

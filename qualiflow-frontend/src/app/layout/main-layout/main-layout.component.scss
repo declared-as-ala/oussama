@@ -1,0 +1,227 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* TOPBAR */
+.topbar {
+  min-height: var(--topbar-h);
+  background: linear-gradient(90deg, var(--xl-green-dark) 0%, var(--xl-green-mid) 100%);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  flex-shrink: 0;
+  gap: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* HAMBURGER BUTTON */
+.hamburger-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  color: white;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background 0.2s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.brand-icon {
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  padding: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.brand-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.brand-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: white;
+  letter-spacing: -0.3px;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  white-space: nowrap;
+}
+
+.brand-name span {
+  color: #90EE90;
+}
+
+.brand-tag {
+  font-size: 10px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.8);
+  padding: 2px 7px;
+  border-radius: 2px;
+  letter-spacing: 0.4px;
+}
+
+.topbar-sep {
+  flex: 1;
+}
+
+.topbar-notif {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  color: rgba(255, 255, 255, 0.8);
+  transition: background 0.1s;
+}
+
+.topbar-notif:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+}
+
+.topbar-notif svg {
+  width: 17px;
+  height: 17px;
+}
+
+.notif-dot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 7px;
+  height: 7px;
+  background: #E74C3C;
+  border-radius: 50%;
+  border: 1.5px solid var(--xl-green);
+}
+
+/* SIDEBAR OVERLAY */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: var(--topbar-h);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 199;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+
+  &.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* APP BODY */
+.app-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+  min-width: 0;
+}
+
+.content-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  min-height: 0;
+  min-width: 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ======================== RESPONSIVE ======================== */
+
+/* Tablet (≤1024px) */
+@media (max-width: 1024px) {
+  .topbar {
+    padding: 0 16px;
+    gap: 12px;
+  }
+}
+
+/* Mobile / Small Tablet (≤768px) */
+@media (max-width: 768px) {
+  .hamburger-btn {
+    display: flex;
+  }
+
+  .brand-name {
+    display: none;
+  }
+
+  .topbar {
+    padding: 0 12px;
+    gap: 8px;
+  }
+
+  .topbar-brand {
+    gap: 8px;
+  }
+
+  .sidebar-overlay {
+    display: block;
+  }
+}
+
+/* Small mobile (≤480px) */
+@media (max-width: 480px) {
+  .topbar {
+    padding: 0 8px;
+    gap: 6px;
+  }
+
+  .brand-icon {
+    width: 32px;
+    height: 32px;
+    padding: 4px;
+  }
+
+  .topbar-brand {
+    max-width: 38vw;
+  }
+}

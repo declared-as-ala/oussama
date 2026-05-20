@@ -1,0 +1,130 @@
+<section class="department-form-page">
+  <header class="page-header-bar">
+    <div class="page-header-left">
+      <span class="page-subtitle">Départements</span>
+      <h1 class="page-title">{{ title }}</h1>
+      <p class="page-intro">
+        Renseignez les informations du service et attribuez un chef de service conforme à l'organisation.
+      </p>
+    </div>
+
+    <div class="page-header-right">
+      <button type="button" class="btn btn-ghost" (click)="goBack()">Retour</button>
+    </div>
+  </header>
+
+  <div class="content-scroll">
+    <section class="summary-strip" *ngIf="isEditMode && currentDepartment">
+      <article class="summary-box">
+        <span class="sb-label">Code</span>
+        <strong>{{ currentDepartment.code }}</strong>
+      </article>
+      <article class="summary-box">
+        <span class="sb-label">Statut</span>
+        <span class="sb-badge" [class.active]="currentDepartment.status === 'ACTIF'" [class.inactive]="currentDepartment.status === 'INACTIF'">
+          {{ currentDepartment.status === 'ACTIF' ? 'Actif' : 'Inactif' }}
+        </span>
+      </article>
+      <article class="summary-box">
+        <span class="sb-label">Chef de service</span>
+        <strong>{{ currentDepartment.managerFullName || 'Non affecté' }}</strong>
+      </article>
+      <article class="summary-box">
+        <span class="sb-label">Volume</span>
+        <strong>{{ currentDepartment.usersCount }} utilisateurs / {{ currentDepartment.documentsCount }} documents</strong>
+      </article>
+    </section>
+
+    <div *ngIf="isLoading" class="loading-state">
+      <mat-spinner diameter="36"></mat-spinner>
+      <span>Chargement du formulaire...</span>
+    </div>
+
+    <mat-card class="glass-card form-card" *ngIf="!isLoading">
+      <form [formGroup]="form" (ngSubmit)="save()" class="department-form">
+        <div class="section-grid">
+          <section class="form-section">
+            <div class="section-head">
+              <h2>Informations générales</h2>
+              <p>Identifiez le service et précisez son rôle dans l'organisation.</p>
+            </div>
+
+            <div class="field-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Nom</mat-label>
+                <input matInput formControlName="name" maxlength="255" />
+                <mat-error *ngIf="form.get('name')?.hasError('required')">Le nom est obligatoire.</mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Code</mat-label>
+                <input matInput formControlName="code" maxlength="50" />
+                <mat-hint>Le code sera converti automatiquement en majuscules.</mat-hint>
+                <mat-error *ngIf="form.get('code')?.hasError('required')">Le code est obligatoire.</mat-error>
+              </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Description</mat-label>
+              <textarea matInput rows="4" formControlName="description"></textarea>
+            </mat-form-field>
+          </section>
+
+          <section class="form-section">
+            <div class="section-head">
+              <h2>Responsable et statut</h2>
+              <p>Choisissez le chef de service et l'état opérationnel du département.</p>
+            </div>
+
+            <div class="field-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Chef de service</mat-label>
+                <mat-select formControlName="managerUserId">
+                  <mat-option [value]="null">Aucun chef de service</mat-option>
+                  <mat-option *ngFor="let user of users" [value]="user.id">
+                    {{ user.firstName }} {{ user.lastName }} - {{ user.role }}<span *ngIf="!user.isActive"> (inactif)</span>
+                  </mat-option>
+                </mat-select>
+                <mat-hint *ngIf="users.length === 0">Aucun utilisateur disponible.</mat-hint>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Statut</mat-label>
+                <mat-select formControlName="status">
+                  <mat-option *ngFor="let option of statusOptions" [value]="option.value">{{ option.label }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <div class="preview-card">
+              <span class="preview-label">Aperçu</span>
+              <div class="preview-row">
+                <span class="preview-key">Département</span>
+                <strong>{{ form.get('name')?.value || 'Nom du département' }}</strong>
+              </div>
+              <div class="preview-row">
+                <span class="preview-key">Chef de service</span>
+                <strong>{{ selectedManagerLabel }}</strong>
+              </div>
+              <div class="preview-row">
+                <span class="preview-key">Statut</span>
+                <span class="sb-badge" [class.active]="form.get('status')?.value === 'ACTIF'" [class.inactive]="form.get('status')?.value === 'INACTIF'">
+                  {{ form.get('status')?.value === 'INACTIF' ? 'Inactif' : 'Actif' }}
+                </span>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="form-actions">
+          <button mat-flat-button color="primary" type="submit" [disabled]="isSaving">
+            <mat-icon *ngIf="!isSaving">save</mat-icon>
+            <mat-spinner *ngIf="isSaving" diameter="18"></mat-spinner>
+            {{ submitLabel }}
+          </button>
+          <button mat-stroked-button type="button" (click)="goBack()" [disabled]="isSaving">Annuler</button>
+        </div>
+      </form>
+    </mat-card>
+  </div>
+</section>

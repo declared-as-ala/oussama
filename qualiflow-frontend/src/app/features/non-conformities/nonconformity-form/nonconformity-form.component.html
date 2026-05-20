@@ -1,0 +1,157 @@
+<section class="nonconformity-form-page">
+  <!-- PAGE HEADER BAR -->
+  <div class="page-header-bar">
+    <div class="page-header-left">
+      <div class="page-subtitle">
+        <button type="button" class="btn-back" (click)="goBack()">
+          <mat-icon>arrow_back</mat-icon> Retour
+        </button>
+      </div>
+      <h1 class="page-title">{{ isEdit ? ('form.nc.editTitle' | t) : ('form.nc.newTitle' | t) }}</h1>
+    </div>
+    <div class="page-header-right">
+      <span class="form-status-hint">{{ 'common.requiredHint' | t }}</span>
+    </div>
+  </div>
+
+  <!-- PROGRESS TRACKER (Optional but good for consistency) -->
+  <div class="form-progress-bar">
+    <div class="progress-step active">
+      <div class="step-dot">1</div>
+      <span>{{ 'form.nc.qualification' | t }}</span>
+    </div>
+    <div class="progress-line" [class.active]="form.valid"></div>
+    <div class="progress-step" [class.active]="form.valid">
+      <div class="step-dot">2</div>
+      <span>{{ 'form.nc.validation' | t }}</span>
+    </div>
+  </div>
+
+  <div class="loading-overlay" *ngIf="loading">
+    <mat-spinner diameter="40"></mat-spinner>
+    <span>{{ 'common.initializing' | t }}</span>
+  </div>
+
+  <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="submit()" class="modern-form-container">
+
+    <!-- SECTION 1: IDENTIFICATION -->
+    <mat-card class="form-section-clean">
+      <div class="section-header">
+        <mat-icon>assignment_late</mat-icon>
+        <div class="header-text">
+          <h3>{{ 'form.nc.identification' | t }}</h3>
+          <p>{{ 'form.nc.identificationDesc' | t }}</p>
+        </div>
+      </div>
+
+      <div class="section-content grid-2-cols">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'form.nc.identificationCode' | t }}</mat-label>
+          <input matInput formControlName="code" placeholder="ex: NC-2024-001" />
+          <mat-hint>{{ 'form.nc.codeHint' | t }}</mat-hint>
+          <mat-error *ngIf="form.get('code')?.invalid">{{ 'form.nc.codeRequired' | t }}</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'form.nc.severityImpact' | t }}</mat-label>
+          <mat-select formControlName="severity">
+            <mat-option *ngFor="let option of severityOptions" [value]="option.value">
+              {{ option.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>{{ 'form.nc.titleLabel' | t }} *</mat-label>
+          <input matInput formControlName="title" [placeholder]="'form.nc.titlePlaceholder' | t" />
+          <mat-error *ngIf="form.get('title')?.invalid">{{ 'form.nc.titleRequired' | t }}</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>{{ 'form.nc.detailedDescription' | t }}</mat-label>
+          <textarea matInput rows="4" formControlName="description"
+            [placeholder]="'form.nc.descriptionPlaceholder' | t"></textarea>
+        </mat-form-field>
+      </div>
+    </mat-card>
+
+    <!-- SECTION 2: CONTEXTE & AFFECTATION -->
+    <mat-card class="form-section-clean">
+      <div class="section-header">
+        <mat-icon>share</mat-icon>
+        <div class="header-text">
+          <h3>{{ 'form.nc.contextAssignment' | t }}</h3>
+          <p>{{ 'form.nc.contextAssignmentDesc' | t }}</p>
+        </div>
+      </div>
+
+      <div class="section-content grid-2-cols">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'form.nc.impactedProcess' | t }}</mat-label>
+          <mat-select formControlName="processId">
+            <mat-option [value]="null">{{ 'form.nc.none' | t }}</mat-option>
+            <mat-option *ngFor="let p of processes" [value]="p.id">{{ p.code }} - {{ p.name }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'form.nc.concernedProcedure' | t }}</mat-label>
+          <mat-select formControlName="procedureId">
+            <mat-option [value]="null">{{ 'form.nc.none' | t }}</mat-option>
+            <mat-option *ngFor="let proc of filteredProcedures" [value]="proc.id">{{ proc.code }} - {{ proc.title
+              }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'form.nc.processingOwner' | t }} *</mat-label>
+          <mat-select formControlName="responsibleUserId">
+            <mat-option [value]="0">{{ 'form.nc.selectPilot' | t }}</mat-option>
+            <mat-option *ngFor="let u of users" [value]="u.id">{{ u.firstName }} {{ u.lastName }}</mat-option>
+          </mat-select>
+          <mat-error *ngIf="form.get('responsibleUserId')?.invalid">{{ 'form.nc.ownerRequired' | t }}</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'form.nc.detectedDate' | t }}</mat-label>
+          <input matInput type="date" formControlName="detectedDate" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'form.nc.categoryType' | t }}</mat-label>
+          <mat-select formControlName="type">
+            <mat-option *ngFor="let t of typeOptions" [value]="t.value">{{ t.label }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Status selector: only visible to ADMIN_ORG / RESPONSABLE_QUALITE -->
+        <mat-form-field *ngIf="canSetStatus" appearance="outline">
+          <mat-label>{{ 'form.nc.initialStatus' | t }}</mat-label>
+          <mat-select formControlName="status">
+            <mat-option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Non-privileged users: NC is automatically queued for validation -->
+        <div *ngIf="!canSetStatus && !isEdit" class="awaiting-info-badge">
+          <mat-icon>hourglass_top</mat-icon>
+          <div>
+            <strong>En attente de validation</strong>
+            <span>Votre signalement sera soumis au responsable qualité pour validation.</span>
+          </div>
+        </div>
+      </div>
+    </mat-card>
+
+    <!-- FORM ACTIONS BAR -->
+    <div class="form-actions-bar">
+      <button mat-button type="button" (click)="goBack()" [disabled]="saving">{{ 'common.cancel' | t }}</button>
+      <div class="spacer"></div>
+      <button mat-flat-button color="primary" type="submit" class="submit-btn" [disabled]="saving">
+        <mat-icon *ngIf="!saving">check_circle</mat-icon>
+        <mat-spinner *ngIf="saving" diameter="20"></mat-spinner>
+        <span>{{ isEdit ? ('form.nc.update' | t) : ('form.nc.submit' | t) }}</span>
+      </button>
+    </div>
+  </form>
+</section>

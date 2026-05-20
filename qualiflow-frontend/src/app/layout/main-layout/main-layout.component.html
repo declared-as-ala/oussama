@@ -1,0 +1,28 @@
+<!-- TOPBAR -->
+<header class="topbar">
+  <button class="hamburger-btn" (click)="toggleSidebar()">
+    <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+      <path d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+  </button>
+  <div class="topbar-brand">
+    <div class="brand-icon">
+      <img [src]="brandLogoUrl" alt="Logo QualiFlow" />
+    </div>
+    <span class="brand-name">QualiFlow</span>
+  </div>
+  <span class="topbar-sep"></span>
+  <app-notification-dropdown *ngIf="canShowNotifications"></app-notification-dropdown>
+  <app-header></app-header>
+</header>
+
+<div class="app-body">
+  <div class="sidebar-overlay" [class.visible]="sidebarOpen" (click)="closeSidebar()"></div>
+  <app-sidebar [sidebarOpen]="sidebarOpen" (navClicked)="closeSidebar()"></app-sidebar>
+
+  <div class="content-area">
+    <router-outlet></router-outlet>
+  </div>
+</div>
+
+<app-loading></app-loading>

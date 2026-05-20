@@ -1,0 +1,28 @@
+<header class="topbar">
+  <a class="brand" routerLink="/">
+    <span class="brand-mark">QF</span>
+    <span class="brand-text">QualiFlow</span>
+  </a>
+
+  <button class="menu-toggle" (click)="toggleMenu()" aria-label="Toggle menu">
+    <mat-icon>{{ isMenuOpen ? 'close' : 'menu' }}</mat-icon>
+  </button>
+
+  <nav class="nav-links" [class.open]="isMenuOpen" aria-label="Navigation principale">
+    <a *ngFor="let item of navItems" 
+       (click)="selectSection(item.section)" 
+       [class.active]="activeSection === item.section"
+       href="javascript:void(0)">
+       {{ item.label }}
+    </a>
+    <div class="mobile-actions">
+      <a class="btn btn-ghost" routerLink="/login" (click)="isMenuOpen = false">Se connecter</a>
+      <a class="btn btn-primary" routerLink="/register" (click)="isMenuOpen = false">Commencer</a>
+    </div>
+  </nav>
+
+  <div class="actions">
+    <a class="btn btn-ghost" routerLink="/login">Se connecter</a>
+    <a class="btn btn-primary" routerLink="/register">Commencer</a>
+  </div>
+</header>

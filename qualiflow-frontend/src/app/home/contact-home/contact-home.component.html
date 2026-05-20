@@ -1,0 +1,45 @@
+<section class="section contact-section" id="contact">
+  <div class="section-title">
+    <h2>Contact</h2>
+    <p>Discutons de votre démarche qualité et de vos objectifs de conformité ISO 21001.</p>
+  </div>
+
+  <div class="contact-layout">
+    <form class="contact-form" [formGroup]="contactForm" (ngSubmit)="onSubmit()">
+      <label>
+        Nom
+        <input type="text" formControlName="name" placeholder="Votre nom complet" />
+      </label>
+
+      <label>
+        Email
+        <input type="email" formControlName="email" placeholder="nom@organisation.com" />
+      </label>
+
+      <label>
+        Sujet
+        <input type="text" formControlName="subject" placeholder="Sujet du message" />
+      </label>
+
+      <label>
+        Message
+        <textarea rows="5" formControlName="message" placeholder="Décrivez votre besoin..."></textarea>
+      </label>
+
+      <button class="btn btn-primary" type="submit">Envoyer</button>
+    </form>
+
+    <aside class="contact-info">
+      <h3>Coordonnées</h3>
+      <p><span class="material-symbols-outlined">mail</span> contact&#64;qualiflow.me</p>
+      <p><span class="material-symbols-outlined">call</span> +216 XX XXX XXX</p>
+      <p><span class="material-symbols-outlined">location_on</span> Tunisie</p>
+
+      <div class="socials">
+        <a *ngFor="let social of socialLinks" [href]="social.href" [attr.aria-label]="social.label">
+          <span class="material-symbols-outlined">{{ social.icon }}</span>
+        </a>
+      </div>
+    </aside>
+  </div>
+</section>

@@ -1,0 +1,14 @@
+.git
+.gitignore
+.vscode
+.idea
+
+bin
+obj
+artifacts
+
+StorageFiles
+
+tmp-*.log
+*.user
+*.suo

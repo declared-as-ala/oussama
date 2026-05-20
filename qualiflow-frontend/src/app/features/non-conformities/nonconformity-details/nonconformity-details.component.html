@@ -1,0 +1,292 @@
+<section class="nonconformity-details-page">
+  <div class="loading-overlay" *ngIf="loading">
+    <mat-spinner diameter="40"></mat-spinner>
+    <span>{{ 'detail.nc.loading' | t }}</span>
+  </div>
+
+  <ng-container *ngIf="!loading && details">
+    <!-- PAGE HEADER BAR -->
+    <div class="page-header-bar">
+      <div class="page-header-left">
+        <div class="page-subtitle">
+          <button type="button" class="btn-back" (click)="goBack()">
+            <mat-icon>arrow_back</mat-icon> Retour
+          </button>
+        </div>
+        <h1 class="page-title">{{ details.nonConformity.code }} — {{ details.nonConformity.title }}</h1>
+      </div>
+
+      <div class="page-header-right">
+        <button *ngIf="canWrite" mat-flat-button color="primary" class="edit-btn" (click)="editNonConformity()">
+          <mat-icon>edit</mat-icon> {{ 'common.edit' | t }}
+        </button>
+      </div>
+    </div>
+
+    <div class="details-body">
+      <!-- QUICK STATUS CARDS -->
+      <div class="summary-cards">
+        <div class="summary-card">
+          <div class="sc-header">
+            <span class="sc-label">{{ 'detail.nc.currentStatus' | t }}</span>
+            <mat-icon class="sc-icon">info_outline</mat-icon>
+          </div>
+          <div class="sc-value">
+            <span class="tag-status" [ngClass]="details.nonConformity.status.toLowerCase()">
+              {{ getStatusLabel(details.nonConformity.status) }}
+            </span>
+          </div>
+          <div *ngIf="canWrite" class="status-quick-actions">
+            <button mat-icon-button [matMenuTriggerFor]="stMenu" [matTooltip]="'detail.nc.changeStatus' | t">
+              <mat-icon>swap_vert</mat-icon>
+            </button>
+            <mat-menu #stMenu="matMenu" class="modern-menu">
+              <button mat-menu-item (click)="changeStatus('OUVERTE')">{{ 'detail.nc.open' | t }}</button>
+              <button mat-menu-item (click)="changeStatus('EN_COURS')">{{ 'detail.nc.inProgress' | t }}</button>
+              <button mat-menu-item (click)="changeStatus('CLOTUREE')">{{ 'detail.nc.closed' | t }}</button>
+            </mat-menu>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="sc-header">
+            <span class="sc-label">{{ 'common.severity' | t }}</span>
+            <mat-icon class="sc-icon">priority_high</mat-icon>
+          </div>
+          <div class="sc-value">
+            <span class="tag-badge sev-badge" [ngClass]="details.nonConformity.severity.toLowerCase()">
+              {{ getSeverityLabel(details.nonConformity.severity) }}
+            </span>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="sc-header">
+            <span class="sc-label">{{ 'common.responsible' | t }}</span>
+            <mat-icon class="sc-icon">person_outline</mat-icon>
+          </div>
+          <div class="sc-value">
+            <div class="pilote-avatar" *ngIf="details.nonConformity.responsibleFullName">
+              {{ details.nonConformity.responsibleFullName.charAt(0) }}
+            </div>
+            <span class="resp-name">{{ details.nonConformity.responsibleFullName || ('common.toDefine' | t) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="details-main-grid">
+        <!-- GENERAL INFO -->
+        <mat-card class="info-card">
+          <div class="card-header-clean">
+            <h2>{{ 'detail.nc.infoOrigin' | t }}</h2>
+            <mat-icon>info</mat-icon>
+          </div>
+          <div class="info-grid">
+            <div class="info-item full-width">
+              <label>{{ 'detail.nc.deviationDescription' | t }}</label>
+              <p>{{ details.nonConformity.description || ('detail.nc.noDescription' | t) }}</p>
+            </div>
+            <div class="info-item">
+              <label>{{ 'detail.nc.linkedProcess' | t }}</label>
+              <div class="link-display" *ngIf="details.nonConformity.processCode; else noProc">
+                <mat-icon>hub</mat-icon>
+                <strong>{{ details.nonConformity.processCode }}</strong>
+                <span>{{ details.nonConformity.processName }}</span>
+              </div>
+              <ng-template #noProc>
+                <p class="empty-text">{{ 'detail.nc.noLinkedProcess' | t }}</p>
+              </ng-template>
+            </div>
+            <div class="info-item">
+              <label>{{ 'detail.nc.linkedProcedure' | t }}</label>
+              <div class="link-display" *ngIf="details.nonConformity.procedureCode; else noProc2">
+                <mat-icon>description</mat-icon>
+                <strong>{{ details.nonConformity.procedureCode }}</strong>
+                <span>{{ details.nonConformity.procedureTitle }}</span>
+              </div>
+              <ng-template #noProc2>
+                <p class="empty-text">{{ 'detail.nc.noLinkedProcedure' | t }}</p>
+              </ng-template>
+            </div>
+            <div class="info-item">
+              <label>{{ 'detail.nc.detectedDate' | t }}</label>
+              <p>{{ details.nonConformity.detectedDate | date: 'dd/MM/yyyy' }}</p>
+            </div>
+            <div class="info-item">
+              <label>{{ 'detail.nc.typeCategory' | t }}</label>
+              <p>{{ details.nonConformity.type || '-' }}</p>
+            </div>
+          </div>
+        </mat-card>
+
+        <mat-card class="info-card validation-card" *ngIf="canValidatePending">
+          <div class="card-header-clean">
+            <h2>Validation non-conformite</h2>
+            <mat-icon>fact_check</mat-icon>
+          </div>
+
+          <div class="validation-panel">
+            <div class="validation-intro">
+              <div class="validation-copy">
+                <span class="validation-eyebrow">Controle qualite</span>
+                <p>Finalisez le code et confirmez le responsable avant la mise en traitement.</p>
+              </div>
+              <span class="validation-state-pill">En attente</span>
+            </div>
+
+            <form class="validation-form" [formGroup]="validationForm" (ngSubmit)="validatePendingNonConformity()">
+              <div class="validation-grid">
+                <mat-form-field appearance="outline" class="validation-field validation-code-field">
+                  <mat-label>Code non-conformite</mat-label>
+                  <input matInput formControlName="code" />
+                  <mat-hint>Exemple: NC-009</mat-hint>
+                  <mat-error *ngIf="validationForm.controls.code.hasError('required')">
+                    Le code est obligatoire.
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="validation-field validation-owner-field">
+                  <mat-label>Responsable</mat-label>
+                  <mat-select formControlName="responsibleUserId">
+                    <mat-option [value]="0">Choisir</mat-option>
+                    <mat-option *ngFor="let user of users" [value]="user.id">
+                      {{ user.firstName }} {{ user.lastName }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-hint>Affectation du suivi principal</mat-hint>
+                  <mat-error
+                    *ngIf="validationForm.controls.responsibleUserId.hasError('min') || validationForm.controls.responsibleUserId.hasError('required')">
+                    Selectionnez un responsable.
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <div class="validation-actions">
+                <div class="validation-note">
+                  <mat-icon>info</mat-icon>
+                  <span>Le code et le responsable seront enregistres au moment de la validation.</span>
+                </div>
+
+                <button mat-flat-button color="primary" class="validate-btn" type="submit"
+                  [disabled]="validationForm.invalid || savingValidation">
+                  <mat-icon>{{ savingValidation ? 'hourglass_top' : 'task_alt' }}</mat-icon>
+                  {{ savingValidation ? 'Validation...' : 'Valider la non-conformite' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </mat-card>
+
+        <!-- ACTIONS CORRECTIVES -->
+        <mat-card class="info-card actions-section">
+          <div class="card-header-clean">
+            <h2>{{ 'detail.nc.actionPlan' | t }} ({{ details.actions.length }})</h2>
+            <button mat-button color="primary" *ngIf="canWrite && !editingActionId" (click)="startNewAction()">
+              <mat-icon>add</mat-icon> {{ 'detail.nc.newAction' | t }}
+            </button>
+          </div>
+
+          <!-- ACTION FORM (INLINEish) -->
+          <div class="quick-action-form" *ngIf="canWrite && (showActionForm || editingActionId)">
+            <form [formGroup]="actionForm" (ngSubmit)="saveAction()" class="nc-action-form">
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="flex-grow">
+                  <mat-label>{{ 'detail.nc.actionTitle' | t }}</mat-label>
+                  <input matInput formControlName="title" />
+                </mat-form-field>
+                <mat-form-field appearance="outline" style="width: 180px;">
+                  <mat-label>{{ 'common.responsible' | t }}</mat-label>
+                  <mat-select formControlName="responsibleUserId">
+                    <mat-option [value]="0">{{ 'detail.nc.choose' | t }}</mat-option>
+                    <mat-option *ngFor="let user of users" [value]="user.id">{{ user.firstName }} {{ user.lastName
+                      }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+              <div class="form-row">
+                <mat-form-field appearance="outline" style="width: 160px;">
+                  <mat-label>{{ 'detail.nc.dueDate' | t }}</mat-label>
+                  <input matInput type="date" formControlName="dueDate" />
+                </mat-form-field>
+                <mat-form-field appearance="outline" style="width: 160px;">
+                  <mat-label>{{ 'common.status' | t }}</mat-label>
+                  <mat-select formControlName="status">
+                    <mat-option *ngFor="let option of actionStatusOptions" [value]="option.value">{{ option.label
+                      }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <div class="form-actions-inline">
+                  <button mat-flat-button color="primary" type="submit" [disabled]="actionForm.invalid || savingAction">
+                    {{ editingActionId ? ('common.save' | t) : ('detail.nc.add' | t) }}
+                  </button>
+                  <button mat-button type="button" (click)="cancelActionEdit()">{{ 'common.cancel' | t }}</button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <div class="empty-box" *ngIf="details.actions.length === 0">
+            <mat-icon>playlist_add_check</mat-icon>
+            <span>{{ 'detail.nc.noCorrectiveAction' | t }}</span>
+          </div>
+
+          <div class="table-container" *ngIf="details.actions.length > 0">
+            <table mat-table [dataSource]="details.actions" class="nc-details-table">
+              <ng-container matColumnDef="title">
+                <th mat-header-cell *matHeaderCellDef>{{ 'common.actions' | t }}</th>
+                <td mat-cell *matCellDef="let action">
+                  <div class="action-title-cell">
+                    <strong>{{ action.title }}</strong>
+                    <span class="action-desc">{{ action.description }}</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="responsible">
+                <th mat-header-cell *matHeaderCellDef>{{ 'common.responsible' | t }}</th>
+                <td mat-cell *matCellDef="let action">
+                  <span class="resp-text">{{ action.responsibleFullName || '-' }}</span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="dueDate">
+                <th mat-header-cell *matHeaderCellDef>{{ 'detail.nc.dueDate' | t }}</th>
+                <td mat-cell *matCellDef="let action">
+                  <span class="date-badge" [class.is-overdue]="action.isOverdue">
+                    {{ action.dueDate | date: 'dd/MM/yyyy' }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>{{ 'common.status' | t }}</th>
+                <td mat-cell *matCellDef="let action">
+                  <span class="tag-status mini" [ngClass]="action.status.toLowerCase()">
+                    {{ getActionStatusLabel(action.status) }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef style="width: 80px;"></th>
+                <td mat-cell *matCellDef="let action">
+                  <div class="table-actions">
+                    <button mat-icon-button class="action-btn edit-btn" (click)="editAction(action)">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button class="action-btn delete-btn" (click)="deleteAction(action)">
+                      <mat-icon>delete_outline</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedActionColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedActionColumns"></tr>
+            </table>
+          </div>
+        </mat-card>
+      </div>
+    </div>
+  </ng-container>
+</section>

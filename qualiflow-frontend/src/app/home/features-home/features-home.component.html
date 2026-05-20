@@ -1,0 +1,13 @@
+<section class="section" id="fonctionnalites">
+  <div class="section-title">
+    <h2>Fonctionnalités principales</h2>
+    <p>Une base technique solide pour une gestion sécurisée, collaborative et performante.</p>
+  </div>
+
+  <div class="cards-grid feature-grid">
+    <article class="feature-card" *ngFor="let feature of features">
+      <span class="material-symbols-outlined">{{ feature.icon }}</span>
+      <p>{{ feature.label }}</p>
+    </article>
+  </div>
+</section>

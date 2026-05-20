@@ -1,0 +1,269 @@
+<section class="department-details-page" *ngIf="!loading; else loadingTpl">
+  <header class="page-header-bar" *ngIf="department">
+    <div class="page-header-left">
+      <button type="button" class="btn-back" (click)="back()">
+        <mat-icon>arrow_back</mat-icon> Retour
+      </button>
+      <span class="page-subtitle">Détail du département</span>
+      <h1 class="page-title">{{ department.name }}</h1>
+      <p class="page-intro">
+        {{ department.code }} - {{ department.description || 'Aucune description renseignée' }}
+      </p>
+    </div>
+
+    <div class="page-header-right">
+      <button type="button" class="btn btn-ghost" (click)="toggleStatus()" *ngIf="canWrite">
+        <mat-icon>published_with_changes</mat-icon>
+        {{ department.status === 'ACTIF' ? 'Désactiver' : 'Réactiver' }}
+      </button>
+      <button type="button" class="btn btn-ghost" (click)="editDepartment()" *ngIf="canWrite">
+        <mat-icon>edit</mat-icon>
+        Modifier
+      </button>
+      <button type="button" class="btn btn-primary" (click)="deleteDepartment()" *ngIf="canWrite">
+        <mat-icon>delete</mat-icon>
+        Supprimer
+      </button>
+    </div>
+  </header>
+
+  <div class="content-scroll" *ngIf="department">
+    <section class="summary-cards">
+      <article class="summary-card">
+        <span class="sc-label">Statut</span>
+        <div class="sc-value">
+          <span class="status-pill" [class.active]="department.status === 'ACTIF'"
+            [class.inactive]="department.status === 'INACTIF'">
+            {{ department.status === 'ACTIF' ? 'Actif' : 'Inactif' }}
+          </span>
+        </div>
+        <span class="sc-subtext">État opérationnel du service</span>
+      </article>
+
+      <article class="summary-card">
+        <span class="sc-label">Chef de service</span>
+        <div class="sc-value manager-line">
+          <span class="avatar">{{ managerInitials() }}</span>
+          <span>{{ managerLabel() }}</span>
+        </div>
+        <span class="sc-subtext">{{ department.managerRole || 'Aucun rôle attribué' }}</span>
+      </article>
+
+      <article class="summary-card">
+        <span class="sc-label">Utilisateurs</span>
+        <div class="sc-value">{{ stats?.usersCount || department.usersCount }}</div>
+        <span class="sc-subtext">Rattachés au département</span>
+      </article>
+
+      <article class="summary-card">
+        <span class="sc-label">Documents</span>
+        <div class="sc-value">{{ stats?.documentsCount || department.documentsCount }}</div>
+        <span class="sc-subtext">Liés au département</span>
+      </article>
+    </section>
+
+    <div class="details-main-grid">
+      <mat-card class="info-card">
+        <div class="card-header-clean">
+          <h2>Informations du département</h2>
+          <mat-icon>business</mat-icon>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Code</label>
+            <p>{{ department.code }}</p>
+          </div>
+
+          <div class="info-item">
+            <label>Nom</label>
+            <p>{{ department.name }}</p>
+          </div>
+
+          <div class="info-item">
+            <label>Description</label>
+            <p>{{ department.description || 'Aucune description renseignée.' }}</p>
+          </div>
+
+          <div class="info-item">
+            <label>Chef de service</label>
+            <div class="link-display">
+              <mat-icon>person</mat-icon>
+              <strong>{{ managerLabel() }}</strong>
+              <span>{{ department.managerRole || 'Non attribué' }}</span>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <label>Organisation</label>
+            <p>Organisation #{{ department.organizationId }}</p>
+          </div>
+
+          <div class="info-item">
+            <label>Horodatage</label>
+            <p>Créé le {{ department.createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
+            <p *ngIf="department.updatedAt">Mis à jour le {{ department.updatedAt | date:'dd/MM/yyyy HH:mm' }}</p>
+          </div>
+        </div>
+      </mat-card>
+
+      <mat-card class="info-card">
+        <div class="card-header-clean">
+          <h2>Affectations rapides</h2>
+          <mat-icon>group_add</mat-icon>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-item" *ngIf="canLoadAllUsers">
+            <label>Utilisateurs du département</label>
+            <p>Sélectionnez les utilisateurs à rattacher à ce département principal.</p>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Utilisateurs</mat-label>
+              <mat-select [formControl]="usersForm.controls.userIds" multiple>
+                <mat-option *ngFor="let user of allUsers" [value]="user.id">
+                  {{ user.firstName }} {{ user.lastName }} - {{ user.role }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <div class="action-row">
+              <button type="button" mat-flat-button color="primary" (click)="saveUsers()" [disabled]="savingUsers">
+                <mat-icon *ngIf="!savingUsers">save</mat-icon>
+                <mat-spinner *ngIf="savingUsers" diameter="18"></mat-spinner>
+                Enregistrer les utilisateurs
+              </button>
+            </div>
+          </div>
+
+          <div class="info-item" *ngIf="canWrite">
+            <label>Documents liés</label>
+            <p>Associez les documents métier qui doivent être rattachés à ce service.</p>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Documents</mat-label>
+              <mat-select [formControl]="documentsForm.controls.documentIds" multiple>
+                <mat-option *ngFor="let document of allDocuments" [value]="document.id">
+                  {{ document.code }} - {{ document.title }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <div class="action-row">
+              <button type="button" mat-flat-button color="primary" (click)="saveDocuments()"
+                [disabled]="savingDocuments">
+                <mat-icon *ngIf="!savingDocuments">save</mat-icon>
+                <mat-spinner *ngIf="savingDocuments" diameter="18"></mat-spinner>
+                Enregistrer les documents
+              </button>
+            </div>
+          </div>
+        </div>
+      </mat-card>
+    </div>
+
+    <div class="details-main-grid bottom-grid">
+      <mat-card class="info-card">
+        <div class="card-header-clean">
+          <h2>Utilisateurs du département</h2>
+          <span class="count-badge">{{ users.length }}</span>
+        </div>
+
+        <div class="table-container-mini">
+          <table mat-table [dataSource]="users" class="word-table modern-table-compact">
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>Nom</th>
+              <td mat-cell *matCellDef="let user">{{ user.firstName }} {{ user.lastName }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="email">
+              <th mat-header-cell *matHeaderCellDef>Email</th>
+              <td mat-cell *matCellDef="let user">{{ user.email }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="role">
+              <th mat-header-cell *matHeaderCellDef>Rôle</th>
+              <td mat-cell *matCellDef="let user">{{ user.role }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Statut</th>
+              <td mat-cell *matCellDef="let user">
+                <span class="status-pill" [class.active]="user.isActive" [class.inactive]="!user.isActive">
+                  {{ user.isActive ? 'Actif' : 'Inactif' }}
+                </span>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="userColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: userColumns"></tr>
+          </table>
+
+          <div class="empty-state-mid" *ngIf="users.length === 0">
+            <mat-icon>person_off</mat-icon>
+            <p>Aucun utilisateur rattaché</p>
+          </div>
+        </div>
+      </mat-card>
+
+      <mat-card class="info-card">
+        <div class="card-header-clean">
+          <h2>Documents liés</h2>
+          <span class="count-badge">{{ documents.length }}</span>
+        </div>
+
+        <div class="table-container-mini">
+          <table mat-table [dataSource]="documents" class="word-table modern-table-compact">
+            <ng-container matColumnDef="code">
+              <th mat-header-cell *matHeaderCellDef>Code</th>
+              <td mat-cell *matCellDef="let document">{{ document.code }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="title">
+              <th mat-header-cell *matHeaderCellDef>Titre</th>
+              <td mat-cell *matCellDef="let document">{{ document.title }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="type">
+              <th mat-header-cell *matHeaderCellDef>Type</th>
+              <td mat-cell *matCellDef="let document">{{ document.type }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="docStatus">
+              <th mat-header-cell *matHeaderCellDef>Statut</th>
+              <td mat-cell *matCellDef="let document">
+                <span class="status-pill" [class.active]="document.status === 'APPROUVE'"
+                  [class.inactive]="document.status !== 'APPROUVE'">
+                  {{ document.status || 'BROUILLON' }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <td mat-cell *matCellDef="let document">
+                <button type="button" mat-stroked-button color="primary" (click)="viewDocument(document.id)">
+                  Voir
+                </button>
+                <button type="button" mat-flat-button color="primary" (click)="downloadDocument(document)">
+                  Télécharger
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="documentColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: documentColumns"></tr>
+          </table>
+
+          <div class="empty-state-mid" *ngIf="documents.length === 0">
+            <mat-icon>description</mat-icon>
+            <p>Aucun document lié</p>
+          </div>
+        </div>
+      </mat-card>
+    </div>
+  </div>
+</section>
+
+<ng-template #loadingTpl>
+  <div class="loading-state">
+    <mat-spinner diameter="36"></mat-spinner>
+    <span>Chargement du détail du département...</span>
+  </div>
+</ng-template>

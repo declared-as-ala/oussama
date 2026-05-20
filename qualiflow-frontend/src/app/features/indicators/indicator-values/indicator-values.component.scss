@@ -1,0 +1,203 @@
+.values-flex {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.entry-card,
+.history-table-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.card-head {
+    padding: 12px 20px;
+    background: var(--bg-raised);
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+/* COMPACT FORM */
+.compact-form {
+    padding: 20px;
+
+    .c-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+
+        @media (max-width: 600px) {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .c-group {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+
+        &.full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        input {
+            padding: 8px 12px;
+            border: 1px solid var(--border-mid);
+            border-radius: 6px;
+            font-size: 13px;
+            background: white;
+
+            &:focus {
+                outline: none;
+                border-color: var(--xl-green-mid);
+            }
+        }
+    }
+
+    .c-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 16px;
+    }
+}
+
+/* FLAT TABLE */
+.flat-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th.mat-header-cell {
+        background: white;
+        padding: 12px 20px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        border-bottom: 2px solid var(--bg-raised);
+    }
+
+    td.mat-cell {
+        padding: 12px 20px;
+        border-bottom: 1px solid var(--bg-raised);
+        font-size: 13px;
+    }
+
+    .v-cell {
+        font-weight: 800;
+        color: var(--xl-green);
+    }
+
+    .comm-cell {
+        color: var(--text-secondary);
+        max-width: 200px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .u-tag {
+        background: var(--bg-raised);
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        border: 1px solid var(--border);
+    }
+}
+
+.row-acts {
+    display: flex;
+    gap: 4px;
+    justify-content: flex-end;
+
+    .icon-btn {
+        width: 28px;
+        height: 28px;
+        border: none;
+        background: transparent;
+        color: var(--text-muted);
+        padding: 0;
+        cursor: pointer;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &:hover {
+            background: var(--bg-raised);
+            color: var(--text-primary);
+        }
+
+        &.del:hover {
+            background: #fee2e2;
+            color: var(--s-red);
+        }
+
+        mat-icon {
+            font-size: 16px;
+            width: 16px;
+            height: 16px;
+        }
+    }
+}
+
+.btn-sm-primary {
+    height: 32px;
+    padding: 0 16px;
+    border-radius: 6px;
+    background: var(--xl-green-mid);
+    color: white;
+    border: none;
+    font-weight: 700;
+    font-size: 12.5px;
+    cursor: pointer;
+
+    &:hover {
+        background: var(--xl-green);
+    }
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+}
+
+.btn-sm-ghost {
+    height: 32px;
+    padding: 0 16px;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-secondary);
+    border: none;
+    font-weight: 600;
+    font-size: 12.5px;
+    cursor: pointer;
+
+    &:hover {
+        background: var(--bg-raised);
+    }
+}
+
+.empty-vals,
+.loading-vals {
+    padding: 40px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12.5px;
+}
+
+.loading-vals {
+    display: flex;
+    justify-content: center;
+}

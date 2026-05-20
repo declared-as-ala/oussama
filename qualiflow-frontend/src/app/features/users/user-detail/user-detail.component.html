@@ -1,0 +1,206 @@
+﻿<div class="user-detail-container" *ngIf="!isLoading; else loadingTpl">
+  <!-- Header Section -->
+  <header class="page-header">
+    <div class="header-breadcrumb">
+      <button mat-icon-button (click)="goBack()" matTooltip="Retour à la liste">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <span class="breadcrumb-item">Utilisateurs</span>
+      <mat-icon class="breadcrumb-separator">chevron_right</mat-icon>
+      <span class="breadcrumb-item active">Détails de l'utilisateur</span>
+    </div>
+    <div class="header-actions" *ngIf="isAdminOrg()">
+      <button mat-stroked-button color="primary" *ngIf="!isEditMode" (click)="toggleEditMode()">
+        <mat-icon>edit</mat-icon>
+        Modifier
+      </button>
+      <button mat-stroked-button color="warn" *ngIf="isEditMode" (click)="toggleEditMode()" [disabled]="isSaving">
+        Annuler
+      </button>
+      <button mat-flat-button color="primary" *ngIf="isEditMode" (click)="saveChanges()"
+        [disabled]="userForm.invalid || isSaving">
+        <mat-icon *ngIf="!isSaving">save</mat-icon>
+        <mat-spinner diameter="20" *ngIf="isSaving"></mat-spinner>
+        Enregistrer
+      </button>
+    </div>
+  </header>
+
+  <div class="content-grid" [class.editing]="isEditMode">
+    <!-- Left Column: User Profile Card -->
+    <aside class="profile-sidebar">
+      <mat-card class="glass-card profile-card">
+        <div class="profile-header">
+          <div class="avatar-large">
+            {{ user?.firstName?.charAt(0) }}{{ user?.lastName?.charAt(0) }}
+          </div>
+          <h2 class="user-full-name">{{ user?.firstName }} {{ user?.lastName }}</h2>
+          <mat-chip-listbox>
+            <mat-chip class="role-chip" [class]="user?.role">
+              {{ user?.role }}
+            </mat-chip>
+            <mat-chip class="status-chip" [class.active]="user?.isActive">
+              {{ user?.isActive ? 'Actif' : 'Inactif' }}
+            </mat-chip>
+          </mat-chip-listbox>
+        </div>
+        <mat-divider></mat-divider>
+        <div class="profile-info">
+          <div class="info-item">
+            <mat-icon>email</mat-icon>
+            <div class="details">
+              <span class="label">Email</span>
+              <span class="value">{{ user?.email }}</span>
+            </div>
+          </div>
+          <div class="info-item">
+            <mat-icon>work</mat-icon>
+            <div class="details">
+              <span class="label">Fonction</span>
+              <span class="value">{{ user?.function || 'Non définie' }}</span>
+            </div>
+          </div>
+          <div class="info-item">
+            <mat-icon>business</mat-icon>
+            <div class="details">
+              <span class="label">Département</span>
+              <span class="value">{{ user?.department || 'Non défini' }}</span>
+            </div>
+          </div>
+        </div>
+      </mat-card>
+
+      <mat-card class="glass-card meta-card">
+        <h3>Informations Système</h3>
+        <div class="meta-info">
+          <div class="meta-item">
+            <span class="label">Créé le</span>
+            <span class="value">{{ formatDate(user?.createdAt) }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="label">Dernière connexion</span>
+            <span class="value">{{ formatDate(user?.lastLoginAt) }}</span>
+          </div>
+          <div class="meta-item" *ngIf="user?.updatedAt">
+            <span class="label">Mis à jour le</span>
+            <span class="value">{{ formatDate(user?.updatedAt) }}</span>
+          </div>
+        </div>
+      </mat-card>
+    </aside>
+
+    <!-- Right Column: Details / Edit Form -->
+    <main class="details-content">
+      <!-- View Mode -->
+      <mat-card class="glass-card content-card" *ngIf="!isEditMode">
+        <div class="card-header">
+          <h3>Vue d'ensemble</h3>
+        </div>
+        <div class="details-grid">
+          <div class="detail-block">
+            <h4>Identité</h4>
+            <div class="grid-row">
+              <div class="field">
+                <span class="label">Prénom</span>
+                <span class="value">{{ user?.firstName }}</span>
+              </div>
+              <div class="field">
+                <span class="label">Nom</span>
+                <span class="value">{{ user?.lastName }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="detail-block">
+            <h4>Permissions & Accès</h4>
+            <div class="grid-row">
+              <div class="field">
+                <span class="label">Rôle assigné</span>
+                <span class="value highlight">{{ user?.role }}</span>
+              </div>
+              <div class="field">
+                <span class="label">Statut du compte</span>
+                <span class="value status" [class.active]="user?.isActive">
+                  {{ user?.isActive ? 'Activé' : 'Désactivé' }}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="detail-block" *ngIf="user?.organizationName">
+            <h4>Organisation</h4>
+            <div class="field">
+              <span class="label">Institut</span>
+              <span class="value">{{ user?.organizationName }}</span>
+            </div>
+          </div>
+        </div>
+      </mat-card>
+
+      <!-- Edit Mode -->
+      <mat-card class="glass-card content-card edit-card" [formGroup]="userForm" *ngIf="isEditMode">
+        <div class="card-header">
+          <h3>Modifier les informations</h3>
+          <p>Mettez à jour les données personnelles et les permissions de l'utilisateur.</p>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-section">
+            <h4>Informations Personnelles</h4>
+            <div class="row">
+              <mat-form-field appearance="outline">
+                <mat-label>Prénom</mat-label>
+                <input matInput formControlName="firstName" placeholder="Jean">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Nom</mat-label>
+                <input matInput formControlName="lastName" placeholder="Dupont">
+              </mat-form-field>
+            </div>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Email</mat-label>
+              <input matInput formControlName="email" placeholder="jean.dupont@example.com">
+            </mat-form-field>
+          </div>
+
+          <div class="form-section">
+            <h4>Poste & Organisation</h4>
+            <div class="row">
+              <mat-form-field appearance="outline">
+                <mat-label>Fonction</mat-label>
+                <input matInput formControlName="function" placeholder="Chargé de qualité">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Département</mat-label>
+                <input matInput formControlName="department" placeholder="Production">
+              </mat-form-field>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h4>Rôle & Sécurité</h4>
+            <div class="row">
+              <mat-form-field appearance="outline">
+                <mat-label>Rôle</mat-label>
+                <mat-select formControlName="role">
+                  <mat-option *ngFor="let option of roleOptions" [value]="option.value">
+                    {{ option.label }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+              <div class="toggle-field">
+                <span class="label">Compte Actif</span>
+                <input type="checkbox" formControlName="isActive" class="ios-toggle">
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-card>
+    </main>
+  </div>
+</div>
+
+<ng-template #loadingTpl>
+  <div class="loading-state">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Chargement des détails de l'utilisateur...</p>
+  </div>
+</ng-template>

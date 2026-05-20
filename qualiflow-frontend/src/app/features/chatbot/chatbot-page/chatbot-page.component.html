@@ -1,0 +1,115 @@
+<section class="chatbot-shell" [class.sidebar-open]="sidebarOpen">
+  <aside class="conversation-panel" [class.open]="sidebarOpen">
+    <div class="panel-header">
+      <h2>Conversations</h2>
+      <button type="button" class="new-btn" (click)="startNewConversation()">Nouvelle</button>
+    </div>
+
+    <div class="panel-content">
+      <div *ngIf="loadingConversations" class="panel-state">
+        <span class="loading-spinner"></span>
+        Chargement...
+      </div>
+
+      <button *ngFor="let conversation of conversations; trackBy: trackByConversation" type="button"
+        class="conversation-item" [class.active]="conversation.id === selectedConversationId"
+        (click)="openConversation(conversation.id)">
+        <div class="conversation-meta">
+          <span class="title">{{ conversation.title || 'Conversation' }}</span>
+          <span class="time">{{ formatTime(conversation.updatedAt) }}</span>
+        </div>
+        <span class="date">{{ conversation.updatedAt | date: 'dd/MM/yyyy' }}</span>
+        <button type="button" class="delete-btn" title="Supprimer"
+          (click)="deleteConversation(conversation.id, $event)">
+        </button>
+      </button>
+
+      <div *ngIf="!loadingConversations && conversations.length === 0" class="panel-state">
+        Aucune conversation.
+      </div>
+    </div>
+  </aside>
+
+  <main class="chat-panel">
+    <header class="chat-header">
+      <div class="header-left">
+        <button type="button" class="mobile-toggle" (click)="toggleSidebar()" title="Conversations">
+          <mat-icon>menu</mat-icon>
+        </button>
+        <div>
+          <h1>Assistant GED</h1>
+          <p class="desktop-only">Posez vos questions sur les documents, procédures et processus.</p>
+        </div>
+      </div>
+    </header>
+
+    <div class="messages" #messagesContainer>
+      <!-- Skeleton Loader for conversation loading -->
+      <div *ngIf="loadingMessages" class="skeleton-messages">
+        <div class="skeleton-bubble assistant"></div>
+        <div class="skeleton-bubble user"></div>
+        <div class="skeleton-bubble assistant"></div>
+      </div>
+
+      <div *ngIf="!loadingMessages && messages.length === 0" class="welcome-container">
+        <div class="bot-avatar animate-float">
+          <mat-icon>smart_toy</mat-icon>
+        </div>
+        <h2>Bienvenue sur l'Assistant GED</h2>
+        <p>Je suis prêt à vous aider. Posez-moi une question sur vos documents, processus ou non-conformités.</p>
+        <div class="suggested-prompts">
+          <button (click)="questionControl.setValue('Quels sont mes processus actifs ?')">Mes processus actifs ?</button>
+          <button (click)="questionControl.setValue('Résumé des non-conformités')">Résumé des NC</button>
+        </div>
+      </div>
+
+      <article *ngFor="let message of messages; trackBy: trackByMessage" class="message-wrapper"
+        [class.user-wrapper]="isUserMessage(message.role)">
+        <div class="message" [class.message-user]="isUserMessage(message.role)"
+          [class.message-assistant]="!isUserMessage(message.role)">
+          <div class="message-header">
+            <span class="message-role">{{ isUserMessage(message.role) ? 'Vous' : 'Assistant QualiFlow' }}</span>
+            <button *ngIf="!isUserMessage(message.role)" class="copy-btn" (click)="copyToClipboard(message.content)"
+              matTooltip="Copier le texte">
+              <mat-icon>content_copy</mat-icon>
+            </button>
+          </div>
+          <div class="message-content" [innerHTML]="renderMarkdown(message.content)"></div>
+          <div class="message-time">{{ formatTime(message.createdAt) }}</div>
+        </div>
+      </article>
+
+      <div *ngIf="sending" class="message message-assistant typing-bubble">
+        <div class="message-role">Assistant QualiFlow</div>
+        <div class="typing-indicator">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="quick-actions-bar">
+      <button (click)="questionControl.setValue('Quels sont les documents en attente ?')">Documents en attente</button>
+      <button (click)="questionControl.setValue('Procédures récentes')">Procédures récentes</button>
+      <button (click)="questionControl.setValue('Statistiques qualité')">Stats Qualité</button>
+    </div>
+
+    <footer class="composer">
+      <div *ngIf="errorMessage" class="error-text">{{ errorMessage }}</div>
+
+      <div class="composer-input-wrapper">
+        <textarea [formControl]="questionControl" rows="1" maxlength="1500" placeholder="Écrivez votre question ici..."
+          (keydown)="onComposerKeydown($event)"></textarea>
+      </div>
+
+      <div class="composer-actions">
+        <span class="hint">Entrer pour envoyer, Shift+Entrer pour nouvelle ligne</span>
+        <button type="button" [class.sending]="sending" [disabled]="sending || !questionControl.value.trim()"
+          (click)="sendQuestion()">
+          {{ sending ? 'Envoi en cours...' : 'Envoyer' }}
+        </button>
+      </div>
+    </footer>
+  </main>
+</section>

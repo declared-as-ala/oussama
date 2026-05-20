@@ -1,0 +1,273 @@
+﻿.process-form-page {
+  display: flex;
+  flex-direction: column;
+  background: #f3f5f7;
+  min-height: 100vh;
+}
+
+/* ── PAGE HEADER BAR ── */
+.page-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  border-bottom: 1px solid #e1e3e5;
+  padding: 12px 24px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.page-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+
+.page-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cancel-btn {
+  height: 36px;
+  font-size: 0.85rem;
+  border-color: #d1d5db !important;
+  color: #374151 !important;
+}
+
+.new-process-btn {
+  background-color: #217346 !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  border-radius: 3px !important;
+  height: 36px;
+  padding: 0 16px;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    margin-right: 4px;
+  }
+}
+
+/* ── PROGRESS BAR ── */
+.form-progress-bar {
+  background: #ffffff;
+  padding: 0 24px 12px;
+  border-bottom: 1px solid #e1e3e5;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+
+    strong {
+      color: #217346;
+    }
+  }
+
+  .progress-track {
+    height: 4px;
+    background: #e5e7eb;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: #217346;
+    transition: width 0.3s ease;
+  }
+}
+
+/* ── FORM BODY ── */
+.form-body {
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.form-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* ── FORM SECTIONS ── */
+.form-section-clean {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  .section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+
+    mat-icon {
+      margin-top: 2px;
+      color: #217346;
+      background: #e9f5ee;
+      padding: 8px;
+      border-radius: 8px;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    p {
+      margin: 2px 0 0;
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+  }
+
+  .section-content {
+    background: #ffffff;
+    border: 1px solid #e1e3e5;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+    &.grid-two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+
+      @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .full-width {
+      grid-column: 1 / -1;
+    }
+  }
+}
+
+/* ── CHIP GRID ── */
+.chip-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chip-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  .field-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+
+    label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #4b5563;
+    }
+
+    .count-badge {
+      font-size: 0.7rem;
+      background: #e9f5ee;
+      color: #107c10;
+      padding: 1px 6px;
+      border-radius: 10px;
+      font-weight: 800;
+      border: 1px solid #c3e6cb;
+    }
+  }
+
+  .chip-form-field {
+    width: 100%;
+
+    &.minimal {
+      ::ng-deep .mat-form-field-flex {
+        padding-top: 4px !important;
+        background: #fdfdfd;
+      }
+
+      ::ng-deep .mat-chip-list-wrapper {
+        margin: 0 !important;
+        gap: 4px;
+      }
+
+      mat-chip-row {
+        min-height: 24px;
+        font-size: 0.8rem;
+        background: #f1f3f5;
+        border: 1px solid #dee2e6;
+        color: #333;
+
+        mat-icon {
+          font-size: 14px;
+          width: 14px;
+          height: 14px;
+          opacity: 0.7;
+        }
+      }
+    }
+
+    ::ng-deep .mat-form-field-wrapper {
+      padding-bottom: 0;
+    }
+  }
+}
+
+/* ── UTILS ── */
+.loading-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 0;
+  gap: 16px;
+  color: #666;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+::ng-deep .mat-form-field-appearance-outline .mat-form-field-outline {
+  color: #d1d5db;
+}
+
+::ng-deep .mat-form-field-appearance-outline.mat-focused .mat-form-field-outline-thick {
+  color: #217346;
+}
+
+::ng-deep .mat-form-field-appearance-outline.mat-focused .mat-form-field-label {
+  color: #217346;
+}
