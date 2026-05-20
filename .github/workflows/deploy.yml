@@ -103,18 +103,17 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASSWORD }}
+          port: 22
+          timeout: 120s
+          command_timeout: 300s
           script: |
             set -e
+            apt-get update && apt-get install -y sshpass
             cd /opt/qualiflow
-
-            # Pull new images (credentials already configured on VPS)
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
             export REGISTRY=ghcr.io/${{ github.repository_owner }}
             export TAG=${{ needs.build.outputs.tag }}
-
             docker compose pull backend frontend
             docker compose up -d --remove-orphans
             docker system prune -f --filter "until=24h"
-
             echo "Deployed tag $TAG successfully"
