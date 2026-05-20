@@ -3,10 +3,10 @@ FROM node:20-alpine AS build
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --prefer-offline
+RUN npm ci --prefer-offline --legacy-peer-deps
 
 COPY . .
-RUN npm run build -- --configuration production
+RUN npm run build -- --configuration production --legacy-peer-deps
 
 # Stage 2: Serve with Nginx
 FROM nginx:1.27-alpine AS final
