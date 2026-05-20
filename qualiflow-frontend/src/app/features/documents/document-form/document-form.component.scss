@@ -352,6 +352,89 @@
     padding: 10px;
   }
 }
+/* ── SIGNATURE PAD ── */
+.signature-pad-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 500px;
+}
+
+.signature-pad-wrapper {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+
+  &:hover {
+    border-color: var(--xl-green-mid);
+  }
+
+  .signature-pad {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: crosshair;
+    touch-action: none;
+  }
+
+  .signature-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    color: #94a3b8;
+    gap: 8px;
+
+    mat-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+      opacity: 0.5;
+    }
+
+    span {
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+  }
+
+  .signature-overlay {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: rgba(0, 135, 90, 0.1);
+    /* xl-green-mid approximation */
+    color: #00875a;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    pointer-events: none;
+  }
+
+  .signature-result-preview {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: white;
+    padding: 10px;
+  }
+}
 
 .signature-actions {
   display: flex;
@@ -392,4 +475,63 @@
   color: #64748b;
   margin: 0;
   font-style: italic;
+}
+
+/* ── TAB NAVIGATION STYLES ── */
+.form-tabs-container {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  background: white;
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+
+  .tab-button {
+    background: transparent;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 12px;
+    transition: all 0.2s ease-in-out;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: #94a3b8;
+      transition: color 0.2s;
+    }
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.02);
+      color: var(--text-primary);
+    }
+
+    &.active {
+      background: rgba(16, 185, 129, 0.08);
+      color: var(--xl-green-mid);
+
+      mat-icon {
+        color: var(--xl-green-mid);
+      }
+    }
+  }
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    padding: 12px;
+    
+    .tab-button {
+      width: 100%;
+      justify-content: flex-start;
+    }
+  }
 }

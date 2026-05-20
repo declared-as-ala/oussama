@@ -97,16 +97,6 @@
             <mat-label>Fonction / Poste</mat-label>
             <input matInput formControlName="function" placeholder="Ex: Responsable Qualité" />
           </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Département / Unité</mat-label>
-            <mat-select formControlName="department">
-              <mat-option [value]="''">-- Sélectionner un département --</mat-option>
-              <mat-option *ngFor="let dept of departments" [value]="dept.name">
-                {{ dept.name }} ({{ dept.code }})
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
         </div>
       </div>
 

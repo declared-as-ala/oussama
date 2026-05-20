@@ -231,4 +231,180 @@ mat-form-field {
     color: #b45309;
     line-height: 1.4;
   }
+}
+
+/* ── UPLOAD & ATTACHMENTS STYLING ── */
+.upload-zone {
+  border: 2px dashed #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  margin-bottom: 20px;
+
+  &:hover {
+    border-color: var(--xl-green-mid);
+    background: #f1f5f9;
+  }
+
+  .file-input-hidden {
+    display: none;
+  }
+
+  .upload-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 20px;
+    width: 100%;
+    cursor: pointer;
+
+    .upload-icon {
+      font-size: 40px;
+      width: 40px;
+      height: 40px;
+      color: #94a3b8;
+      margin-bottom: 12px;
+    }
+
+    .label-text {
+      text-align: center;
+
+      .main-text {
+        display: block;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #334155;
+      }
+
+      .sub-text {
+        display: block;
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-top: 4px;
+      }
+    }
+  }
+}
+
+.sub-section-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #475569;
+  margin: 0 0 12px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.attachments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 8px 12px;
+
+  .file-icon-badge {
+    color: #64748b;
+    flex-shrink: 0;
+  }
+
+  .attachment-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+
+    .file-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #334155;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .file-size {
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+  }
+
+  .btn-delete {
+    color: #ef4444;
+    
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
+/* ── TAB NAVIGATION STYLES ── */
+.form-tabs-container {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  background: white;
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+
+  .tab-button {
+    background: transparent;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 12px;
+    transition: all 0.2s ease-in-out;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: #94a3b8;
+      transition: color 0.2s;
+    }
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.02);
+      color: var(--text-primary);
+    }
+
+    &.active {
+      background: rgba(16, 185, 129, 0.08);
+      color: var(--xl-green-mid);
+
+      mat-icon {
+        color: var(--xl-green-mid);
+      }
+    }
+  }
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    padding: 12px;
+    
+    .tab-button {
+      width: 100%;
+      justify-content: flex-start;
+    }
+  }
 }

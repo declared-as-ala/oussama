@@ -72,8 +72,7 @@ export class OrganizationDetailsComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
       role: ['UTILISATEUR', [Validators.required]],
-      function: [''],
-      department: ['']
+      function: ['']
     });
   }
 
@@ -239,8 +238,7 @@ export class OrganizationDetailsComponent implements OnInit {
       email: raw.email,
       password: raw.password,
       role: raw.role,
-      function: raw.function || null,
-      department: raw.department || null
+      function: raw.function || null
     }).subscribe({
       next: () => {
         this.notificationService.showSuccess('Utilisateur créé et email envoyé.');
@@ -250,8 +248,7 @@ export class OrganizationDetailsComponent implements OnInit {
           email: '',
           password: '',
           role: 'UTILISATEUR',
-          function: '',
-          department: ''
+          function: ''
         });
         this.showCreateUserForm = false;
         this.loadOrganizationUsers(this.organization!.id);

@@ -106,9 +106,21 @@ export interface NonConformityResponse {
   updatedAt?: string | null;
 }
 
+export interface NonConformityAttachmentResponse {
+  id: number;
+  nonConformityId: number;
+  organizationId: number;
+  originalFileName: string;
+  fileExtension?: string | null;
+  mimeType?: string | null;
+  fileSize?: number | null;
+  createdAt: string;
+}
+
 export interface NonConformityDetailsResponse {
   nonConformity: NonConformityResponse;
   actions: CorrectiveActionResponse[];
+  attachments: NonConformityAttachmentResponse[];
 }
 
 export interface PagedNonConformityResponse {

@@ -1,4 +1,4 @@
-﻿import { Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
 import {
@@ -12,7 +12,8 @@ import {
   ProcessStatisticsResponse,
   CreateProcessRequest,
   UpdateProcessRequest,
-  UpdateProcessPilotRequest
+  UpdateProcessPilotRequest,
+  ProcessActionLogResponse
 } from '../models/process.models';
 
 @Injectable({
@@ -70,5 +71,13 @@ export class ProcessService {
 
   getProcessStatistics(): Observable<ProcessStatisticsResponse> {
     return this.apiService.get<ProcessStatisticsResponse>(`${this.endpoint}/statistics`);
+  }
+
+  getActionLogs(processId: number): Observable<ProcessActionLogResponse[]> {
+    return this.apiService.get<ProcessActionLogResponse[]>(`${this.endpoint}/${processId}/action-logs`);
+  }
+
+  deleteActionLog(processId: number, logId: number): Observable<void> {
+    return this.apiService.delete<void>(`${this.endpoint}/${processId}/action-logs/${logId}`);
   }
 }

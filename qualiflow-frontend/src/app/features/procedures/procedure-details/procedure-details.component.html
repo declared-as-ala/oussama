@@ -1,189 +1,350 @@
 <section class="procedure-details-page">
-    <div class="loading-overlay" *ngIf="loading">
-        <mat-spinner diameter="40"></mat-spinner>
-        <span>{{ 'detail.procedure.loading' | t }}</span>
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner diameter="38"></mat-spinner>
+    <span>Chargement de la procédure...</span>
+  </div>
+
+  <ng-container *ngIf="!loading && details">
+    <div class="page-header-bar">
+      <div class="page-header-left">
+        <div class="page-subtitle">
+          <button type="button" class="back-link-btn" (click)="backToList()">
+            <mat-icon>arrow_back</mat-icon>
+            <span>{{ 'common.backToList' | t }}</span>
+          </button>
+        </div>
+        <h1 class="page-title">{{ details.procedure.code }} — {{ details.procedure.title }}</h1>
+        <p class="page-intro">Détail de la procédure qualité — {{ details.procedure.processName }}</p>
+      </div>
+      <div class="page-header-right">
+        <button mat-stroked-button color="primary" (click)="viewHistory()"
+          style="border-radius: 12px; font-weight: 700; height: 40px; border-color: #cbd5e1; display: flex; align-items: center; gap: 8px;">
+          <mat-icon style="font-size: 20px; width: 20px; height: 20px; margin-right: 0;">history</mat-icon>
+          <span>Historique d'Audit</span>
+        </button>
+        <button *ngIf="canWrite" mat-flat-button color="primary" class="new-process-btn" (click)="editProcedure()"
+          style="background-color: var(--xl-green-mid) !important; color: white !important;">
+          <mat-icon>edit</mat-icon> {{ 'common.edit' | t }}
+        </button>
+      </div>
     </div>
 
-    <ng-container *ngIf="!loading && details">
-        <!-- PAGE HEADER BAR -->
-        <div class="page-header-bar">
-            <div class="page-header-left">
-                <div class="page-subtitle">
-                    <button type="button" class="back-link-btn" (click)="backToList()">
-                        <mat-icon>arrow_back</mat-icon>
-                        <span>{{ 'common.backToList' | t }}</span>
-                    </button>
-                </div>
-                <h1 class="page-title">{{ details.procedure.code }} — {{ details.procedure.title }}</h1>
-            </div>
+    <!-- TABS SYSTEM -->
+    <div class="form-tabs-container">
+      <button type="button" class="tab-button" [class.active]="activeTab === 0" (click)="setActiveTab(0)">
+        <mat-icon>info_outline</mat-icon>
+        <span>1. Informations Générales</span>
+      </button>
+      <button type="button" class="tab-button" [class.active]="activeTab === 1" (click)="setActiveTab(1)">
+        <mat-icon>rule</mat-icon>
+        <span>2. Instructions <span *ngIf="details.instructions.length > 0" class="tab-badge">{{ details.instructions.length }}</span></span>
+      </button>
+      <button type="button" class="tab-button" [class.active]="activeTab === 2" (click)="setActiveTab(2)">
+        <mat-icon>account_tree</mat-icon>
+        <span>3. Processus liés <span *ngIf="(details.procedure.processes || []).length > 0" class="tab-badge">{{ (details.procedure.processes || []).length }}</span></span>
+      </button>
+      <button type="button" class="tab-button" [class.active]="activeTab === 3" (click)="setActiveTab(3)">
+        <mat-icon>description</mat-icon>
+        <span>4. Documents liés <span *ngIf="(details.procedure.documents || []).length > 0" class="tab-badge doc-badge">{{ (details.procedure.documents || []).length }}</span></span>
+      </button>
+    </div>
 
-            <div class="page-header-right">
-                <button *ngIf="canWrite" mat-flat-button color="primary" class="new-process-btn"
-                    (click)="editProcedure()">
-                    <mat-icon>edit</mat-icon> {{ 'common.edit' | t }}
-                </button>
-            </div>
+    <!-- TAB 1 : INFORMATIONS GÉNÉRALES -->
+    <div class="details-body" *ngIf="activeTab === 0">
+      <div class="summary-cards">
+        <div class="summary-card">
+          <div class="sc-label">Processus parent</div>
+          <div class="sc-value" style="font-size: 16px; gap: 8px;">
+            <mat-icon style="color: var(--xl-green-mid); font-size: 20px; width: 20px; height: 20px;">hub</mat-icon>
+            {{ details.procedure.processCode }}
+          </div>
+          <div style="font-size: 12px; color: #90a4ae; font-weight: 500;">{{ details.procedure.processName }}</div>
         </div>
 
-        <div class="details-body">
-            <!-- SUMMARY CARDS -->
-            <div class="summary-cards">
-                <div class="summary-card">
-                    <span class="sc-label">{{ 'detail.procedure.parentProcess' | t }}</span>
-                    <div class="sc-value">
-                        <mat-icon style="color: var(--xl-green-mid); margin-right: 8px;">hub</mat-icon>
-                        {{ details.procedure.processCode }}
-                    </div>
-                    <span class="sc-subtext">{{ details.procedure.processName }}</span>
-                </div>
-
-                <div class="summary-card">
-                    <span class="sc-label">{{ 'common.responsible' | t }}</span>
-                    <div class="sc-value">
-                        <div class="pilote-avatar" *ngIf="details.procedure.responsibleFullName">
-                            {{ details.procedure.responsibleFullName.charAt(0) }}
-                        </div>
-                        {{ details.procedure.responsibleFullName || ('common.toDefine' | t) }}
-                    </div>
-                </div>
-
-                <div class="summary-card">
-                    <span class="sc-label">{{ 'detail.nc.currentStatus' | t }}</span>
-                    <div class="sc-value">
-                        <span class="tag" [ngClass]="details.procedure.status === 'ACTIF' ? 'conforme' : 'perime'">
-                            {{ getStatusLabel(details.procedure.status) }}
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="details-main-grid">
-                <!-- GENERAL INFO -->
-                <mat-card class="info-card">
-                    <div class="card-header-clean">
-                        <h2>{{ 'form.indicator.generalInfo' | t }}</h2>
-                        <mat-icon>info</mat-icon>
-                    </div>
-                    <div class="info-grid">
-                        <div class="info-item full-width">
-                            <label>{{ 'detail.indicator.description' | t }}</label>
-                            <p>{{ details.procedure.description || ('detail.nc.noDescription' | t) }}</p>
-                        </div>
-                        <div class="info-item">
-                            <label>{{ 'form.procedure.mainObjective' | t }}</label>
-                            <p>{{ details.procedure.objective || ('detail.procedure.notProvided' | t) }}</p>
-                        </div>
-                        <div class="info-item">
-                            <label>{{ 'form.procedure.scope' | t }}</label>
-                            <p>{{ details.procedure.scope || ('detail.procedure.notProvided' | t) }}</p>
-                        </div>
-                        <div class="info-item">
-                            <label>{{ 'common.createdAt' | t }}</label>
-                            <p>{{ details.procedure.createdAt | date: 'dd/MM/yyyy' }}</p>
-                        </div>
-                        <div class="info-item">
-                            <label>{{ 'detail.procedure.lastUpdated' | t }}</label>
-                            <p>{{ details.procedure.updatedAt ? (details.procedure.updatedAt | date: 'dd/MM/yyyy') :
-                                ('detail.procedure.never' | t) }}</p>
-                        </div>
-                    </div>
-                </mat-card>
-
-                <!-- INSTRUCTIONS -->
-                <mat-card class="info-card instructions-section">
-                    <div class="card-header-clean">
-                        <h2>{{ 'detail.procedure.instructions' | t }} ({{ details.instructions.length }})</h2>
-                        <button mat-button color="primary"
-                            *ngIf="canWrite && !editingInstructionId && !isAddingInstruction"
-                            (click)="startAddInstruction()">
-                            <mat-icon>add</mat-icon> {{ 'detail.nc.add' | t }}
-                        </button>
-                    </div>
-
-                    <!-- INSTRUCTION FORM (INLINE) -->
-                    <div class="quick-actor-form" *ngIf="canWrite && (isAddingInstruction || editingInstructionId)">
-                        <form [formGroup]="instructionForm" (ngSubmit)="saveInstruction()"
-                            class="instruction-inline-form">
-                            <mat-form-field appearance="outline" style="width: 100px;">
-                                <mat-label>{{ 'detail.procedure.order' | t }}</mat-label>
-                                <input matInput type="number" formControlName="orderIndex" />
-                            </mat-form-field>
-                            <mat-form-field appearance="outline" style="width: 120px;">
-                                <mat-label>{{ 'common.code' | t }}</mat-label>
-                                <input matInput formControlName="code" />
-                            </mat-form-field>
-                            <mat-form-field appearance="outline" style="flex: 1;">
-                                <mat-label>{{ 'detail.procedure.instructionTitle' | t }}</mat-label>
-                                <input matInput formControlName="title" />
-                            </mat-form-field>
-                            <div class="form-actions-inline">
-                                <button mat-icon-button color="primary" type="submit"
-                                    [disabled]="instructionForm.invalid">
-                                    <mat-icon>check_circle</mat-icon>
-                                </button>
-                                <button mat-icon-button color="warn" type="button"
-                                    (click)="cancelInstructionEdit(); instructionForm.markAsPristine()">
-                                    <mat-icon>cancel</mat-icon>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-
-                    <div class="empty-box" *ngIf="details.instructions.length === 0">
-                        <mat-icon>assignment_late</mat-icon>
-                        <span>{{ 'detail.procedure.noInstruction' | t }}</span>
-                    </div>
-
-                    <div class="table-container" *ngIf="details.instructions.length > 0">
-                        <table mat-table [dataSource]="details.instructions" class="details-word-table">
-                            <ng-container matColumnDef="orderIndex">
-                                <th mat-header-cell *matHeaderCellDef style="width: 60px;">#</th>
-                                <td mat-cell *matCellDef="let item">{{ item.orderIndex }}</td>
-                            </ng-container>
-
-                            <ng-container matColumnDef="code">
-                                <th mat-header-cell *matHeaderCellDef style="width: 120px;">Code</th>
-                                <td mat-cell *matCellDef="let item"><strong>{{ item.code }}</strong></td>
-                            </ng-container>
-
-                            <ng-container matColumnDef="title">
-                                <th mat-header-cell *matHeaderCellDef>{{ 'detail.procedure.instruction' | t }}</th>
-                                <td mat-cell *matCellDef="let item">{{ item.title }}</td>
-                            </ng-container>
-
-                            <ng-container matColumnDef="status">
-                                <th mat-header-cell *matHeaderCellDef style="width: 100px;">{{ 'common.status' | t }}
-                                </th>
-                                <td mat-cell *matCellDef="let item">
-                                    <span class="tag" [ngClass]="item.status === 'ACTIF' ? 'conforme' : 'perime'"
-                                        style="font-size: 10px; padding: 1px 6px;">
-                                        {{ getStatusLabel(item.status) }}
-                                    </span>
-                                </td>
-                            </ng-container>
-
-                            <ng-container matColumnDef="actions">
-                                <th mat-header-cell *matHeaderCellDef style="width: 100px;"></th>
-                                <td mat-cell *matCellDef="let item">
-                                    <div class="table-actions">
-                                        <button mat-icon-button class="action-btn edit-btn"
-                                            (click)="editInstruction(item)">
-                                            <mat-icon>edit</mat-icon>
-                                        </button>
-                                        <button mat-icon-button class="action-btn delete-btn"
-                                            (click)="deleteInstruction(item)">
-                                            <mat-icon>delete</mat-icon>
-                                        </button>
-                                    </div>
-                                </td>
-                            </ng-container>
-
-                            <tr mat-header-row *matHeaderRowDef="displayedInstructionColumns"></tr>
-                            <tr mat-row *matRowDef="let row; columns: displayedInstructionColumns"></tr>
-                        </table>
-                    </div>
-                </mat-card>
-            </div>
+        <div class="summary-card">
+          <div class="sc-label">Responsable</div>
+          <div class="sc-value pilote-cell" style="font-size: 15px;">
+            <div class="pilote-avatar">{{ details.procedure.responsibleFullName?.charAt(0) || '?' }}</div>
+            <span>{{ details.procedure.responsibleFullName || 'Non défini' }}</span>
+          </div>
         </div>
-    </ng-container>
+
+        <div class="summary-card">
+          <div class="sc-label">Statut</div>
+          <div class="sc-value">
+            <span class="tag" [ngClass]="details.procedure.status === 'ACTIF' ? 'conforme' : 'perime'">
+              {{ getStatusLabel(details.procedure.status) }}
+            </span>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="sc-label">Version</div>
+          <div class="sc-value">
+            <span class="tag conforme" style="background-color: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">
+              v{{ details.procedure.versionNumber || '1.0' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="sc-label">Instructions</div>
+          <div class="sc-value">{{ details.instructions.length }}</div>
+        </div>
+      </div>
+
+      <div class="details-main-grid">
+        <mat-card class="info-card">
+          <div class="card-header-clean">
+            <mat-icon>info_outline</mat-icon>
+            <h2>Informations générales</h2>
+          </div>
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Description</label>
+              <p>{{ details.procedure.description || 'Aucune description.' }}</p>
+            </div>
+            <div class="info-item">
+              <label>Commentaire de révision</label>
+              <p>{{ details.procedure.revisionComment || 'Aucun commentaire.' }}</p>
+            </div>
+            <div class="info-item">
+              <label>Objectif principal</label>
+              <p>{{ details.procedure.objective || 'Non renseigné.' }}</p>
+            </div>
+            <div class="info-item">
+              <label>Périmètre</label>
+              <p>{{ details.procedure.scope || 'Non renseigné.' }}</p>
+            </div>
+            <div class="info-item">
+              <label>Créé le</label>
+              <p>{{ details.procedure.createdAt | date: 'dd/MM/yyyy' }}</p>
+            </div>
+            <div class="info-item">
+              <label>Dernière mise à jour</label>
+              <p>{{ details.procedure.updatedAt ? (details.procedure.updatedAt | date: 'dd/MM/yyyy') : 'Jamais' }}</p>
+            </div>
+          </div>
+        </mat-card>
+      </div>
+    </div>
+
+    <!-- TAB 2 : INSTRUCTIONS -->
+    <div class="tab-content-container instructions-tab" *ngIf="activeTab === 1">
+
+      <div class="proc-tab-header">
+        <div class="proc-tab-title">
+          <div class="proc-tab-icon">
+            <mat-icon>rule</mat-icon>
+          </div>
+          <div>
+            <h2>Instructions de la procédure</h2>
+            <p>{{ details.instructions.length }} instruction{{ details.instructions.length > 1 ? 's' : '' }}</p>
+          </div>
+        </div>
+        <div *ngIf="canWrite && !editingInstructionId && !isAddingInstruction" class="proc-tab-actions">
+          <button mat-flat-button color="primary" class="proc-tab-submit-btn" (click)="startAddInstruction()">
+            <mat-icon>add</mat-icon>
+            <span>Ajouter une instruction</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Inline form -->
+      <div class="quick-actor-form" *ngIf="canWrite && (isAddingInstruction || editingInstructionId)">
+        <form [formGroup]="instructionForm" (ngSubmit)="saveInstruction()" class="instruction-inline-form">
+          <mat-form-field appearance="outline" style="width: 90px;">
+            <mat-label>Ordre</mat-label>
+            <input matInput type="number" formControlName="orderIndex" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" style="width: 130px;">
+            <mat-label>Code</mat-label>
+            <input matInput formControlName="code" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" style="flex: 1;">
+            <mat-label>Titre de l'instruction</mat-label>
+            <input matInput formControlName="title" />
+          </mat-form-field>
+          <div class="form-actions-inline">
+            <button mat-icon-button color="primary" type="submit" [disabled]="instructionForm.invalid">
+              <mat-icon>check_circle</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" type="button"
+              (click)="cancelInstructionEdit(); instructionForm.markAsPristine()">
+              <mat-icon>cancel</mat-icon>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="proc-tab-empty" *ngIf="details.instructions.length === 0">
+        <mat-icon>assignment_late</mat-icon>
+        <h3>Aucune instruction</h3>
+        <p>Cette procédure n'a pas encore d'instructions définies.<br *ngIf="canWrite">
+          <span *ngIf="canWrite">Utilisez le bouton ci-dessus pour en ajouter.</span>
+        </p>
+      </div>
+
+      <div class="table-wrap" *ngIf="details.instructions.length > 0">
+        <table class="details-word-table">
+          <thead>
+            <tr>
+              <th style="width: 60px;">#</th>
+              <th style="width: 120px;">Code</th>
+              <th>Instruction</th>
+              <th style="width: 110px;">Statut</th>
+              <th style="width: 100px; text-align: center;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of details.instructions; trackBy: trackByInstructionId">
+              <td>{{ item.orderIndex }}</td>
+              <td><strong style="color: var(--xl-green-mid); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">{{ item.code }}</strong></td>
+              <td>{{ item.title }}</td>
+              <td>
+                <span class="tag" [ngClass]="item.status === 'ACTIF' ? 'conforme' : 'perime'" style="font-size: 10px; padding: 3px 8px;">
+                  {{ getStatusLabel(item.status) }}
+                </span>
+              </td>
+              <td style="text-align: center;">
+                <div style="display: inline-flex; gap: 4px;">
+                  <button mat-icon-button color="primary" (click)="editInstruction(item)" style="width: 30px; height: 30px;">
+                    <mat-icon style="font-size: 16px; width: 16px; height: 16px;">edit</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" (click)="deleteInstruction(item)" style="width: 30px; height: 30px;">
+                    <mat-icon style="font-size: 16px; width: 16px; height: 16px;">delete</mat-icon>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 3 : PROCESSUS LIÉS -->
+    <div class="tab-content-container procedures-tab" *ngIf="activeTab === 2">
+      <div class="proc-tab-header">
+        <div class="proc-tab-title">
+          <div class="proc-tab-icon" style="background: var(--xl-green-xlight);">
+            <mat-icon style="color: var(--xl-green-mid);">account_tree</mat-icon>
+          </div>
+          <div>
+            <h2>Processus liés à la procédure</h2>
+            <p>{{ (details.procedure.processes || []).length }} processus associé{{ (details.procedure.processes || []).length > 1 ? 's' : '' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="proc-tab-empty" *ngIf="!(details.procedure.processes?.length)">
+        <mat-icon>hub</mat-icon>
+        <h3>Aucun processus lié</h3>
+        <p>Cette procédure n'est rattachée à aucun processus.</p>
+      </div>
+
+      <div class="table-wrap" *ngIf="details.procedure.processes?.length">
+        <table class="details-word-table">
+          <thead>
+            <tr>
+              <th>Processus</th>
+              <th style="width: 140px;">Type</th>
+              <th style="width: 140px;">Statut</th>
+              <th style="width: 100px;">Version</th>
+              <th style="width: 80px; text-align: center;">Voir</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of details.procedure.processes">
+              <td>
+                <div class="pilote-cell">
+                  <div class="pilote-avatar" style="background: var(--xl-green-xlight); color: var(--xl-green-mid); border: 1px solid rgba(33,115,70,0.15); font-weight: 700;">
+                    {{ p.code.charAt(0) }}
+                  </div>
+                  <div class="proc-text-container">
+                    <span class="proc-code-cell" style="color: var(--xl-green-mid); font-family: 'Consolas', monospace; font-size: 11px; font-weight: 600; background: var(--xl-green-xlight); padding: 2px 8px; border-radius: 4px; width: fit-content;">{{ p.code }}</span>
+                    <span class="proc-title-cell" style="font-weight: 700; color: #1e293b; font-size: 14px; margin-top: 4px;">{{ p.name }}</span>
+                  </div>
+                </div>
+              </td>
+              <td><span class="tag-type" style="padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; background: var(--bg-body); color: var(--text-secondary); border: 1px solid var(--border);">{{ p.type }}</span></td>
+              <td>
+                <span class="status-badge" [ngClass]="p.status.toLowerCase()" style="padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 800; text-transform: uppercase; border-left: 4px solid currentColor; display: inline-block; min-width: 100px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+                  {{ p.status === 'ACTIF' ? 'Actif' : 'Inactif' }}
+                </span>
+              </td>
+              <td><span class="revision-v" style="font-weight: 700; color: var(--xl-green-mid); font-size: 13px; padding: 4px 10px; background: var(--xl-green-xlight); border-radius: 6px;">v{{ p.versionNumber || '1.0' }}</span></td>
+              <td style="text-align: center;">
+                <a [routerLink]="['/processes', p.id]" mat-icon-button color="primary" matTooltip="Voir le processus" style="color: var(--xl-green-mid);">
+                  <mat-icon>visibility</mat-icon>
+                </a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 4 : DOCUMENTS LIÉS -->
+    <div class="tab-content-container procedures-tab" *ngIf="activeTab === 3">
+      <div class="proc-tab-header">
+        <div class="proc-tab-title">
+          <div class="proc-tab-icon" style="background: #ede9fe;">
+            <mat-icon style="color: #6366f1;">description</mat-icon>
+          </div>
+          <div>
+            <h2>Documents liés à la procédure</h2>
+            <p>{{ (details.procedure.documents || []).length }} document{{ (details.procedure.documents || []).length > 1 ? 's' : '' }} associé{{ (details.procedure.documents || []).length > 1 ? 's' : '' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="proc-tab-empty" *ngIf="!(details.procedure.documents?.length)">
+        <mat-icon>folder_open</mat-icon>
+        <h3>Aucun document lié</h3>
+        <p>Cette procédure n'a aucun document rattaché.</p>
+      </div>
+
+      <div class="table-wrap" *ngIf="details.procedure.documents?.length">
+        <table class="details-word-table">
+          <thead>
+            <tr>
+              <th>Document</th>
+              <th style="width: 140px;">Type</th>
+              <th style="width: 140px;">Statut</th>
+              <th style="width: 100px;">Version</th>
+              <th style="width: 80px; text-align: center;">Voir</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let d of details.procedure.documents">
+              <td>
+                <div class="pilote-cell">
+                  <div class="pilote-avatar" style="background: #ede9fe; color: #6366f1; border: 1px solid #c4b5fd; font-weight: 700;">
+                    {{ d.code.charAt(0) }}
+                  </div>
+                  <div class="proc-text-container">
+                    <span class="proc-code-cell" style="color: #6366f1; font-family: 'Consolas', monospace; font-size: 11px; font-weight: 600; background: #ede9fe; padding: 2px 8px; border-radius: 4px; width: fit-content;">{{ d.code }}</span>
+                    <span class="proc-title-cell" style="font-weight: 700; color: #1e293b; font-size: 14px; margin-top: 4px;">{{ d.title }}</span>
+                  </div>
+                </div>
+              </td>
+              <td><span class="tag-type" style="padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; background: var(--bg-body); color: var(--text-secondary); border: 1px solid var(--border);">{{ getTypeLabel(d.type) }}</span></td>
+              <td>
+                <span class="status-badge" [ngClass]="d.status.toLowerCase()" style="padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 800; text-transform: uppercase; border-left: 4px solid currentColor; display: inline-block; min-width: 100px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+                  {{ getDocumentStatusLabel(d.status) }}
+                </span>
+              </td>
+              <td><span class="revision-v" style="font-weight: 700; color: #6366f1; font-size: 13px; padding: 4px 10px; background: #ede9fe; border-radius: 6px;">v{{ d.versionNumber || '1.0' }}</span></td>
+              <td style="text-align: center;">
+                <a [routerLink]="['/documents', d.id]" mat-icon-button color="primary" matTooltip="Voir le document" style="color: #6366f1;">
+                  <mat-icon>visibility</mat-icon>
+                </a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </ng-container>
 </section>

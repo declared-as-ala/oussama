@@ -13,9 +13,6 @@ export interface UserResponse {
   email: string;
   role: string;
   function?: string;
-  department?: string;
-  departmentId?: number | null;
-  departmentName?: string | null;
   isActive: boolean;
   lastLoginAt?: string;
   createdAt: string;
@@ -36,8 +33,6 @@ export interface CreateUserRequest {
   password: string;
   role: UserRole;
   function?: string;
-  department?: string;
-  departmentId?: number | null;
 }
 
 export interface UpdateUserRequest {
@@ -45,8 +40,6 @@ export interface UpdateUserRequest {
   lastName: string;
   email: string;
   function?: string;
-  department?: string;
-  departmentId?: number | null;
 }
 
 export interface ChangeUserRoleRequest {

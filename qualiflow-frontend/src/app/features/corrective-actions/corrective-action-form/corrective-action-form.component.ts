@@ -64,6 +64,7 @@ export class CorrectiveActionFormComponent implements OnInit {
   saving = false;
   isEdit = false;
   correctiveActionId: number | null = null;
+  activeTab = 0;
 
   users: UserResponse[] = [];
   nonConformities: NonConformityListItemResponse[] = [];
@@ -243,5 +244,21 @@ export class CorrectiveActionFormComponent implements OnInit {
     const month = `${date.getUTCMonth() + 1}`.padStart(2, '0');
     const day = `${date.getUTCDate()}`.padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  setActiveTab(index: number): void {
+    this.activeTab = index;
+  }
+
+  nextTab(): void {
+    if (this.activeTab < 1) {
+      this.activeTab++;
+    }
+  }
+
+  prevTab(): void {
+    if (this.activeTab > 0) {
+      this.activeTab--;
+    }
   }
 }

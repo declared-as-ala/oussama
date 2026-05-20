@@ -1,4 +1,4 @@
-﻿import { Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -65,7 +65,6 @@ export class UserDetailComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       role: ['', [Validators.required]],
       function: [''],
-      department: [''],
       isActive: [true]
     });
   }
@@ -104,7 +103,6 @@ export class UserDetailComponent implements OnInit {
       email: user.email,
       role: user.role,
       function: user.function || '',
-      department: user.department || '',
       isActive: user.isActive
     });
   }
@@ -131,8 +129,7 @@ export class UserDetailComponent implements OnInit {
       firstName: formData.firstName,
       lastName: formData.lastName,
       email: formData.email,
-      function: formData.function,
-      department: formData.department
+      function: formData.function
     }));
 
     // Role update if changed

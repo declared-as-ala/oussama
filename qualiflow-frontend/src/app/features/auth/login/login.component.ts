@@ -4,7 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, finalize, of, switchMap, tap } from 'rxjs';
-import { AuthService, LoginRequest, LoginResponse, MeResponse } from '../../../core/services/auth.service';
+import { AuthService, LoginRequest, LoginByPhoneRequest, LoginResponse, MeResponse } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 
 interface DemoAccount {
@@ -77,7 +77,7 @@ export class LoginComponent implements OnInit {
 
   private initForm(): void {
     this.loginForm = this.fb.group({
-      email: [this.demoAccounts[0].email, [Validators.required, Validators.email]],
+      identifier: [this.demoAccounts[0].email, [Validators.required]],
       password: [this.demoAccounts[0].password, [Validators.required]],
       antiBotAnswer: ['', [Validators.required, Validators.pattern(/^\d+$/)]]
     });
@@ -87,16 +87,42 @@ export class LoginComponent implements OnInit {
     const emailFromQuery = this.route.snapshot.queryParamMap.get('email');
     if (emailFromQuery) {
       this.loginForm.patchValue({
-        email: emailFromQuery,
+        identifier: emailFromQuery,
         password: '',
         antiBotAnswer: ''
       });
     }
   }
 
+  getIdentifierIcon(val: string | null | undefined): string {
+    const s = String(val ?? '').trim();
+    if (!s) {
+      return 'person-outline';
+    }
+    if (/^\+?\d/.test(s) || (/^\+?[0-9\s\-()]+$/.test(s) && s.length >= 4)) {
+      return 'call-outline';
+    }
+    return 'mail-outline';
+  }
+
+  detectFormat(val: string | null | undefined): string {
+    const s = String(val ?? '').trim();
+    if (!s) {
+      return 'Aucun';
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (emailRegex.test(s)) {
+      return 'Adresse e-mail';
+    }
+    if (/^\+?[0-9\s\-()]{4,20}$/.test(s)) {
+      return 'Numéro de téléphone';
+    }
+    return 'Format inconnu';
+  }
+
   useDemoAccount(account: DemoAccount): void {
     this.loginForm.patchValue({
-      email: account.email,
+      identifier: account.email,
       password: account.password,
       antiBotAnswer: ''
     });
@@ -127,22 +153,42 @@ export class LoginComponent implements OnInit {
       return;
     }
 
+    const identifierVal = String(this.loginForm.value.identifier ?? '').trim();
+    const passwordVal = String(this.loginForm.value.password ?? '');
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^\+?[0-9\s\-()]{6,20}$/;
+
+    const isEmail = emailRegex.test(identifierVal);
+    const isPhone = phoneRegex.test(identifierVal);
+
+    if (!isEmail && !isPhone) {
+      this.notificationService.showError('Saisie non reconnue. Entrez un e-mail ou un téléphone valide.');
+      return;
+    }
+
     this.isLoading = true;
     this.antiBotError = null;
 
-    const payload: LoginRequest = {
-      email: String(this.loginForm.value.email ?? '').trim(),
-      password: String(this.loginForm.value.password ?? '')
-    };
+    const submitObservable = isEmail
+      ? this.authService.login({
+          email: identifierVal,
+          password: passwordVal
+        })
+      : this.authService.loginByPhone({
+          phoneNumber: identifierVal,
+          password: passwordVal
+        });
 
-    this.authService.login(payload).pipe(
+    this.authService.loginByPhone
+
+    submitObservable.pipe(
       switchMap((response: LoginResponse) => {
         if (!response.accessToken || !response.refreshToken) {
           return of(null);
         }
 
-        return (
-        this.authService.getProfile().pipe(
+        return this.authService.getProfile().pipe(
           tap((profile: MeResponse) => {
             this.notificationService.showSuccess('Connexion reussie !');
             this.navigateAfterLogin(profile.role);
@@ -153,28 +199,32 @@ export class LoginComponent implements OnInit {
             }
             return of(null);
           })
-        )
         );
       }),
       catchError((error: HttpErrorResponse) => {
         const requiresEmailVerification = Boolean(error?.error?.requiresEmailVerification);
         const message = String(error?.error?.message ?? '').toLowerCase();
-        if (requiresEmailVerification || message.includes('vérifier votre email') || message.includes('verifier votre email')) {
-          return this.authService.resendVerificationCode({ email: payload.email }).pipe(
+        if (isEmail && (requiresEmailVerification || message.includes('vérifier votre email') || message.includes('verifier votre email'))) {
+          return this.authService.resendVerificationCode({ email: identifierVal }).pipe(
             tap(() => {
               this.router.navigate(['/verify-email'], {
-                queryParams: { email: payload.email }
+                queryParams: { email: identifierVal }
               });
             }),
             catchError(() => {
               this.router.navigate(['/verify-email'], {
-                queryParams: { email: payload.email }
+                queryParams: { email: identifierVal }
               });
               return of(null);
             })
           );
         }
 
+        if (error.status === 0) {
+          this.notificationService.showError("Impossible de se connecter au serveur. Veuillez vérifier votre connexion internet.");
+        } else {
+          this.notificationService.showError(error?.error?.message || 'Identifiant ou mot de passe incorrect.');
+        }
         this.regenerateAntiBotChallenge();
         return of(null);
       }),

@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
 import {
   CorrectiveActionDetailsResponse,
-  CorrectiveActionHistoryResponse,
+  CorrectiveActionActionLogResponse,
   CorrectiveActionListItemResponse,
   CorrectiveActionResponse,
   CorrectiveActionStatisticsResponse,
@@ -59,7 +59,11 @@ export class CorrectiveActionService {
     return this.apiService.get<CorrectiveActionListItemResponse[]>(`${this.endpoint}/by-nonconformity/${nonConformityId}`);
   }
 
-  getCorrectiveActionHistory(id: number): Observable<CorrectiveActionHistoryResponse[]> {
-    return this.apiService.get<CorrectiveActionHistoryResponse[]>(`${this.endpoint}/${id}/history`);
+  getCorrectiveActionHistory(id: number): Observable<CorrectiveActionActionLogResponse[]> {
+    return this.apiService.get<CorrectiveActionActionLogResponse[]>(`${this.endpoint}/${id}/action-logs`);
+  }
+
+  deleteCorrectiveActionActionLog(actionId: number, logId: number): Observable<void> {
+    return this.apiService.delete<void>(`${this.endpoint}/${actionId}/action-logs/${logId}`);
   }
 }

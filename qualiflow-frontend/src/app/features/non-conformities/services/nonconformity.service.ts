@@ -1,8 +1,11 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../environments/environment';
 import { Observable, map } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
 import {
   CreateCorrectiveActionRequest,
+  NonConformityAttachmentResponse,
   CreateNonConformityRequest,
   CorrectiveActionResponse,
   NonConformityDetailsResponse,
@@ -22,7 +25,12 @@ import {
 export class NonConformityService {
   private readonly endpoint = 'nonconformities';
 
-  constructor(private readonly apiService: ApiService) {}
+  private readonly apiBase = `${environment.apiUrl}/api`;
+
+  constructor(
+    private readonly apiService: ApiService,
+    private readonly http: HttpClient
+  ) {}
 
   getNonConformities(params: NonConformityQueryParams = {}): Observable<PagedNonConformityResponse> {
     return this.apiService.get<PagedNonConformityResponse>(this.endpoint, params);
@@ -131,6 +139,25 @@ export class NonConformityService {
       default:
         return 'EN_COURS';
     }
+  }
+
+  uploadAttachment(nonConformityId: number, file: File): Observable<NonConformityAttachmentResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<NonConformityAttachmentResponse>(
+      `${this.apiBase}/${this.endpoint}/${nonConformityId}/attachments`,
+      formData
+    );
+  }
+
+  downloadAttachment(attachmentId: number): Observable<Blob> {
+    return this.http.get(`${this.apiBase}/${this.endpoint}/attachments/${attachmentId}`, {
+      responseType: 'blob'
+    });
+  }
+
+  deleteAttachment(attachmentId: number): Observable<void> {
+    return this.apiService.delete<void>(`${this.endpoint}/attachments/${attachmentId}`);
   }
 
   private mapNewStatusToLegacy(status: string): CorrectiveActionResponse['status'] {

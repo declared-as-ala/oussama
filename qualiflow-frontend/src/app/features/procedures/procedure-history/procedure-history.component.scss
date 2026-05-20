@@ -1,0 +1,156 @@
+.procedure-history-page {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-body);
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.details-body {
+  max-width: 1550px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ── CATEGORY PILLS ── */
+.category-pill-btn {
+  background: #f8fafc;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  color: #64748b;
+  padding: 8px 16px;
+  border-radius: 30px;
+  font-size: 0.825rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.01);
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: #94a3b8;
+  }
+
+  &:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+    
+    mat-icon {
+      color: #64748b;
+    }
+  }
+
+  &.active {
+    background: #0f172a;
+    color: white;
+    border-color: #0f172a;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+
+    mat-icon {
+      color: white;
+    }
+
+    .category-badge {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+  }
+
+  .category-badge {
+    padding: 1px 7px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 800;
+
+    &.count-all { background: #e2e8f0; color: #475569; }
+    &.count-pilotage { background: #fff7ed; color: #ea580c; }
+    &.count-modification { background: #eff6ff; color: #2563eb; }
+    &.count-creation { background: #ecfdf5; color: #10b981; }
+    &.count-status { background: #fdf2f8; color: #db2777; }
+  }
+}
+
+/* ── ACTION TYPE ICON BADGES ── */
+.log-icon-badge {
+  color: #64748b;
+  background: #f1f5f9;
+
+  /* Created/Initial */
+  &[class*="created"], &[class*="initial"] {
+    background: #ecfdf5;
+    color: #10b981;
+  }
+
+  /* Deleted */
+  &[class*="deleted"] {
+    background: #fef2f2;
+    color: #dc2626;
+  }
+
+  /* Updated */
+  &[class*="updated"] {
+    background: #eff6ff;
+    color: #2563eb;
+  }
+
+  /* Status */
+  &[class*="status"] {
+    background: #fdf2f8;
+    color: #db2777;
+  }
+
+  /* Pilot/Actors/Instructions */
+  &[class*="pilot"], &[class*="actor"], &[class*="instruction"] {
+    background: #fff7ed;
+    color: #ea580c;
+  }
+}
+
+/* ── MODERN DATATABLE STYLING ── */
+.details-word-table {
+  tr {
+    transition: background-color 0.1s ease;
+  }
+
+  tr:hover {
+    background: rgba(16, 185, 129, 0.02) !important;
+  }
+
+  tr.row-selected {
+    background-color: rgba(16, 185, 129, 0.07) !important;
+    
+    td {
+      font-weight: 700;
+      color: #0f172a;
+    }
+  }
+
+  th {
+    user-select: none;
+  }
+}
+
+.loading-container {
+  color: var(--xl-green-mid);
+  font-weight: 700;
+}
+
+/* ── INTERACTIVE EFFECTS ── */
+.change-item-pill {
+  transition: transform 0.15s ease;
+  &:hover {
+    transform: translateX(4px);
+  }
+}
+
+.details-spec-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}

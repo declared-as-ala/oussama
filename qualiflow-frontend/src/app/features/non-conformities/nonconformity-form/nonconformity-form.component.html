@@ -14,17 +14,20 @@
     </div>
   </div>
 
-  <!-- PROGRESS TRACKER (Optional but good for consistency) -->
-  <div class="form-progress-bar">
-    <div class="progress-step active">
-      <div class="step-dot">1</div>
-      <span>{{ 'form.nc.qualification' | t }}</span>
-    </div>
-    <div class="progress-line" [class.active]="form.valid"></div>
-    <div class="progress-step" [class.active]="form.valid">
-      <div class="step-dot">2</div>
-      <span>{{ 'form.nc.validation' | t }}</span>
-    </div>
+  <!-- WIZARD STEPPERS/TABS -->
+  <div class="form-tabs-container" *ngIf="!loading">
+    <button type="button" class="tab-button" [class.active]="activeTab === 0" (click)="setActiveTab(0)">
+      <mat-icon>assignment_late</mat-icon>
+      <span>1. Identification</span>
+    </button>
+    <button type="button" class="tab-button" [class.active]="activeTab === 1" (click)="setActiveTab(1)">
+      <mat-icon>share</mat-icon>
+      <span>2. Contexte & Affectation</span>
+    </button>
+    <button type="button" class="tab-button" [class.active]="activeTab === 2" (click)="setActiveTab(2)">
+      <mat-icon>attach_file</mat-icon>
+      <span>3. Pièces Jointes</span>
+    </button>
   </div>
 
   <div class="loading-overlay" *ngIf="loading">
@@ -35,7 +38,7 @@
   <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="submit()" class="modern-form-container">
 
     <!-- SECTION 1: IDENTIFICATION -->
-    <mat-card class="form-section-clean">
+    <mat-card class="form-section-clean" *ngIf="activeTab === 0">
       <div class="section-header">
         <mat-icon>assignment_late</mat-icon>
         <div class="header-text">
@@ -76,7 +79,7 @@
     </mat-card>
 
     <!-- SECTION 2: CONTEXTE & AFFECTATION -->
-    <mat-card class="form-section-clean">
+    <mat-card class="form-section-clean" *ngIf="activeTab === 1">
       <div class="section-header">
         <mat-icon>share</mat-icon>
         <div class="header-text">
@@ -143,11 +146,77 @@
       </div>
     </mat-card>
 
+    <!-- SECTION 3: PIÈCES JOINTES -->
+    <mat-card class="form-section-clean" *ngIf="activeTab === 2">
+      <div class="section-header">
+        <mat-icon>attach_file</mat-icon>
+        <div class="header-text">
+          <h3>Pièces jointes & Captures d'écran</h3>
+          <p>Ajoutez des images, des fichiers Excel, ou d'autres documents à cette non-conformité.</p>
+        </div>
+      </div>
+
+      <div class="section-content full-width">
+        <!-- Existing attachments (if editing) -->
+        <div class="existing-attachments-container" *ngIf="isEdit && existingAttachments.length > 0">
+          <h4 class="sub-section-title">Pièces jointes actuelles</h4>
+          <div class="attachments-list">
+            <div class="attachment-item" *ngFor="let att of existingAttachments">
+              <mat-icon class="file-icon-badge">insert_drive_file</mat-icon>
+              <div class="attachment-info">
+                <span class="file-name">{{ att.originalFileName }}</span>
+                <span class="file-size" *ngIf="att.fileSize">{{ att.fileSize / 1024 | number:'1.0-1' }} KB</span>
+              </div>
+              <button mat-icon-button type="button" color="warn" class="btn-delete" (click)="deleteExistingAttachment(att.id)">
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- File Upload Selector / Dropzone -->
+        <div class="upload-zone full-width">
+          <input type="file" id="file-input" (change)="onFileSelected($event)" class="file-input-hidden" multiple />
+          <label for="file-input" class="upload-label">
+            <mat-icon class="upload-icon">cloud_upload</mat-icon>
+            <div class="label-text">
+              <span class="main-text">Cliquez ici pour sélectionner des fichiers</span>
+              <span class="sub-text">PDF, Word, Excel, Photos (Screenshots)</span>
+            </div>
+          </label>
+        </div>
+
+        <!-- Selected files preview -->
+        <div class="selected-files-container" *ngIf="selectedFiles.length > 0">
+          <h4 class="sub-section-title">Fichiers sélectionnés à importer</h4>
+          <div class="attachments-list">
+            <div class="attachment-item" *ngFor="let file of selectedFiles; let i = index">
+              <mat-icon class="file-icon-badge">description</mat-icon>
+              <div class="attachment-info">
+                <span class="file-name">{{ file.name }}</span>
+                <span class="file-size">{{ file.size / 1024 | number:'1.0-1' }} KB</span>
+              </div>
+              <button mat-icon-button type="button" class="btn-delete" (click)="removeFile(i)">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-card>
+
     <!-- FORM ACTIONS BAR -->
     <div class="form-actions-bar">
-      <button mat-button type="button" (click)="goBack()" [disabled]="saving">{{ 'common.cancel' | t }}</button>
+      <button mat-button type="button" (click)="goBack()" [disabled]="saving" *ngIf="activeTab === 0">{{ 'common.cancel' | t }}</button>
+      <button mat-button type="button" (click)="prevTab()" [disabled]="saving" *ngIf="activeTab > 0">
+        <mat-icon>navigate_before</mat-icon> Précédent
+      </button>
       <div class="spacer"></div>
-      <button mat-flat-button color="primary" type="submit" class="submit-btn" [disabled]="saving">
+      <button mat-flat-button color="primary" type="button" class="submit-btn" (click)="nextTab()" *ngIf="activeTab < 2">
+        <span>Suivant</span>
+        <mat-icon>navigate_next</mat-icon>
+      </button>
+      <button mat-flat-button color="primary" type="submit" class="submit-btn" [disabled]="saving" *ngIf="activeTab === 2">
         <mat-icon *ngIf="!saving">check_circle</mat-icon>
         <mat-spinner *ngIf="saving" diameter="20"></mat-spinner>
         <span>{{ isEdit ? ('form.nc.update' | t) : ('form.nc.submit' | t) }}</span>

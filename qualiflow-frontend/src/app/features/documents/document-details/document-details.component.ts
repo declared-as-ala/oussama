@@ -48,6 +48,14 @@ export class DocumentDetailsComponent implements OnInit {
   documentId!: number;
   details: DocumentDetailsResponse | null = null;
   actionLogs: DocumentActionLogResponse[] = [];
+  creationLog: DocumentActionLogResponse | null = null;
+  lastLog: DocumentActionLogResponse | null = null;
+  totalActions = 0;
+  activeTab = 0;
+
+  setActiveTab(index: number): void {
+    this.activeTab = index;
+  }
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -56,7 +64,7 @@ export class DocumentDetailsComponent implements OnInit {
     private readonly authService: AuthService,
     private readonly dialog: MatDialog,
     private readonly notificationService: NotificationService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     const rawId = this.route.snapshot.paramMap.get('id');
@@ -173,6 +181,30 @@ export class DocumentDetailsComponent implements OnInit {
     });
   }
 
+  printCurrent(): void {
+    this.documentService.previewCurrentOrLatest(this.documentId).subscribe({
+      next: (blob) => {
+        const blobUrl = URL.createObjectURL(blob);
+        const iframe = window.document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = blobUrl;
+        window.document.body.appendChild(iframe);
+        iframe.contentWindow?.focus();
+        iframe.onload = () => {
+          iframe.contentWindow?.print();
+          setTimeout(() => {
+            window.document.body.removeChild(iframe);
+            URL.revokeObjectURL(blobUrl);
+          }, 2000);
+        };
+        this.loadActionLogs();
+      },
+      error: () => {
+        this.notificationService.showError('Impression impossible (aucune version disponible).');
+      }
+    });
+  }
+
   previewCurrent(): void {
     this.documentService.previewCurrentOrLatest(this.documentId).subscribe({
       next: (blob) => {
@@ -192,12 +224,18 @@ export class DocumentDetailsComponent implements OnInit {
     this.documentService.getActionLogs(this.documentId).subscribe({
       next: (logs) => {
         this.actionLogs = logs;
+        this.creationLog = logs.find(log => log.actionType.includes('CREATED') || log.actionType.includes('UPLOADED')) || null;
+        this.lastLog = logs.length > 0 ? logs[0] : null;
+        this.totalActions = logs.length;
         this.actionLogsLoading = false;
       },
       error: () => {
         this.actionLogs = [];
+        this.creationLog = null;
+        this.lastLog = null;
+        this.totalActions = 0;
         this.actionLogsLoading = false;
-        this.notificationService.showError('Impossible de charger le journal d actions.');
+        this.notificationService.showError('Impossible de charger le journal d\'actions.');
       }
     });
   }

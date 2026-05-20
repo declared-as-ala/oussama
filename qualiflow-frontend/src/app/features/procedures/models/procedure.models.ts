@@ -19,6 +19,8 @@ export interface CreateProcedureRequest {
   description?: string | null;
   responsibleUserId?: number | null;
   status: ProcedureStatus;
+  versionNumber?: string | null;
+  revisionComment?: string | null;
 }
 
 export type UpdateProcedureRequest = CreateProcedureRequest;
@@ -44,6 +46,39 @@ export interface ProcedureListItemResponse {
   responsibleUserId?: number | null;
   responsibleFullName?: string | null;
   status: ProcedureStatus;
+  versionNumber?: string | null;
+  createdAt: string;
+}
+
+export interface LinkedDocumentRef {
+  id: number;
+  organizationId: number;
+  code: string;
+  title: string;
+  type: string;
+  processId?: number | null;
+  processCode?: string | null;
+  processName?: string | null;
+  procedureId?: number | null;
+  procedureCode?: string | null;
+  status: string;
+  versionNumber?: string | null;
+  ownerUserId?: number | null;
+  ownerFullName?: string | null;
+  fileName?: string | null;
+  isActive: boolean;
+  updatedAt: string;
+}
+
+export interface LinkedProcessRef {
+  id: number;
+  organizationId: number;
+  code: string;
+  name: string;
+  type: string;
+  status: string;
+  versionNumber?: string | null;
+  pilotUserId?: number | null;
   createdAt: string;
 }
 
@@ -61,8 +96,12 @@ export interface ProcedureResponse {
   responsibleUserId?: number | null;
   responsibleFullName?: string | null;
   status: ProcedureStatus;
+  versionNumber?: string | null;
+  revisionComment?: string | null;
   createdAt: string;
   updatedAt?: string | null;
+  documents: LinkedDocumentRef[];
+  processes: LinkedProcessRef[];
 }
 
 export interface InstructionResponse {
@@ -81,6 +120,19 @@ export interface InstructionResponse {
 export interface ProcedureDetailsResponse {
   procedure: ProcedureResponse;
   instructions: InstructionResponse[];
+}
+
+export interface ProcedureActionLogResponse {
+  id: number;
+  organizationId: number;
+  procedureId: number;
+  actionType: string;
+  oldValue?: string | null;
+  newValue?: string | null;
+  comment?: string | null;
+  performedByUserId: number;
+  performedByFullName?: string | null;
+  performedAt: string;
 }
 
 export interface PagedProcedureResponse {

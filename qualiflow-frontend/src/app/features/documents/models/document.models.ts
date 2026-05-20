@@ -25,7 +25,6 @@ export interface DocumentQueryParams {
   processId?: number | null;
   procedureId?: number | null;
   ownerUserId?: number | null;
-  departmentId?: number | null;
   pendingValidationOnly?: boolean;
 }
 
@@ -40,7 +39,6 @@ export interface CreateDocumentRequest {
   keywords?: string | null;
   signature?: string | null;
   ownerUserId?: number | null;
-  departmentId?: number | null;
   isActive: boolean;
 }
 
@@ -79,8 +77,6 @@ export interface DocumentListItemResponse {
   updatedAt: string;
   ownerUserId?: number | null;
   ownerFullName?: string | null;
-  departmentId?: number | null;
-  departmentName?: string | null;
   fileName?: string | null;
   isActive: boolean;
   deletedAt?: string | null;
@@ -105,8 +101,6 @@ export interface DocumentResponse {
   signature?: string | null;
   ownerUserId?: number | null;
   ownerFullName?: string | null;
-  departmentId?: number | null;
-  departmentName?: string | null;
   currentVersionId?: number | null;
   currentVersionNumber?: string | null;
   currentVersionStatus?: DocumentStatus | null;
@@ -195,8 +189,6 @@ export interface DocumentExpiringResponse {
   expirationState: 'VALID' | 'EXPIRING_SOON' | 'EXPIRED';
   ownerUserId?: number | null;
   ownerFullName?: string | null;
-  departmentId?: number | null;
-  departmentName?: string | null;
 }
 
 export interface UpdateDocumentStatusRequest {

@@ -15,8 +15,8 @@ bootstrapApplication(AppComponent, {
     provideAnimations(),
     provideHttpClient(
       withInterceptors([
-        authInterceptor,
         errorInterceptor,
+        authInterceptor,
         loadingInterceptor
       ])
     )

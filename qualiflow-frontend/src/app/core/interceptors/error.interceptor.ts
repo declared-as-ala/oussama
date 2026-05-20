@@ -47,7 +47,10 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       } else {
         switch (error.status) {
           case 0:
-            errorMessage = `Impossible de joindre l'API (${environment.apiUrl}). Verifiez que le backend est demarre et que CORS autorise l'origine du frontend.`;
+            errorMessage = "Impossible de se connecter au serveur. Veuillez vérifier votre connexion internet.";
+            if (authService.isAuthenticated() && !isPublicAuthRequest) {
+              authService.forceLogout();
+            }
             break;
           case 401:
             if (error?.error?.requiresEmailVerification) {
@@ -55,9 +58,17 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
               return throwError(() => error);
             }
 
-            errorMessage = error.error?.message || 'Non autorise. Veuillez vous reconnecter.';
-            if (!isPublicAuthRequest && !isNotificationRequest) {
+            if (isPublicAuthRequest) {
+              // Public auth requests (login, register) handle their own error displays.
+              return throwError(() => error);
+            }
+
+            if (authService.isAuthenticated()) {
+              errorMessage = error.error?.message || 'Votre session a expiré. Veuillez vous reconnecter.';
               authService.forceLogout();
+            } else {
+              // Silent fallback for guest/unauthenticated calls.
+              return throwError(() => error);
             }
             break;
           case 403:

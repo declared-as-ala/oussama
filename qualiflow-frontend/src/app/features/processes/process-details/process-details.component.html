@@ -18,15 +18,40 @@
           {{ 'detail.process.subtitle' | t }}
         </p>
       </div>
-
-      <div class="page-header-right">
-        <button *ngIf="canWrite" mat-flat-button color="primary" class="new-process-btn" (click)="editProcess()">
+      <div class="page-header-right" style="display: flex; gap: 8px; align-items: center;">
+        <button mat-stroked-button color="primary" (click)="viewHistory()"
+          style="border-radius: 12px; font-weight: 700; height: 40px; border-color: #cbd5e1; display: flex; align-items: center; gap: 8px;">
+          <mat-icon style="font-size: 20px; width: 20px; height: 20px; margin-right: 0;">history</mat-icon>
+          <span>Historique d'Audit</span>
+        </button>
+        <button *ngIf="canWrite" mat-flat-button color="primary" class="new-process-btn" (click)="editProcess()"
+          style="background-color: var(--xl-green-mid) !important; color: white !important;">
           <mat-icon>edit</mat-icon> {{ 'common.edit' | t }}
         </button>
       </div>
     </div>
 
-    <div class="details-body">
+    <!-- PROCESS TABS SYSTEM -->
+    <div class="form-tabs-container" *ngIf="!loading && details">
+      <button type="button" class="tab-button" [class.active]="activeTab === 0" (click)="setActiveTab(0)">
+        <mat-icon>info_outline</mat-icon>
+        <span>1. Informations Générales</span>
+      </button>
+      <button type="button" class="tab-button" [class.active]="activeTab === 1" (click)="setActiveTab(1)">
+        <mat-icon>description</mat-icon>
+        <span>2. Documentation</span>
+      </button>
+      <button type="button" class="tab-button" [class.active]="activeTab === 2" (click)="setActiveTab(2)">
+        <mat-icon>group</mat-icon>
+        <span>3. Acteurs</span>
+      </button>
+      <button type="button" class="tab-button" [class.active]="activeTab === 3" (click)="setActiveTab(3)">
+        <mat-icon>description</mat-icon>
+        <span>4. Procédures <span *ngIf="procedures.length > 0" class="tab-badge">{{ procedures.length }}</span></span>
+      </button>
+    </div>
+
+    <div class="details-body" *ngIf="activeTab === 0">
       <div class="summary-cards">
         <div class="summary-card">
           <div class="sc-label">{{ 'common.type' | t }}</div>
@@ -40,6 +65,13 @@
             <span class="tag" [ngClass]="details.process.status === 'ACTIF' ? 'conforme' : 'perime'">
               {{ getStatusLabel(details.process.status) }}
             </span>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="sc-label">Version</div>
+          <div class="sc-value">
+            <span class="tag conforme" style="background-color: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">v{{
+              details.process.versionNumber || '1.0' }}</span>
           </div>
         </div>
         <div class="summary-card">
@@ -66,6 +98,10 @@
             <div class="info-item">
               <label>{{ 'detail.indicator.description' | t }}</label>
               <p>{{ details.process.description || ('detail.nc.noDescription' | t) }}</p>
+            </div>
+            <div class="info-item">
+              <label>Commentaire de révision</label>
+              <p>{{ details.process.revisionComment || 'Aucun commentaire.' }}</p>
             </div>
             <div class="info-item">
               <label>{{ 'form.procedure.objectivesScope' | t }}</label>
@@ -108,174 +144,132 @@
           </div>
         </mat-card>
       </div>
+    </div>
 
-      <mat-card class="info-card map-card">
-        <div class="card-header-clean">
-          <div class="title-block">
-            <mat-icon>account_tree</mat-icon>
-            <h2>{{ 'detail.process.linkedMapping' | t }}</h2>
-          </div>
-          <span class="count-pill">{{ procedures.length }} {{ 'detail.process.proceduresCount' | t }}</span>
-        </div>
+    <!-- DOCUMENTATION TAB -->
+    <div class="tab-content-container" *ngIf="activeTab === 1">
+      <app-process-documents></app-process-documents>
+    </div>
 
-        <div class="process-flow">
-          <button type="button" class="procedure-chip" [class.active]="selectedProcedureId === null"
-            (click)="selectProcedure(null)">
-            <span class="chip-code">{{ 'detail.process.all' | t }}</span>
-            <span class="chip-title">{{ 'detail.process.processDocuments' | t }}</span>
-            <span class="chip-count">{{ allDocuments.length }} {{ 'detail.process.documentsCount' | t }}</span>
-          </button>
+    <!-- ACTORS TAB -->
+    <div class="tab-content-container" *ngIf="activeTab === 2">
+      <app-process-actors></app-process-actors>
+    </div>
 
-          <button type="button" class="procedure-chip" *ngFor="let procedure of procedures"
-            [class.active]="selectedProcedureId === procedure.id" (click)="selectProcedure(procedure.id)">
-            <span class="chip-code">{{ procedure.code }}</span>
-            <span class="chip-title">{{ procedure.title }}</span>
-            <span class="chip-count">{{ getProcedureDocumentCount(procedure.id) }} {{ 'detail.process.documentsCount' |
-              t }}</span>
-          </button>
-        </div>
+    <!-- PROCEDURES TAB -->
+    <div class="tab-content-container procedures-tab" *ngIf="activeTab === 3">
 
-        <div class="empty-state-mini" *ngIf="procedures.length === 0">
-          {{ 'detail.process.noProcedureLink' | t }}
-        </div>
-      </mat-card>
-
-      <mat-card class="info-card docs-card">
-        <div class="card-header-clean">
-          <div class="title-block">
+      <!-- HEADER BAR -->
+      <div class="proc-tab-header">
+        <div class="proc-tab-title">
+          <div class="proc-tab-icon">
             <mat-icon>description</mat-icon>
-            <h2>{{ selectedDocumentsTitle }}</h2>
           </div>
-          <span class="count-pill">{{ linkedDocuments.length }} {{ 'detail.process.documentsCount' | t }}</span>
-        </div>
-
-        <div class="table-wrap" *ngIf="linkedDocuments.length > 0; else emptyDocumentsTpl">
-          <table mat-table [dataSource]="linkedDocuments" class="details-word-table">
-            <ng-container matColumnDef="code">
-              <th mat-header-cell *matHeaderCellDef>{{ 'common.code' | t }}</th>
-              <td mat-cell *matCellDef="let document">{{ document.code }}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="title">
-              <th mat-header-cell *matHeaderCellDef>{{ 'common.title' | t }}</th>
-              <td mat-cell *matCellDef="let document">{{ document.title }}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="procedure">
-              <th mat-header-cell *matHeaderCellDef>{{ 'list.procedures.title' | t }}</th>
-              <td mat-cell *matCellDef="let document">{{ document.procedureCode || '—' }}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>{{ 'common.status' | t }}</th>
-              <td mat-cell *matCellDef="let document">
-                <span class="tag" [ngClass]="getDocumentStatusClass(document.status)">
-                  {{ document.status || 'BROUILLON' }}
-                </span>
-              </td>
-            </ng-container>
-
-            <tr mat-header-row *matHeaderRowDef="displayedDocumentColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedDocumentColumns"></tr>
-          </table>
-        </div>
-
-        <ng-template #emptyDocumentsTpl>
-          <div class="empty-state-mid">
-            <mat-icon>description</mat-icon>
-            <p>{{ 'detail.process.noLinkedDocument' | t }}</p>
+          <div>
+            <h2>Procédures liées au processus</h2>
+            <p>{{ procedures.length }} procédure{{ procedures.length > 1 ? 's' : '' }} associée{{ procedures.length > 1
+              ? 's' : '' }}</p>
           </div>
-        </ng-template>
-      </mat-card>
-
-      <mat-card class="info-card actors-section">
-        <div class="card-header-clean">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <mat-icon>group</mat-icon>
-            <h2>{{ 'detail.process.processActors' | t }}</h2>
-          </div>
-          <button *ngIf="canWrite" mat-stroked-button color="primary" class="add-actor-header-btn" (click)="addActor()">
-            <mat-icon>person_add</mat-icon> {{ 'detail.process.addActor' | t }}
-          </button>
         </div>
+        <div *ngIf="canWrite" class="proc-tab-actions">
+          <!-- Search input -->
+          <mat-form-field appearance="outline" class="proc-tab-search-field">
+            <mat-label>Filtrer les procédures</mat-label>
+            <mat-icon matPrefix>search</mat-icon>
+            <input matInput type="text" placeholder="Filtrer par code ou titre..." [(ngModel)]="procedureSearchTerm" />
+            <button *ngIf="procedureSearchTerm" matSuffix mat-icon-button (click)="procedureSearchTerm = ''" matTooltip="Effacer">
+              <mat-icon>close</mat-icon>
+            </button>
+          </mat-form-field>
 
-        <form *ngIf="canWrite" [formGroup]="actorForm" class="quick-actor-form" (ngSubmit)="addActor()">
-          <mat-form-field appearance="outline">
-            <mat-label>{{ 'detail.process.user' | t }}</mat-label>
-            <mat-select formControlName="userId">
-              <mat-option [value]="null">{{ 'form.indicator.select' | t }}</mat-option>
-              <mat-option *ngFor="let user of availableUsers" [value]="user.id">
-                {{ user.firstName }} {{ user.lastName }}
+          <!-- Select dropdown -->
+          <mat-form-field appearance="outline" class="proc-tab-select-field">
+            <mat-label>Sélectionner une procédure</mat-label>
+            <mat-select [(ngModel)]="selectedProcedureToLink" (openedChange)="$event && loadAllAvailableProcedures()">
+              <mat-select-trigger *ngIf="selectedProcedureToLink">
+                <span class="proc-selected-trigger-code">{{ getSelectedProcedureCode() }}</span>
+                <span class="proc-selected-trigger-title">{{ getSelectedProcedureTitle() }}</span>
+              </mat-select-trigger>
+              <mat-option [value]="null" disabled class="proc-dropdown-placeholder">Choisir une procédure…</mat-option>
+              <mat-option *ngFor="let p of filteredAvailableProcedures" [value]="p.id" class="proc-dropdown-option">
+                <span class="proc-option-code-pill">{{ p.code }}</span>
+                <span class="proc-option-title">{{ p.title }}</span>
+              </mat-option>
+              <mat-option *ngIf="filteredAvailableProcedures.length === 0" disabled class="proc-dropdown-empty">
+                <mat-icon style="margin-right: 8px; color: #94a3b8; font-size: 18px; width: 18px; height: 18px;">info</mat-icon>
+                <span>Aucune procédure disponible</span>
               </mat-option>
             </mat-select>
           </mat-form-field>
 
-          <mat-form-field appearance="outline">
-            <mat-label>{{ 'detail.process.actorType' | t }}</mat-label>
-            <mat-select formControlName="actorType">
-              <mat-option *ngFor="let option of actorTypeOptions" [value]="option.value">{{ option.label }}</mat-option>
-            </mat-select>
-          </mat-form-field>
-
-          <button mat-flat-button color="primary" type="submit" [disabled]="!actorForm.valid">
-            {{ 'form.nc.submit' | t }}
+          <!-- Lier button -->
+          <button mat-flat-button color="primary" class="proc-tab-submit-btn" (click)="addProcedureLink()"
+            [disabled]="!selectedProcedureToLink || linkingProcedure">
+            <mat-icon>add_link</mat-icon>
+            <span>{{ linkingProcedure ? 'Liaison...' : 'Lier la procédure' }}</span>
           </button>
-        </form>
-
-        <div class="empty-actors" *ngIf="details.actors.length === 0">
-          <mat-icon>group_off</mat-icon>
-          <span>{{ 'detail.process.noActor' | t }}</span>
         </div>
+      </div>
 
-        <div class="table-wrap" *ngIf="details.actors.length > 0">
-          <table mat-table [dataSource]="details.actors" class="details-word-table">
-            <ng-container matColumnDef="fullName">
-              <th mat-header-cell *matHeaderCellDef>{{ 'detail.process.name' | t }}</th>
-              <td mat-cell *matCellDef="let actor">
+      <!-- EMPTY STATE -->
+      <div class="proc-tab-empty" *ngIf="procedures.length === 0">
+        <mat-icon>link_off</mat-icon>
+        <h3>Aucune procédure liée</h3>
+        <p>Ce processus n'a pas encore de procédures associées.<br *ngIf="canWrite"> <span *ngIf="canWrite">Utilisez le
+            formulaire ci-dessus pour en lier une.</span></p>
+      </div>
+
+      <!-- PROCEDURES LIST TABLE -->
+      <div class="table-wrap" *ngIf="procedures.length > 0" style="background: white; border-radius: 12px; border: 1px solid rgba(0,0,0,0.05); overflow-hidden: auto;">
+        <table class="details-word-table">
+          <thead>
+            <tr>
+              <th>Procédure</th>
+              <th>Responsable</th>
+              <th style="width: 140px;">Statut</th>
+              <th style="width: 100px; text-align: center;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let proc of procedures">
+              <td>
                 <div class="pilote-cell">
-                  <div class="pilote-avatar small">{{ actor.fullName?.charAt(0) }}</div>
-                  {{ actor.fullName }}
+                  <div class="pilote-avatar">
+                    {{ proc.title.charAt(0).toUpperCase() }}
+                  </div>
+                  <div class="proc-text-container">
+                    <span class="proc-code-cell">{{ proc.code }}</span>
+                    <span class="proc-title-cell">{{ proc.title }}</span>
+                  </div>
                 </div>
               </td>
-            </ng-container>
-
-            <ng-container matColumnDef="email">
-              <th mat-header-cell *matHeaderCellDef>{{ 'detail.process.email' | t }}</th>
-              <td mat-cell *matCellDef="let actor">{{ actor.email }}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="function">
-              <th mat-header-cell *matHeaderCellDef>{{ 'detail.process.function' | t }}</th>
-              <td mat-cell *matCellDef="let actor">{{ actor.function || '-' }}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="actorType">
-              <th mat-header-cell *matHeaderCellDef>{{ 'common.type' | t }}</th>
-              <td mat-cell *matCellDef="let actor">
-                <span class="tag gray">{{ getActorTypeLabel(actor.actorType) }}</span>
+              <td>
+                <span *ngIf="proc.responsibleFullName" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 500; color: #546e7a;">
+                  <mat-icon style="font-size: 16px; width: 16px; height: 16px; color: #94a3b8; margin: 0; vertical-align: middle;">person</mat-icon>
+                  {{ proc.responsibleFullName }}
+                </span>
+                <span *ngIf="!proc.responsibleFullName" class="muted" style="color: #94a3b8; font-style: italic;">
+                  Non assigné
+                </span>
               </td>
-            </ng-container>
-
-            <ng-container matColumnDef="assignedAt">
-              <th mat-header-cell *matHeaderCellDef>{{ 'detail.process.assignedAt' | t }}</th>
-              <td mat-cell *matCellDef="let actor">{{ actor.assignedAt | date: 'dd/MM/yyyy' }}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef style="width: 60px;"></th>
-              <td mat-cell *matCellDef="let actor">
-                <button *ngIf="canWrite" mat-icon-button color="warn" type="button" (click)="removeActor(actor)"
-                  [matTooltip]="'detail.process.removeActor' | t">
-                  <mat-icon>delete_outline</mat-icon>
-                </button>
+              <td>
+                <span class="tag conforme" *ngIf="proc.status === 'ACTIF'">Actif</span>
+                <span class="tag perime" *ngIf="proc.status !== 'ACTIF'">Inactif</span>
               </td>
-            </ng-container>
-
-            <tr mat-header-row *matHeaderRowDef="displayedActorColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedActorColumns"></tr>
-          </table>
-        </div>
-      </mat-card>
+              <td style="text-align: center;">
+                <div style="display: inline-flex; gap: 4px; justify-content: center; align-items: center;">
+                  <a [routerLink]="['/procedures', proc.id]" mat-icon-button color="primary" matTooltip="Voir le détail" style="color: var(--xl-green-mid);">
+                    <mat-icon>visibility</mat-icon>
+                  </a>
+                  <button *ngIf="canWrite" mat-icon-button color="warn" (click)="removeProcedureLink(proc.id)" matTooltip="Délier">
+                    <mat-icon>link_off</mat-icon>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </ng-container>
 </section>

@@ -14,6 +14,26 @@
     </div>
   </div>
 
+  <!-- WIZARD STEPPERS/TABS -->
+  <div class="form-tabs-container" *ngIf="!loading">
+    <button type="button" class="tab-button" [class.active]="activeTab === 0" (click)="setActiveTab(0)">
+      <mat-icon>description</mat-icon>
+      <span>1. Identification</span>
+    </button>
+    <button type="button" class="tab-button" [class.active]="activeTab === 1" (click)="setActiveTab(1)">
+      <mat-icon>hub</mat-icon>
+      <span>2. Liaisons</span>
+    </button>
+    <button type="button" class="tab-button" [class.active]="activeTab === 2" (click)="setActiveTab(2)">
+      <mat-icon>draw</mat-icon>
+      <span>3. Signature</span>
+    </button>
+    <button type="button" class="tab-button" [class.active]="activeTab === 3" (click)="setActiveTab(3)">
+      <mat-icon>history</mat-icon>
+      <span>4. Version & Fichier</span>
+    </button>
+  </div>
+
   <!-- LOADING STATE -->
   <div class="loading-overlay" *ngIf="loading">
     <mat-spinner diameter="40"></mat-spinner>
@@ -24,7 +44,7 @@
   <form *ngIf="!loading" [formGroup]="documentForm" (ngSubmit)="submit()" class="modern-form-container">
 
     <!-- SECTION 1: IDENTIFICATION & METADONNÉES -->
-    <mat-card class="form-section-clean">
+    <mat-card class="form-section-clean" *ngIf="activeTab === 0">
       <div class="section-header">
         <mat-icon>description</mat-icon>
         <div class="header-text">
@@ -34,6 +54,21 @@
       </div>
 
       <div class="section-content grid-2-cols">
+        <!-- MODÈLES PRÉ-REMPLIS (FACULTATIF) -->
+        <mat-form-field appearance="outline" class="full-width" *ngIf="!isEdit">
+          <mat-label>Utiliser un modèle d'enregistrement pré-rempli (Facultatif)</mat-label>
+          <mat-select (selectionChange)="onTemplateSelected($event.value)">
+            <mat-option [value]="null">-- Aucun modèle (Saisie manuelle vide) --</mat-option>
+            <mat-option value="presence">Liste de présence (Émargement)</mat-option>
+            <mat-option value="annexe">Annexe / Pièce jointe standard</mat-option>
+            <mat-option value="cours">Gestion des cours (Fiche de cours / Syllabus)</mat-option>
+            <mat-option value="enseignants">Suivi des enseignants (Fiche de suivi / Évaluation)</mat-option>
+            <mat-option value="reclamations">Réclamations des étudiants (Formulaire de réclamation)</mat-option>
+            <mat-option value="formations">Évaluation des formations (Questionnaire de satisfaction)</mat-option>
+          </mat-select>
+          <mat-icon matSuffix style="color: #6200ee;">assignment</mat-icon>
+        </mat-form-field>
+
         <mat-form-field appearance="outline">
           <mat-label>Code Document *</mat-label>
           <input matInput formControlName="code" placeholder="ex: DOC-QUA-001" />
@@ -54,9 +89,9 @@
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Description / Résumé</mat-label>
-          <textarea matInput rows="3" formControlName="description"
-            placeholder="Courte description du contenu..."></textarea>
+          <mat-label>Description / Formulaire pré-rempli à compléter *</mat-label>
+          <textarea matInput rows="16" formControlName="description"
+            placeholder="Renseignez le contenu de votre document ou complétez le modèle sélectionné..."></textarea>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
@@ -72,7 +107,7 @@
     </mat-card>
 
     <!-- SECTION 2: LIAISONS & RESPONSABILITÉ -->
-    <mat-card class="form-section-clean">
+    <mat-card class="form-section-clean" *ngIf="activeTab === 1">
       <div class="section-header">
         <mat-icon>hub</mat-icon>
         <div class="header-text">
@@ -109,16 +144,6 @@
           </mat-select>
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Departement (optionnel)</mat-label>
-          <mat-select formControlName="departmentId">
-            <mat-option [value]="null">-- Aucun departement --</mat-option>
-            <mat-option *ngFor="let department of departments" [value]="department.id">
-              {{ department.code }} - {{ department.name }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-
         <div class="toggle-control">
           <mat-slide-toggle formControlName="isActive">Document actif dans le référentiel</mat-slide-toggle>
         </div>
@@ -126,7 +151,7 @@
     </mat-card>
 
     <!-- SECTION 4: SIGNATURE -->
-    <mat-card class="form-section-clean">
+    <mat-card class="form-section-clean" *ngIf="activeTab === 2">
       <div class="section-header">
         <mat-icon>draw</mat-icon>
         <div class="header-text">
@@ -180,7 +205,7 @@
     </mat-card>
 
     <!-- SECTION 3: VERSION & FICHIER -->
-    <mat-card class="form-section-clean">
+    <mat-card class="form-section-clean" *ngIf="activeTab === 3">
       <div class="section-header">
         <mat-icon>history</mat-icon>
         <div class="header-text">
@@ -253,9 +278,16 @@
 
     <!-- FORM ACTIONS BAR -->
     <div class="form-actions-bar">
-      <button mat-button type="button" (click)="goBack()" [disabled]="saving">{{ 'common.cancel' | t }}</button>
+      <button mat-button type="button" (click)="goBack()" [disabled]="saving" *ngIf="activeTab === 0">{{ 'common.cancel' | t }}</button>
+      <button mat-button type="button" (click)="prevTab()" [disabled]="saving" *ngIf="activeTab > 0">
+        <mat-icon>navigate_before</mat-icon> Précédent
+      </button>
       <div class="spacer"></div>
-      <button mat-flat-button color="primary" type="submit" class="submit-btn" [disabled]="saving">
+      <button mat-flat-button color="primary" type="button" class="submit-btn" (click)="nextTab()" *ngIf="activeTab < 3">
+        <span>Suivant</span>
+        <mat-icon>navigate_next</mat-icon>
+      </button>
+      <button mat-flat-button color="primary" type="submit" class="submit-btn" [disabled]="saving || documentForm.invalid" *ngIf="activeTab === 3">
         <mat-icon *ngIf="!saving">check_circle</mat-icon>
         <mat-spinner *ngIf="saving" diameter="20"></mat-spinner>
         <span>{{ isEdit ? ('form.document.saveChanges' | t) : ('form.document.create' | t) }}</span>

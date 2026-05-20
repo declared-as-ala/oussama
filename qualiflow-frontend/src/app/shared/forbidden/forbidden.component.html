@@ -1,4 +1,28 @@
-﻿<section class="page">
-  <h1>403 - Access Forbidden</h1>
-  <p>You do not have permission to access this page.</p>
-</section>
+<div class="forbidden-container">
+  <div class="glass-shield-card">
+    <div class="animated-icon-wrapper">
+      <div class="pulse-ring"></div>
+      <div class="icon-core">
+        <mat-icon>security</mat-icon>
+      </div>
+    </div>
+
+    <h1 class="error-code">403</h1>
+    <h2 class="error-title">Accès Restreint</h2>
+    <p class="error-description">
+      Votre compte actuel ne dispose pas des autorisations nécessaires pour accéder à cette ressource. Veuillez contacter votre administrateur ou basculer sur un compte habilité.
+    </p>
+
+    <div class="actions-wrapper">
+      <button mat-flat-button color="primary" class="btn-home" (click)="goHome()">
+        <mat-icon>dashboard</mat-icon>
+        Retourner au tableau de bord
+      </button>
+      
+      <button mat-stroked-button class="btn-logout" (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        Se déconnecter / Changer de compte
+      </button>
+    </div>
+  </div>
+</div>

@@ -11,6 +11,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { forkJoin } from 'rxjs';
 import { NotificationService } from '../../../core/services/notification.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { UserResponse, UserService } from '../../../core/services/user.service';
 import { ProcessListItemResponse } from '../../processes/models/process.models';
 import { ProcessService } from '../../processes/services/process.service';
@@ -54,7 +55,9 @@ export class ProcedureFormComponent implements OnInit {
     scope: this.fb.control<string>('', [Validators.maxLength(1200)]),
     description: this.fb.control<string>('', [Validators.maxLength(2000)]),
     responsibleUserId: this.fb.control<number | null>(null),
-    status: this.fb.nonNullable.control<ProcedureStatus>('ACTIF', Validators.required)
+    status: this.fb.nonNullable.control<ProcedureStatus>('ACTIF', Validators.required),
+    versionNumber: this.fb.control<string>('1.0', [Validators.required]),
+    revisionComment: this.fb.control<string>('')
   });
 
   loading = false;
@@ -63,6 +66,7 @@ export class ProcedureFormComponent implements OnInit {
   procedureId: number | null = null;
   processes: ProcessListItemResponse[] = [];
   responsibles: UserResponse[] = [];
+  activeTab = 0;
 
   constructor(
     private readonly fb: FormBuilder,
@@ -71,7 +75,8 @@ export class ProcedureFormComponent implements OnInit {
     private readonly procedureService: ProcedureService,
     private readonly processService: ProcessService,
     private readonly userService: UserService,
-    private readonly notificationService: NotificationService
+    private readonly notificationService: NotificationService,
+    private readonly authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -92,7 +97,7 @@ export class ProcedureFormComponent implements OnInit {
         details: this.procedureService.getProcedureById(this.procedureId)
       }).subscribe({
         next: ({ base, details }) => {
-          this.responsibles = base.users.items.filter(user => user.isActive);
+          this.responsibles = base.users.items.filter(user => user.isActive && (user.role === 'RESPONSABLE_QUALITE' || user.role === 'SUPER_ADMIN' || user.role === 'ADMIN_ORG'));
           this.processes = base.processes.items;
           this.patchForm(details.procedure);
           this.loading = false;
@@ -108,7 +113,7 @@ export class ProcedureFormComponent implements OnInit {
 
     baseLoad$.subscribe({
       next: ({ users, processes }) => {
-        this.responsibles = users.items.filter(user => user.isActive);
+        this.responsibles = users.items.filter(user => user.isActive && (user.role === 'RESPONSABLE_QUALITE' || user.role === 'SUPER_ADMIN' || user.role === 'ADMIN_ORG'));
         this.processes = processes.items;
         this.loading = false;
       },
@@ -117,6 +122,17 @@ export class ProcedureFormComponent implements OnInit {
         this.notificationService.showError('Impossible de charger les donnees de reference.');
       }
     });
+  }
+
+  get canChangeResponsible(): boolean {
+    return this.authService.hasRole(['ADMIN_ORG', 'RESPONSABLE_QUALITE', 'SUPER_ADMIN']);
+  }
+
+  getResponsibleName(): string {
+    const id = this.procedureForm.get('responsibleUserId')?.value;
+    if (!id) return 'Non défini';
+    const r = this.responsibles.find(u => u.id === id);
+    return r ? `${r.firstName} ${r.lastName}` : 'Non défini';
   }
 
   get title(): string {
@@ -135,7 +151,13 @@ export class ProcedureFormComponent implements OnInit {
     return Math.round((done / requiredControls.length) * 100);
   }
 
-  isInvalid(fieldName: 'processId' | 'code' | 'title' | 'objective' | 'scope' | 'description'): boolean {
+  get nextVersion(): string {
+    const current = this.procedureForm.controls.versionNumber.value || '1.0';
+    const num = parseFloat(current);
+    return isNaN(num) ? current : (num + 0.1).toFixed(1);
+  }
+
+  isInvalid(fieldName: 'processId' | 'code' | 'title' | 'objective' | 'scope' | 'description' | 'versionNumber'): boolean {
     const control = this.procedureForm.controls[fieldName];
     return !!control && control.invalid && (control.dirty || control.touched);
   }
@@ -152,6 +174,15 @@ export class ProcedureFormComponent implements OnInit {
   submit(): void {
     if (this.procedureForm.invalid) {
       this.procedureForm.markAllAsTouched();
+      const invalidControls: string[] = [];
+      Object.keys(this.procedureForm.controls).forEach(key => {
+        const control = this.procedureForm.get(key);
+        if (control && control.invalid) {
+          invalidControls.push(key);
+        }
+      });
+      console.warn('Formulaire invalide. Champs en erreur:', invalidControls);
+      this.notificationService.showError('Le formulaire est invalide. Veuillez vérifier les champs suivants : ' + invalidControls.join(', '));
       return;
     }
 
@@ -185,7 +216,9 @@ export class ProcedureFormComponent implements OnInit {
       scope: procedure.scope ?? '',
       description: procedure.description ?? '',
       responsibleUserId: procedure.responsibleUserId ?? null,
-      status: procedure.status
+      status: procedure.status,
+      versionNumber: procedure.versionNumber ?? '1.0',
+      revisionComment: ''
     });
   }
 
@@ -200,7 +233,25 @@ export class ProcedureFormComponent implements OnInit {
       scope: raw.scope?.trim() || null,
       description: raw.description?.trim() || null,
       responsibleUserId: raw.responsibleUserId ?? null,
-      status: raw.status
+      status: raw.status,
+      versionNumber: raw.versionNumber,
+      revisionComment: raw.revisionComment || null
     };
+  }
+
+  setActiveTab(index: number): void {
+    this.activeTab = index;
+  }
+
+  nextTab(): void {
+    if (this.activeTab < 2) {
+      this.activeTab++;
+    }
+  }
+
+  prevTab(): void {
+    if (this.activeTab > 0) {
+      this.activeTab--;
+    }
   }
 }

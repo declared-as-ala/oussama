@@ -138,6 +138,30 @@ export const routes: Routes = [
             }
           },
           {
+            path: ':id/actors',
+            loadComponent: () => import('./features/processes/process-actors/process-actors.component').then(m => m.ProcessActorsComponent),
+            data: {
+              title: 'Acteurs du processus',
+              roles: ['ADMIN_ORG', 'RESPONSABLE_QUALITE', 'CHEF_SERVICE', 'UTILISATEUR']
+            }
+          },
+          {
+            path: ':id/history',
+            loadComponent: () => import('./features/processes/process-history/process-history.component').then(m => m.ProcessHistoryComponent),
+            data: {
+              title: 'Historique du processus',
+              roles: ['ADMIN_ORG', 'RESPONSABLE_QUALITE', 'CHEF_SERVICE', 'UTILISATEUR']
+            }
+          },
+          {
+            path: ':id/documents',
+            loadComponent: () => import('./features/processes/process-documents/process-documents.component').then(m => m.ProcessDocumentsComponent),
+            data: {
+              title: 'Documentation du processus',
+              roles: ['ADMIN_ORG', 'RESPONSABLE_QUALITE', 'CHEF_SERVICE', 'UTILISATEUR']
+            }
+          },
+          {
             path: ':id',
             loadComponent: () => import('./features/processes/process-details/process-details.component').then(m => m.ProcessDetailsComponent),
             data: {
@@ -159,6 +183,14 @@ export const routes: Routes = [
             }
           },
           {
+            path: 'map',
+            loadComponent: () => import('./features/procedures/procedure-map/procedure-map.component').then(m => m.ProcedureMapComponent),
+            data: {
+              title: 'Cartographie des procédures',
+              roles: ['ADMIN_ORG', 'RESPONSABLE_QUALITE', 'CHEF_SERVICE', 'UTILISATEUR']
+            }
+          },
+          {
             path: 'new',
             loadComponent: () => import('./features/procedures/procedure-form/procedure-form.component').then(m => m.ProcedureFormComponent),
             data: {
@@ -172,6 +204,14 @@ export const routes: Routes = [
             data: {
               title: 'Modifier procedure',
               roles: ['ADMIN_ORG', 'RESPONSABLE_QUALITE']
+            }
+          },
+          {
+            path: ':id/history',
+            loadComponent: () => import('./features/procedures/procedure-history/procedure-history.component').then(m => m.ProcedureHistoryComponent),
+            data: {
+              title: 'Historique de la procedure',
+              roles: ['ADMIN_ORG', 'RESPONSABLE_QUALITE', 'CHEF_SERVICE', 'UTILISATEUR']
             }
           },
           {
@@ -364,43 +404,6 @@ export const routes: Routes = [
         ]
       },
       {
-        path: 'departments',
-        children: [
-          {
-            path: '',
-            loadComponent: () => import('./features/departments/department-list/department-list.component').then(m => m.DepartmentListComponent),
-            data: {
-              title: 'Départements',
-              roles: ['ADMIN_ORG', 'RESPONSABLE_QUALITE', 'CHEF_SERVICE', 'UTILISATEUR']
-            }
-          },
-          {
-            path: 'new',
-            loadComponent: () => import('./features/departments/department-form/department-form.component').then(m => m.DepartmentFormComponent),
-            data: {
-              title: 'Nouveau département',
-              roles: ['ADMIN_ORG', 'RESPONSABLE_QUALITE', 'CHEF_SERVICE']
-            }
-          },
-          {
-            path: ':id/edit',
-            loadComponent: () => import('./features/departments/department-form/department-form.component').then(m => m.DepartmentFormComponent),
-            data: {
-              title: 'Modifier département',
-              roles: ['ADMIN_ORG', 'RESPONSABLE_QUALITE', 'CHEF_SERVICE']
-            }
-          },
-          {
-            path: ':id',
-            loadComponent: () => import('./features/departments/department-details/department-details.component').then(m => m.DepartmentDetailsComponent),
-            data: {
-              title: 'Détail département',
-              roles: ['ADMIN_ORG', 'RESPONSABLE_QUALITE', 'CHEF_SERVICE', 'UTILISATEUR']
-            }
-          }
-        ]
-      },
-      {
         path: 'notifications',
         loadComponent: () => import('./features/notifications/notification-center/notification-center.component').then(m => m.NotificationCenterComponent),
         data: {
@@ -458,6 +461,14 @@ export const routes: Routes = [
         loadComponent: () => import('./features/organizations/organization-audit-log/organization-audit-log.component').then(m => m.OrganizationAuditLogComponent),
         data: {
           title: 'Journal d\'actions',
+          requiredRoles: ['ADMIN_ORG']
+        }
+      },
+      {
+        path: 'organization/profile',
+        loadComponent: () => import('./features/organizations/organization-detail/organization-detail.component').then(m => m.OrganizationDetailComponent),
+        data: {
+          title: 'Mon Organisation',
           requiredRoles: ['ADMIN_ORG']
         }
       },

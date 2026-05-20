@@ -111,45 +111,84 @@
         <mat-card class="details-card shadow-sm history-card">
           <div class="card-header">
             <mat-icon>history</mat-icon>
-            <h2>Historique des modifications</h2>
+            <h2>Journal d'activités & procédures</h2>
           </div>
           <div class="card-body">
             <div class="empty-state" *ngIf="details.history.length === 0">
               <mat-icon>update_disabled</mat-icon>
-              <p>Aucun changement historisé pour le moment.</p>
+              <p>Aucun événement enregistré pour le moment.</p>
             </div>
 
             <div class="table-container" *ngIf="details.history.length > 0">
               <table mat-table [dataSource]="details.history" class="modern-table">
-                <ng-container matColumnDef="oldStatus">
-                  <th mat-header-cell *matHeaderCellDef>Ancien statut</th>
+                <!-- Action Column -->
+                <ng-container matColumnDef="action">
+                  <th mat-header-cell *matHeaderCellDef>Action</th>
                   <td mat-cell *matCellDef="let item">
-                    <span class="status-mini" *ngIf="item.oldStatus">{{ getStatusLabel(item.oldStatus) }}</span>
-                    <span *ngIf="!item.oldStatus">-</span>
+                    <div class="action-type-cell" style="display: flex; align-items: center; gap: 8px;">
+                      <mat-icon class="action-icon" [color]="item.actionType.includes('CREATED') ? 'primary' : ''" style="font-size: 20px; width: 20px; height: 20px;">{{ getActionIcon(item.actionType) }}</mat-icon>
+                      <span class="action-label" style="font-weight: 500;">{{ getActionLabel(item.actionType) }}</span>
+                    </div>
                   </td>
                 </ng-container>
 
-                <ng-container matColumnDef="newStatus">
-                  <th mat-header-cell *matHeaderCellDef>Nouveau statut</th>
-                  <td mat-cell *matCellDef="let item">
-                    <span class="status-mini highlight">{{ getStatusLabel(item.newStatus) }}</span>
-                  </td>
-                </ng-container>
-
+                <!-- Comment Column -->
                 <ng-container matColumnDef="comment">
-                  <th mat-header-cell *matHeaderCellDef>Commentaire</th>
-                  <td mat-cell *matCellDef="let item" class="comment-cell">{{ item.comment || '-' }}</td>
+                  <th mat-header-cell *matHeaderCellDef>Détails / Commentaire</th>
+                  <td mat-cell *matCellDef="let item" class="comment-cell">
+                    <div class="details-log-container" style="display: flex; flex-direction: column; gap: 4px;">
+                      <!-- Status Change Details -->
+                      <div class="status-transition" *ngIf="item.actionType === 'STATUS_CHANGED' && item.oldValue && item.newValue" style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                        <span class="status-badge mini" [ngClass]="item.oldValue.toLowerCase()" style="font-size: 11px; padding: 2px 6px; border-radius: 4px;">{{ getStatusLabel(item.oldValue) }}</span>
+                        <mat-icon style="font-size: 14px; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center;">arrow_forward</mat-icon>
+                        <span class="status-badge mini" [ngClass]="item.newValue.toLowerCase()" style="font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: bold;">{{ getStatusLabel(item.newValue) }}</span>
+                      </div>
+                      
+                      <!-- Effectiveness verified details -->
+                      <div class="effectiveness-badge-container" *ngIf="item.actionType === 'EFFECTIVENESS_VERIFIED'" style="margin-bottom: 4px;">
+                        <span class="status-badge mini" [ngClass]="item.newValue?.toLowerCase()" style="font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: bold;">{{ getStatusLabel(item.newValue || '') }}</span>
+                      </div>
+
+                      <!-- Parsed Modifications -->
+                      <ul class="modifications-list" *ngIf="item.comment && item.comment.startsWith('Modifications : ')" style="list-style: none; padding-left: 0; margin: 0; font-size: 13px;">
+                        <li *ngFor="let change of parseChanges(item.comment)" class="mod-item" style="display: flex; align-items: center; gap: 4px; color: #4b5563;">
+                          <mat-icon style="font-size: 14px; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; color: #9ca3af;">chevron_right</mat-icon>
+                          <span>{{ change }}</span>
+                        </li>
+                      </ul>
+
+                      <!-- Raw Comment (if not modifications) -->
+                      <p class="raw-comment" *ngIf="item.comment && !item.comment.startsWith('Modifications : ')" style="margin: 0; font-size: 13px; color: #4b5563;">
+                        {{ item.comment }}
+                      </p>
+                      
+                      <span class="text-muted" *ngIf="!item.comment && item.actionType !== 'STATUS_CHANGED'">-</span>
+                    </div>
+                  </td>
                 </ng-container>
 
+                <!-- User Column -->
                 <ng-container matColumnDef="user">
                   <th mat-header-cell *matHeaderCellDef>Par</th>
-                  <td mat-cell *matCellDef="let item">{{ item.changedByFullName || ('User ' + item.changedByUserId) }}
+                  <td mat-cell *matCellDef="let item">
+                    <span class="username" style="font-size: 13px; font-weight: 500; color: #374151;">{{ item.performedByFullName || 'Système' }}</span>
                   </td>
                 </ng-container>
 
+                <!-- Date Column -->
                 <ng-container matColumnDef="date">
                   <th mat-header-cell *matHeaderCellDef>Date</th>
-                  <td mat-cell *matCellDef="let item">{{ item.changedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+                  <td mat-cell *matCellDef="let item" style="font-size: 13px; color: #6b7280;">{{ item.performedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+                </ng-container>
+
+                <!-- Actions Column -->
+                <ng-container matColumnDef="actions">
+                  <th mat-header-cell *matHeaderCellDef style="width: 60px;"></th>
+                  <td mat-cell *matCellDef="let item">
+                    <button mat-icon-button color="warn" *ngIf="canWrite" (click)="deleteActionLog(item.id)" matTooltip="Supprimer cet historique" style="width: 32px; height: 32px; line-height: 32px;">
+                      <mat-icon style="font-size: 18px; width: 18px; height: 18px;">delete_outline</mat-icon>
+                    </button>
+                  </td>
                 </ng-container>
 
                 <tr mat-header-row *matHeaderRowDef="historyColumns"></tr>

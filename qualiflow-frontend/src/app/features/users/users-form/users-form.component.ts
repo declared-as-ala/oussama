@@ -12,8 +12,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { UserRole, UserService } from '../services/user.service';
 import { NotificationService } from '../../../core/services/notification.service';
-import { DepartmentService } from '../../departments/services/department.service';
-import { DepartmentListItemResponse } from '../../departments/models/department.models';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -40,7 +38,6 @@ export class UsersFormComponent implements OnInit {
   userId?: number;
   initialRole: UserRole = 'UTILISATEUR';
   initialIsActive = true;
-  departments: DepartmentListItemResponse[] = [];
 
   readonly roleOptions: Array<{ value: UserRole; label: string }> = [
     { value: 'ADMIN_ORG', label: 'Administrateur Organisation' },
@@ -52,7 +49,6 @@ export class UsersFormComponent implements OnInit {
   constructor(
     private readonly fb: FormBuilder,
     private readonly userService: UserService,
-    private readonly departmentService: DepartmentService,
     private readonly authService: AuthService,
     private readonly router: Router,
     private readonly route: ActivatedRoute,
@@ -61,7 +57,6 @@ export class UsersFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
-    this.loadDepartments();
     this.checkEditMode();
   }
 
@@ -72,20 +67,8 @@ export class UsersFormComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       role: ['UTILISATEUR', [Validators.required]],
       function: [''],
-      department: [''],
       isActive: [true],
       password: ['', [Validators.minLength(6)]]
-    });
-  }
-
-  private loadDepartments(): void {
-    this.departmentService.getDepartments({ pageSize: 100 }).subscribe({
-      next: (response) => {
-        this.departments = response.items;
-      },
-      error: () => {
-        this.notificationService.showError('Erreur lors du chargement des départements.');
-      }
     });
   }
 
@@ -115,7 +98,6 @@ export class UsersFormComponent implements OnInit {
           email: user.email,
           role: user.role,
           function: user.function || '',
-          department: user.department || '',
           isActive: user.isActive
         });
         this.isLoading = false;
@@ -152,8 +134,7 @@ export class UsersFormComponent implements OnInit {
       email: formData.email,
       password: formData.password,
       role: formData.role,
-      function: formData.function,
-      department: formData.department
+      function: formData.function
     }).subscribe({
       next: (id) => {
         const afterCreate$: Observable<void> = formData.isActive
@@ -189,8 +170,7 @@ export class UsersFormComponent implements OnInit {
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
-        function: formData.function,
-        department: formData.department
+        function: formData.function
       })
     ];
 

@@ -1,0 +1,378 @@
+.procedure-map-page {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-body);
+    min-height: 100vh;
+}
+
+/* ── PAGE HEADER BAR ── */
+.page-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-white);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    z-index: 10;
+}
+
+.page-header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.page-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.page-subtitle {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+
+    mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+    }
+
+    &:hover {
+        color: var(--xl-green);
+        background: var(--bg-raised);
+    }
+}
+
+.stats-pills {
+    display: flex;
+    gap: 8px;
+
+    .pill {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--bg-raised);
+        border: 1px solid var(--border);
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+
+        .label {
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .value {
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+
+        &.active {
+            background: var(--s-green-bg);
+            border-color: var(--s-green-border);
+
+            .label {
+                color: var(--s-green);
+            }
+
+            .value {
+                color: var(--s-green);
+            }
+        }
+    }
+}
+
+/* ── MAP CONTAINER ── */
+.map-body-container {
+    padding: 32px;
+    flex-grow: 1;
+    overflow-y: auto;
+    max-width: 1600px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.catalog-content-card.map-content {
+    background: var(--bg-white);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+    position: relative;
+}
+
+/* ── MAP SECTIONS ── */
+.map-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: relative;
+
+    .section-label {
+        align-self: center;
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        color: var(--text-muted);
+        background: var(--bg-raised);
+        padding: 4px 16px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        text-transform: uppercase;
+    }
+}
+
+/* ── PROCESSES GRID ── */
+.processes-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    justify-content: center;
+}
+
+/* ── PROCESS CARD (container for procedures) ── */
+.process-card {
+    width: 320px;
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: all 0.25s ease;
+
+    &:hover {
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        transform: translateY(-2px);
+    }
+
+    &.pilotage {
+        border-top: 4px solid var(--xl-green);
+
+        .process-card-header {
+            background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+        }
+    }
+
+    &.realisation {
+        border-top: 4px solid var(--xl-green-mid);
+
+        .process-card-header {
+            background: linear-gradient(135deg, #e0f2f1, #e8f5e9);
+        }
+    }
+
+    &.support {
+        border-top: 4px solid var(--text-muted);
+
+        .process-card-header {
+            background: linear-gradient(135deg, #f5f5f5, #eeeeee);
+        }
+    }
+}
+
+.process-card-header {
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border-bottom: 1px solid var(--border);
+}
+
+.process-code {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--text-muted);
+    font-family: 'Roboto Mono', monospace;
+    letter-spacing: 0.05em;
+}
+
+.process-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #333;
+    line-height: 1.3;
+}
+
+/* ── PROCEDURES LIST inside process card ── */
+.procedures-list {
+    display: flex;
+    flex-direction: column;
+    padding: 6px 0;
+    max-height: 280px;
+    overflow-y: auto;
+}
+
+.procedure-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    position: relative;
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    &:hover {
+        background: var(--bg-raised);
+
+        .proc-title {
+            color: var(--xl-green);
+        }
+
+        .proc-icon {
+            color: var(--xl-green);
+            transform: scale(1.1);
+        }
+
+        &::after {
+            content: 'arrow_forward';
+            font-family: 'Material Icons';
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 16px;
+            color: var(--xl-green);
+            opacity: 0.7;
+        }
+    }
+}
+
+.proc-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.proc-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+    flex: 1;
+}
+
+.proc-code {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    font-family: 'Roboto Mono', monospace;
+    letter-spacing: 0.03em;
+}
+
+.proc-title {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #444;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.2s ease;
+}
+
+.status-indicator {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--border-mid);
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+
+    &.active {
+        background: var(--s-green);
+        box-shadow: 0 0 6px rgba(76, 175, 80, 0.4);
+    }
+}
+
+.empty-procedures {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 20px 16px;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-style: italic;
+
+    mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+        opacity: 0.5;
+    }
+}
+
+.empty-state-mini {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+.loading-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 100px 0;
+    gap: 16px;
+    color: #888;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+    .page-header-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 12px 16px;
+    }
+
+    .map-body-container {
+        padding: 16px;
+    }
+
+    .catalog-content-card.map-content {
+        padding: 20px;
+        gap: 32px;
+    }
+
+    .processes-grid {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .process-card {
+        width: 100%;
+    }
+}

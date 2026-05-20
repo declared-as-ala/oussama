@@ -11,6 +11,18 @@
     </div>
   </div>
 
+  <!-- WIZARD STEPPERS/TABS -->
+  <div class="form-tabs-container" *ngIf="!loading">
+    <button type="button" class="tab-button" [class.active]="activeTab === 0" (click)="setActiveTab(0)">
+      <mat-icon>assignment</mat-icon>
+      <span>1. Identification</span>
+    </button>
+    <button type="button" class="tab-button" [class.active]="activeTab === 1" (click)="setActiveTab(1)">
+      <mat-icon>person_search</mat-icon>
+      <span>2. Pilotage & Échéances</span>
+    </button>
+  </div>
+
   <div class="loading-box" *ngIf="loading">
     <mat-spinner diameter="38"></mat-spinner>
     <span>Initialisation du formulaire...</span>
@@ -19,7 +31,7 @@
   <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="submit()" class="modern-form">
     <div class="form-grid">
       <!-- IDENTIFICATION CARD -->
-      <mat-card class="form-card shadow-sm">
+      <mat-card class="form-card shadow-sm" *ngIf="activeTab === 0">
         <div class="card-header">
           <mat-icon>assignment</mat-icon>
           <h2>Identification</h2>
@@ -61,7 +73,7 @@
       </mat-card>
 
       <!-- PILOTAGE CARD -->
-      <mat-card class="form-card shadow-sm">
+      <mat-card class="form-card shadow-sm" *ngIf="activeTab === 1">
         <div class="card-header">
           <mat-icon>person_search</mat-icon>
           <h2>Pilotage & Échéances</h2>
@@ -115,11 +127,23 @@
 
     <!-- FORM ACTIONS -->
     <div class="form-actions-bar shadow-sm">
-      <div class="actions-content">
-        <button mat-stroked-button type="button" class="btn-cancel" (click)="goBack()" [disabled]="saving">
+      <div class="actions-content" style="display: flex; align-items: center; width: 100%;">
+        <button mat-stroked-button type="button" class="btn-cancel" (click)="goBack()" [disabled]="saving"
+          *ngIf="activeTab === 0">
           Annuler
         </button>
-        <button mat-flat-button color="primary" type="submit" class="btn-submit" [disabled]="saving">
+        <button mat-stroked-button type="button" class="btn-cancel" (click)="prevTab()" [disabled]="saving"
+          *ngIf="activeTab > 0">
+          <mat-icon>navigate_before</mat-icon> Précédent
+        </button>
+        <div style="flex: 1 1 auto;"></div>
+        <button mat-flat-button color="primary" type="button" class="btn-submit" (click)="nextTab()"
+          *ngIf="activeTab < 1" style="background-color: var(--xl-green-mid) !important; color: white !important;">
+          <span>Suivant</span>
+          <mat-icon>navigate_next</mat-icon>
+        </button>
+        <button mat-flat-button color="primary" type="submit" class="btn-submit" [disabled]="saving || form.invalid"
+          *ngIf="activeTab === 1" style="background-color: var(--xl-green-mid) !important; color: white !important;">
           <mat-spinner *ngIf="saving" diameter="18"></mat-spinner>
           <mat-icon *ngIf="!saving">{{ isEdit ? 'save' : 'add_task' }}</mat-icon>
           <span>{{ isEdit ? 'Mettre à jour l\'action' : 'Créer l\'action corrective' }}</span>

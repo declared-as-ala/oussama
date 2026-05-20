@@ -62,7 +62,6 @@ export interface MeResponse {
   email: string;
   role: string;
   function?: string;
-  department?: string;
   phone?: string;
   city?: string;
   birthDate?: string;

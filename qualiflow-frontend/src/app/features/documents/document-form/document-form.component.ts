@@ -20,8 +20,6 @@ import { ProcessListItemResponse } from '../../processes/models/process.models';
 import { ProcessService } from '../../processes/services/process.service';
 import { ProcedureListItemResponse } from '../../procedures/models/procedure.models';
 import { ProcedureService } from '../../procedures/services/procedure.service';
-import { DepartmentListItemResponse } from '../../departments/models/department.models';
-import { DepartmentService } from '../../departments/services/department.service';
 import {
   CreateDocumentRequest,
   CreateDocumentVersionRequest,
@@ -88,7 +86,6 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
     processId: this.fb.control<number | null>(null),
     procedureId: this.fb.control<number | null>(null),
     ownerUserId: this.fb.control<number | null>(null),
-    departmentId: this.fb.control<number | null>(null),
     isActive: this.fb.nonNullable.control(true),
     initialVersionNumber: this.fb.nonNullable.control('v1.0', [Validators.maxLength(30)]),
     initialVersionStatus: this.fb.nonNullable.control<DocumentStatus>('BROUILLON'),
@@ -106,9 +103,9 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
   processes: ProcessListItemResponse[] = [];
   procedures: ProcedureListItemResponse[] = [];
   owners: UserResponse[] = [];
-  departments: DepartmentListItemResponse[] = [];
   startWithImport = false;
   signaturePreview: string | null = null;
+  activeTab = 0;
 
   constructor(
     private readonly fb: FormBuilder,
@@ -117,7 +114,6 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
     private readonly documentService: DocumentService,
     private readonly processService: ProcessService,
     private readonly procedureService: ProcedureService,
-    private readonly departmentService: DepartmentService,
     private readonly userService: UserService,
     private readonly authService: AuthService,
     private readonly notificationService: NotificationService
@@ -242,8 +238,7 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
       processes: this.processService.getProcesses({ pageNumber: 1, pageSize: 300 }),
       users: this.canSelectOwner
         ? this.userService.getAll(1, 300)
-        : of<UserListResponse>({ total: 0, page: 1, pageSize: 0, items: [] }),
-      departments: this.departmentService.getDepartments({ pageNumber: 1, pageSize: 300 })
+        : of<UserListResponse>({ total: 0, page: 1, pageSize: 0, items: [] })
     });
 
     if (this.isEdit && this.documentId) {
@@ -254,7 +249,6 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
         next: ({ base, details }) => {
           this.processes = base.processes.items;
           this.owners = base.users.items.filter(user => user.isActive);
-          this.departments = base.departments.items.filter(dept => dept.status === 'ACTIF');
           this.patchDocument(details.document);
           if (!this.canSelectOwner && currentUser?.id) {
             this.ensureCurrentUserAsOwnerOption(currentUser);
@@ -278,10 +272,9 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
     }
 
     baseData$.subscribe({
-      next: ({ processes, users, departments }) => {
+      next: ({ processes, users }) => {
         this.processes = processes.items;
         this.owners = users.items.filter(user => user.isActive);
-        this.departments = departments.items.filter(dept => dept.status === 'ACTIF');
         if (!this.canSelectOwner && currentUser?.id) {
           this.ensureCurrentUserAsOwnerOption(currentUser);
           this.documentForm.controls.ownerUserId.setValue(currentUser.id);
@@ -327,6 +320,210 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
 
   get canSelectOwner(): boolean {
     return this.authService.hasRole(['ADMIN_ORG', 'RESPONSABLE_QUALITE']);
+  }
+
+  onTemplateSelected(value: string | null): void {
+    if (!value) {
+      this.documentForm.patchValue({
+        code: '',
+        title: '',
+        type: 'MANUEL',
+        description: '',
+        category: '',
+        keywords: ''
+      });
+      return;
+    }
+
+    const todayStr = this.getTodayInputDate().replace(/-/g, '');
+    let type: DocumentType = 'ENREGISTREMENT';
+    let code = '';
+    let title = '';
+    let category = '';
+    let keywords = '';
+    let description = '';
+
+    switch (value) {
+      case 'presence':
+        type = 'ENREGISTREMENT';
+        code = `ENR-PRES-${todayStr}`;
+        title = `Liste de présence - [Nom Session/Réunion] - ${this.getTodayFrenchFormat()}`;
+        category = 'RH & Formations';
+        keywords = 'présence, émargement, formation, réunion, feuille';
+        description = `----- FEUILLE D'ÉMARGEMENT / LISTE DE PRÉSENCE -----
+Intitulé de la session : [Saisir le nom de la formation ou de la réunion]
+Date de la session : [JJ/MM/AAAA]
+Lieu / Salle : [Ex: Salle A1 / Visioconférence Teams]
+Formateur / Organisateur : [Nom du Formateur / Animateur]
+
+LISTE DES PARTICIPANTS & ÉMARGEMENT :
+1. Nom : __________________ | Statut : [ ] Présent  [ ] Absent | Émargement : (Signez ci-dessous)
+2. Nom : __________________ | Statut : [ ] Présent  [ ] Absent | Émargement :
+3. Nom : __________________ | Statut : [ ] Présent  [ ] Absent | Émargement :
+4. Nom : __________________ | Statut : [ ] Présent  [ ] Absent | Émargement :
+5. Nom : __________________ | Statut : [ ] Présent  [ ] Absent | Émargement :
+
+Observations / Remarques pédagogiques :
+[Saisir ici d'éventuelles remarques, absences justifiées ou incidents de présence]
+
+Visa du Formateur / Responsable : [ ] Validé et clôturé
+`;
+        break;
+
+      case 'annexe':
+        type = 'AUTRE';
+        code = `ANX-STD-${todayStr}`;
+        title = `Annexe - [Titre de l'annexe]`;
+        category = 'Qualité / Documentation';
+        keywords = 'annexe, pièce jointe, document rattaché, support';
+        description = `----- FICHE D'ANNEXE / PIÈCE COMPLÉMENTAIRE -----
+Document principal associé : [Saisir le Code & Titre du document principal]
+Auteur de la pièce jointe : [Votre Nom / Service]
+Date de rattachement : [JJ/MM/AAAA]
+
+CONTENU DE L'ANNEXE / NOTES TECHNIQUES :
+[Rédiger ou coller ici le contenu textuel ou les consignes détaillant cette annexe]
+
+Historique / Modifications de l'annexe :
+- Création initiale le [JJ/MM/AAAA] par [Nom]
+`;
+        break;
+
+      case 'cours':
+        type = 'INSTRUCTION';
+        code = `INS-CRS-${todayStr}`;
+        title = `Gestion de Cours - Syllabus - [Nom de la Matière]`;
+        category = 'Pédagogie & Enseignement';
+        keywords = 'cours, enseignement, syllabus, programme, module';
+        description = `----- FICHE DE GESTION DE COURS / SYLLABUS -----
+Nom de la Matière / Module : [Saisir le nom du cours, ex: Programmation C++]
+Code du module : [Saisir le code pédagogique, ex: INF-101]
+Semestre / Promotion : [Ex: Semestre 1 - 2ème Année]
+Volume Horaire Global : [Ex: 30 heures]
+Enseignant Coordinateur : [Nom de l'enseignant responsable]
+
+1. OBJECTIFS D'APPRENTISSAGE :
+- Objectif 1 : [Saisir ici]
+- Objectif 2 : [Saisir ici]
+- Objectif 3 : [Saisir ici]
+
+2. PLAN DU COURS & PROGRAMME :
+- Chapitre 1 : Introduction & Concepts de base
+- Chapitre 2 : [Titre du chapitre]
+- Chapitre 3 : [Titre du chapitre]
+- Chapitre 4 : Travaux Pratiques & Évaluation
+
+3. MODALITÉS DE CONTRÔLE DES CONNAISSANCES (ÉVALUATION) :
+- [ ] Examen écrit final (% : ____)
+- [ ] Contrôle continu / Quizz (% : ____)
+- [ ] Projet individuel / de groupe (% : ____)
+`;
+        break;
+
+      case 'enseignants':
+        type = 'ENREGISTREMENT';
+        code = `ENR-ENS-${todayStr}`;
+        title = `Suivi de l'enseignant - [Nom de l'Intervenant]`;
+        category = 'Qualité Pédagogique';
+        keywords = 'enseignant, suivi, professeur, évaluation, entretien';
+        description = `----- FICHE DE SUIVI ET D'ÉVALUATION DES ENSEIGNANTS -----
+Nom de l'Enseignant : [Saisir le Nom & Prénom de l'enseignant]
+Statut : [ ] Permanent [ ] Vacataire externe [ ] Professionnel invité
+Matières et Modules confiés : [Ex: Gestion de Projet Agile / Scrum]
+Année Universitaire / Période : [Ex: 2025-2026]
+Évaluateur / Responsable de Suivi : [Nom du Directeur des Études / Qualiticien]
+
+CRITÈRES D'APPRÉCIATION :
+1. Respect des horaires & Syllabus : [ ] Excellent [ ] Satisfaisant [ ] À améliorer
+2. Pédagogie & Dynamisme :         [ ] Excellent [ ] Satisfaisant [ ] À améliorer
+3. Suivi des étudiants & Corrections: [ ] Excellent [ ] Satisfaisant [ ] À améliorer
+4. Alignement avec le SMQ QualiFlow: [ ] Excellent [ ] Satisfaisant [ ] À améliorer
+
+SYNTHÈSE DE L'ÉVALUATION PEDAGOGIQUE :
+[Résumer ici les points forts constatés et les éventuels points d'amélioration à travailler pour le prochain semestre]
+
+Décision du Comité de Suivi :
+[ ] Renouvellement de la vacance/contrat
+[ ] Entretien pédagogique de cadrage à planifier
+[ ] Non-renouvellement de l'intervention
+`;
+        break;
+
+      case 'reclamations':
+        type = 'ENREGISTREMENT';
+        code = `ENR-REC-${todayStr}`;
+        title = `Réclamation Étudiante - [Sujet de la réclamation]`;
+        category = 'Écoute Client & Relations';
+        keywords = 'réclamation, réclamation étudiant, plainte, qualité service';
+        description = `----- FORMULAIRE DE RÉCLAMATION DES ÉTUDIANTS -----
+Nom & Prénom du déclarant (Optionnel) : [Laisser vide pour ANONYME ou saisir le nom]
+Classe / Promotion : [Ex: 3ème Année Ingénierie Web]
+Date du constat de l'anomalie : [JJ/MM/AAAA]
+Objet synthétique : [Saisir l'objet en 1 phrase, ex: Dysfonctionnement Wifi salle C2]
+
+1. DESCRIPTION DÉTAILLÉE DE LA RÉCLAMATION :
+[Décrire précisément les faits, les circonstances, le lieu et l'impact de la réclamation sur le déroulement des cours]
+
+2. PRÉJUDICE OU GENE CONSTATÉ(E) :
+[Expliquer les conséquences, ex: Impossible de réaliser le TP de réseaux]
+
+3. TRAITEMENT DE LA RÉCLAMATION (Réservé à l'Administration/SMQ) :
+Responsable du suivi : [Nom de l'administrateur qualiticien]
+Niveau d'urgence : [ ] Faible [ ] Moyen [ ] Critique (Bloquant)
+Action corrective immédiate engagée : [Décrire l'action mise en place, ex: Déploiement borne Wifi temporaire]
+Date de clôture & Validation : [JJ/MM/AAAA]
+`;
+        break;
+
+      case 'formations':
+        type = 'FORMULAIRE';
+        code = `FOR-EVAL-${todayStr}`;
+        title = `Évaluation de formation - [Nom du Module]`;
+        category = 'Qualité / Évaluations';
+        keywords = 'évaluation, questionnaire satisfaction, formation, feedback';
+        description = `----- QUESTIONNAIRE D'ÉVALUATION DES FORMATIONS -----
+Intitulé exact du module / formation : [Ex: Méthodes Agiles PMI-ACP]
+Date de la session : [Du DD/MM/AAAA au DD/MM/AAAA]
+Formateur principal : [Nom du Formateur / Cabinet d'audit]
+
+QUESTIONNAIRE DE SATISFACTION (Attribuer une note de 1 à 4 : 1=Très mécontent, 4=Très satisfait) :
+Q1. Les objectifs de la formation présentés au début ont été atteints : [ ] 1  [ ] 2  [ ] 3  [ ] 4
+Q2. L'organisation matérielle (salle, outils, outils QualiFlow) était bonne : [ ] 1  [ ] 2  [ ] 3  [ ] 4
+Q3. Le rythme, la durée et l'équilibre théorie/pratique étaient adaptés :[ ] 1  [ ] 2  [ ] 3  [ ] 4
+Q4. Le formateur a fait preuve d'écoute et d'une bonne pédagogie :    [ ] 1  [ ] 2  [ ] 3  [ ] 4
+Q5. Les supports de cours fournis vous seront utiles pour l'avenir : [ ] 1  [ ] 2  [ ] 3  [ ] 4
+
+COMMENTAIRES LIBRES :
+-- Points forts de la formation : [Saisir ici]
+-- Suggestions d'amélioration / Remarques complémentaires : [Saisir ici]
+`;
+        break;
+    }
+
+    this.documentForm.patchValue({
+      type,
+      code,
+      title,
+      category,
+      keywords,
+      description
+    });
+  }
+
+  private getTodayFrenchFormat(): string {
+    const now = new Date();
+    const day = `${now.getDate()}`.padStart(2, '0');
+    const month = `${now.getMonth() + 1}`.padStart(2, '0');
+    const year = now.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+  private getTodayInputDate(): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = `${now.getMonth() + 1}`.padStart(2, '0');
+    const day = `${now.getDate()}`.padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   onProcessChanged(): void {
@@ -418,6 +615,24 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
 
   private uploadIfNeeded(documentId: number) {
     if (!this.selectedFile) {
+      const raw = this.documentForm.getRawValue();
+      if (raw.description && raw.description.trim().length > 0) {
+        // Automatically create a TXT file from the description!
+        const blob = new Blob([raw.description], { type: 'text/plain;charset=utf-8' });
+        const fileName = `${raw.code.trim().replace(/[^a-zA-Z0-9_-]/g, '_')}_v1.0.txt`;
+        const autoFile = new File([blob], fileName, { type: 'text/plain' });
+
+        const versionPayload = this.buildVersionPayload();
+        return this.documentService.uploadVersion(documentId, autoFile, versionPayload).pipe(
+          switchMap(() => {
+            this.documentId = documentId;
+            this.selectedFile = null;
+            return of(true);
+          })
+        );
+      }
+    }
+    if (!this.selectedFile) {
       return of(false);
     }
 
@@ -437,7 +652,6 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
     return {
       processId: raw.processId ?? null,
       procedureId: raw.procedureId ?? null,
-      departmentId: raw.departmentId ?? null,
       code: raw.code.trim(),
       title: raw.title.trim(),
       type: raw.type,
@@ -473,7 +687,6 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
       processId: document.processId ?? null,
       procedureId: document.procedureId ?? null,
       ownerUserId: document.ownerUserId ?? null,
-      departmentId: document.departmentId ?? null,
       isActive: document.isActive,
       initialVersionNumber: document.currentVersionNumber ?? 'v1.0',
       initialVersionStatus: document.currentVersionStatus ?? 'BROUILLON',
@@ -516,22 +729,11 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
         email: currentUser.email,
         role: currentUser.role,
         function: currentUser.function,
-        department: currentUser.department,
-        departmentId: null,
-        departmentName: null,
         isActive: currentUser.isActive,
         createdAt: currentUser.createdAt
       },
       ...this.owners
     ];
-  }
-
-  private getTodayInputDate(): string {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = `${now.getMonth() + 1}`.padStart(2, '0');
-    const day = `${now.getDate()}`.padStart(2, '0');
-    return `${year}-${month}-${day}`;
   }
 
   private formatDateForApi(value: Date | string | null | undefined): string | null {
@@ -547,5 +749,21 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
     const month = `${value.getMonth() + 1}`.padStart(2, '0');
     const day = `${value.getDate()}`.padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  setActiveTab(index: number): void {
+    this.activeTab = index;
+  }
+
+  nextTab(): void {
+    if (this.activeTab < 3) {
+      this.activeTab++;
+    }
+  }
+
+  prevTab(): void {
+    if (this.activeTab > 0) {
+      this.activeTab--;
+    }
   }
 }

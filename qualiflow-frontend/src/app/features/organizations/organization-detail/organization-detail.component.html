@@ -1,4 +1,270 @@
-﻿<section class="page">
-  <h1>Organization Details</h1>
-  <p>Organization detail page is ready.</p>
-</section>
+<div [class.org-page-container]="!isDialog" [class.org-dialog-container]="isDialog">
+  
+  <!-- PAGE HEADER BANNER (Only when not in a dialog) -->
+  <div class="header-banner" *ngIf="!isDialog">
+    <div class="header-content">
+      <div class="avatar-section">
+        <div class="avatar-circle shadow-sm">
+          <img *ngIf="logoObjectUrl" [src]="logoObjectUrl" alt="Logo">
+          <div *ngIf="!logoObjectUrl" class="avatar-initials">
+            {{ organization?.name?.substring(0, 2)?.toUpperCase() || 'OR' }}
+          </div>
+        </div>
+        <div class="profile-info">
+          <h1>{{ organization?.name || 'Mon Organisation' }}</h1>
+          <div class="badge-row">
+            <span class="role-badge">{{ organization?.code || 'ORGANISATION' }}</span>
+            <span class="org-badge">{{ organization?.status || 'ACTIF' }}</span>
+          </div>
+          <span class="email-text" *ngIf="organization?.email">
+            <mat-icon>email</mat-icon> {{ organization?.email }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIALOG HEADER (Only when in a dialog) -->
+  <div class="dialog-header" *ngIf="isDialog">
+    <div class="header-title-area">
+      <mat-icon class="header-icon">business</mat-icon>
+      <div class="header-text">
+        <h2>Profil de l'organisation</h2>
+        <p>Gérez l'identité visuelle et les configurations globales</p>
+      </div>
+    </div>
+    <button mat-icon-button class="close-btn" (click)="onClose()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- CONTENT WRAPPER -->
+  <div [class.tabs-wrapper]="!isDialog" [class.dialog-content-body]="isDialog">
+    <!-- Spinner while loading -->
+    <div class="loading-overlay" *ngIf="loading">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Chargement des paramètres de l'organisation...</p>
+    </div>
+
+    <!-- TABS CONTAINER -->
+    <mat-tab-group *ngIf="!loading" animationDuration="400ms" [class.org-dialog-tabs]="isDialog" [class.org-page-tabs]="!isDialog">
+      
+      <!-- TAB 1: IDENTITÉ VISUELLE & STATUT -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">photo_camera</mat-icon>
+          <span>Identité Visuelle</span>
+        </ng-template>
+        
+        <div [class.tab-content-panel]="isDialog" [class.tab-pane-content]="!isDialog" class="logo-tab-layout">
+          <div class="logo-control-section">
+            <div class="logo-preview-box">
+              <img *ngIf="logoObjectUrl && !selectedLogo" [src]="logoObjectUrl" alt="Logo Officiel" class="org-logo-img">
+              
+              <div *ngIf="!logoObjectUrl && !selectedLogo" class="logo-empty-state">
+                <mat-icon>business</mat-icon>
+                <p>Aucun logo défini</p>
+              </div>
+
+              <div *ngIf="selectedLogo" class="logo-pending-state">
+                <mat-icon>cloud_done</mat-icon>
+                <span class="file-name">{{ selectedLogo.name }}</span>
+                <small>Fichier prêt à être envoyé</small>
+              </div>
+            </div>
+
+            <div class="logo-action-buttons">
+              <input type="file" id="orgLogoSelect" (change)="onLogoSelected($event)" hidden #logoFileInput accept="image/*">
+              
+              <button mat-stroked-button class="select-file-btn" (click)="logoFileInput.click()" [disabled]="uploadingLogo">
+                <mat-icon>add_photo_alternate</mat-icon>
+                {{ selectedLogo ? 'Remplacer le fichier' : 'Choisir un logo' }}
+              </button>
+
+              <div class="pending-actions" *ngIf="selectedLogo">
+                <button mat-flat-button class="upload-btn" (click)="uploadLogo()" [disabled]="uploadingLogo">
+                  <mat-spinner diameter="18" *ngIf="uploadingLogo"></mat-spinner>
+                  <span *ngIf="!uploadingLogo">Enregistrer le logo</span>
+                </button>
+                <button mat-icon-button class="cancel-file-btn" (click)="removeSelectedLogo()" [disabled]="uploadingLogo">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="insights-control-section">
+            <mat-card class="section-card bg-light-sub">
+              <div class="section-title-row">
+                <mat-icon>info</mat-icon>
+                <h3>Informations Système</h3>
+              </div>
+              <div class="insight-row">
+                <span class="insight-label">Code Organisation :</span>
+                <span class="insight-value">{{ organization?.code }}</span>
+              </div>
+              <div class="insight-row">
+                <span class="insight-label">Date d'enregistrement :</span>
+                <span class="insight-value">{{ organization?.createdAt | date: 'dd MMMM yyyy' }}</span>
+              </div>
+              <div class="insight-row">
+                <span class="insight-label">Statut du Compte :</span>
+                <span class="insight-badge active" *ngIf="organization?.status === 'ACTIF'">ACTIF</span>
+                <span class="insight-badge inactive" *ngIf="organization?.status !== 'ACTIF'">{{ organization?.status }}</span>
+              </div>
+            </mat-card>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- TAB 2: INFORMATIONS GÉNÉRALES -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">settings_applications</mat-icon>
+          <span>Informations Générales</span>
+        </ng-template>
+        
+        <div [class.tab-content-panel]="isDialog" [class.tab-pane-content]="!isDialog">
+          <div class="pane-header" *ngIf="!isDialog">
+            <h2>Informations Générales</h2>
+            <p>Gérez le nom, le type d'établissement et l'adresse physique de votre organisation</p>
+          </div>
+
+          <form [formGroup]="organizationForm" class="dialog-form">
+            <div class="form-row-grid">
+              <mat-form-field appearance="outline" class="form-field">
+                <mat-label>Nom de l'organisation</mat-label>
+                <input matInput formControlName="name" placeholder="Ex: QualiFlow Inc.">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field">
+                <mat-label>Type d'établissement</mat-label>
+                <mat-select formControlName="type">
+                  <mat-option *ngFor="let type of typeOptions" [value]="type">{{ type }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" class="form-field full-width">
+              <mat-label>Adresse complète</mat-label>
+              <mat-icon matIconPrefix>place</mat-icon>
+              <button mat-icon-button matSuffix type="button" (click)="fillAddressFromGps()" [disabled]="locatingAddress" title="Utiliser la position GPS actuelle">
+                <mat-icon *ngIf="!locatingAddress">my_location</mat-icon>
+                <mat-spinner *ngIf="locatingAddress" diameter="18"></mat-spinner>
+              </button>
+              <input matInput formControlName="address" placeholder="Rue, Ville, Code Postal, Pays">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field full-width">
+              <mat-label>Description / Présentation</mat-label>
+              <textarea matInput rows="4" formControlName="description" placeholder="Présentation rapide de votre organisation..."></textarea>
+            </mat-form-field>
+          </form>
+        </div>
+      </mat-tab>
+
+      <!-- TAB 3: COORDONNÉES & CONTACT -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">contact_mail</mat-icon>
+          <span>Coordonnées & Contact</span>
+        </ng-template>
+        
+        <div [class.tab-content-panel]="isDialog" [class.tab-pane-content]="!isDialog">
+          <div class="pane-header" *ngIf="!isDialog">
+            <h2>Coordonnées & Contact</h2>
+            <p>Gérez les canaux de communication officiels de votre organisation</p>
+          </div>
+
+          <form [formGroup]="organizationForm" class="dialog-form">
+            <div class="form-row-grid">
+              <mat-form-field appearance="outline" class="form-field">
+                <mat-label>Email officiel</mat-label>
+                <mat-icon matIconPrefix>alternate_email</mat-icon>
+                <input matInput formControlName="email" placeholder="contact@organisation.com">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field">
+                <mat-label>Téléphone support</mat-label>
+                <mat-icon matIconPrefix>phone</mat-icon>
+                <input matInput formControlName="phone" placeholder="+33 X XX XX XX XX">
+              </mat-form-field>
+            </div>
+
+            <div class="form-row-grid">
+              <mat-form-field appearance="outline" class="form-field">
+                <mat-label>Numéro de Fax</mat-label>
+                <mat-icon matIconPrefix>print</mat-icon>
+                <input matInput formControlName="fax" placeholder="Numéro de fax">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field">
+                <mat-label>Site Web</mat-label>
+                <mat-icon matIconPrefix>language</mat-icon>
+                <input matInput formControlName="website" placeholder="https://www.site.com">
+              </mat-form-field>
+            </div>
+          </form>
+        </div>
+      </mat-tab>
+
+      <!-- TAB 4: ABONNEMENT -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">timer</mat-icon>
+          <span>Abonnement</span>
+        </ng-template>
+        
+        <div [class.tab-content-panel]="isDialog" [class.tab-pane-content]="!isDialog">
+          <div class="pane-header" *ngIf="!isDialog">
+            <h2>Abonnement & Notifications</h2>
+            <p>Gérez la période d'activation et l'état du monitoring de l'abonnement</p>
+          </div>
+
+          <div class="subscription-readonly-note" *ngIf="!isSuperAdmin">
+            <mat-icon>info</mat-icon>
+            <span>Les paramètres d'abonnement sont gérés exclusivement par le Super Administrateur de QualiFlow.</span>
+          </div>
+
+          <form [formGroup]="organizationForm" class="dialog-form">
+            <div class="form-row-grid align-center">
+              <mat-form-field appearance="outline" class="form-field">
+                <mat-label>Abonnement (jours restants)</mat-label>
+                <mat-icon matIconPrefix>timer</mat-icon>
+                <input matInput type="number" min="0" formControlName="subscriptionDaysRemaining">
+              </mat-form-field>
+
+              <div class="monitor-toggle-wrapper">
+                <div class="toggle-text">
+                  <mat-icon>monitor_heart</mat-icon>
+                  <span>Moniteur automatique d'abonnement</span>
+                </div>
+                <mat-slide-toggle color="primary" formControlName="subscriptionMonitorEnabled"></mat-slide-toggle>
+              </div>
+            </div>
+          </form>
+        </div>
+      </mat-tab>
+
+    </mat-tab-group>
+  </div>
+
+  <!-- Dialog Footer (Dialog Mode Only) -->
+  <div class="dialog-actions-bar" *ngIf="isDialog && !loading">
+    <button mat-button class="cancel-btn" (click)="onClose()">Fermer</button>
+    <button mat-flat-button class="save-btn" (click)="saveOrganization()" [disabled]="savingOrganization">
+      <mat-spinner diameter="18" *ngIf="savingOrganization"></mat-spinner>
+      <mat-icon *ngIf="!savingOrganization">check_circle</mat-icon>
+      <span *ngIf="!savingOrganization">Appliquer les modifications</span>
+    </button>
+  </div>
+
+  <!-- Page Footer Actions (Page Mode Only) -->
+  <div class="page-footer-actions" *ngIf="!isDialog && !loading">
+    <button mat-flat-button class="btn-primary-custom" (click)="saveOrganization()" [disabled]="savingOrganization">
+      <mat-spinner diameter="18" *ngIf="savingOrganization"></mat-spinner>
+      <mat-icon *ngIf="!savingOrganization">check_circle</mat-icon>
+      <span *ngIf="!savingOrganization">Enregistrer les modifications</span>
+    </button>
+  </div>
+</div>

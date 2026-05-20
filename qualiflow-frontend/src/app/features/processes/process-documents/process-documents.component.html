@@ -1,0 +1,149 @@
+<section class="process-documents-page">
+
+  <!-- LOADING -->
+  <div *ngIf="loading" class="pd-loading">
+    <mat-spinner diameter="38"></mat-spinner>
+    <span>Chargement de la documentation...</span>
+  </div>
+
+  <ng-container *ngIf="!loading && details">
+
+    <!-- ────── HEADER ────── -->
+    <div class="pd-header">
+      <div>
+        <button type="button" class="back-link-btn" (click)="backToProcess()">
+          <mat-icon>arrow_back</mat-icon>
+          <span>Retour au processus</span>
+        </button>
+        <h1>Documentation — {{ details.process.code }}</h1>
+        <p class="pd-subtitle">{{ details.process.name }}</p>
+      </div>
+      <button mat-stroked-button (click)="loadData()" matTooltip="Actualiser">
+        <mat-icon>refresh</mat-icon> Actualiser
+      </button>
+    </div>
+
+    <!-- ────── PROCEDURE CHIPS ────── -->
+    <div class="chips-zone">
+      <!-- "Tous" chip -->
+      <button
+        class="proc-chip"
+        [class.active]="selectedProcedureId === null"
+        (click)="selectProcedure(null)">
+        <mat-icon>layers</mat-icon>
+        <span>Tous les documents</span>
+        <span class="chip-count">{{ getDocumentCount(null) }}</span>
+      </button>
+
+      <!-- One chip per procedure -->
+      <button
+        class="proc-chip"
+        *ngFor="let p of procedures"
+        [class.active]="selectedProcedureId === p.id"
+        (click)="selectProcedure(p.id)">
+        <mat-icon>description</mat-icon>
+        <span>{{ p.code }}</span>
+        <span class="chip-count">{{ getDocumentCount(p.id) }}</span>
+      </button>
+    </div>
+
+    <!-- ────── DOCUMENT LIST CARD ────── -->
+    <mat-card class="docs-card">
+
+      <!-- Card header -->
+      <div class="docs-card-header">
+        <div class="docs-card-title">
+          <mat-icon>folder_open</mat-icon>
+          <div>
+            <h2 *ngIf="selectedProcedureId === null">Tous les documents du processus</h2>
+            <h2 *ngIf="selectedProcedure">{{ selectedProcedure.code }} — {{ selectedProcedure.title }}</h2>
+            <span class="docs-count">{{ visibleDocuments.length }} document(s) affiché(s)</span>
+          </div>
+        </div>
+
+        <!-- Search Toggle Controls -->
+        <div class="search-controls" style="display: flex; align-items: center; gap: 8px;">
+          <button mat-icon-button (click)="toggleSearch()" matTooltip="Rechercher dans les documents" [style.color]="showSearch ? 'var(--xl-green-mid)' : 'inherit'">
+            <mat-icon>{{ showSearch ? 'search_off' : 'search' }}</mat-icon>
+          </button>
+          
+          <mat-form-field appearance="outline" class="search-field" *ngIf="showSearch" style="margin-bottom: 0 !important; width: 220px;">
+            <mat-label>Rechercher</mat-label>
+            <mat-icon matPrefix>search</mat-icon>
+            <input matInput [(ngModel)]="searchTerm" placeholder="Code ou titre…" />
+            <button *ngIf="searchTerm" matSuffix mat-icon-button (click)="searchTerm = ''" matTooltip="Effacer">
+              <mat-icon>close</mat-icon>
+            </button>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrap" *ngIf="visibleDocuments.length > 0; else emptyState">
+        <table mat-table [dataSource]="visibleDocuments" class="doc-table">
+
+          <!-- Code -->
+          <ng-container matColumnDef="code">
+            <th mat-header-cell *matHeaderCellDef>Code</th>
+            <td mat-cell *matCellDef="let d">
+              <strong class="doc-code">{{ d.code }}</strong>
+            </td>
+          </ng-container>
+
+          <!-- Title -->
+          <ng-container matColumnDef="title">
+            <th mat-header-cell *matHeaderCellDef>Titre</th>
+            <td mat-cell *matCellDef="let d">{{ d.title }}</td>
+          </ng-container>
+
+          <!-- Procedure (only when "Tous" is selected) -->
+          <ng-container matColumnDef="procedure">
+            <th mat-header-cell *matHeaderCellDef>Procédure</th>
+            <td mat-cell *matCellDef="let d">
+              <span *ngIf="d.procedureCode" class="proc-chip-inline">{{ d.procedureCode }}</span>
+              <span *ngIf="!d.procedureCode" class="no-proc">—</span>
+            </td>
+          </ng-container>
+
+          <!-- Status -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Statut</th>
+            <td mat-cell *matCellDef="let d">
+              <span class="tag" [ngClass]="getDocumentStatusClass(d.status)">
+                {{ d.status || 'BROUILLON' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Actions -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef style="width:52px;"></th>
+            <td mat-cell *matCellDef="let d">
+              <button mat-icon-button color="primary" (click)="viewDocument(d.id)" matTooltip="Consulter">
+                <mat-icon>visibility</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </div>
+
+      <!-- Empty state -->
+      <ng-template #emptyState>
+        <div class="empty-state">
+          <mat-icon>find_in_page</mat-icon>
+          <ng-container *ngIf="searchTerm; else noDocsMsg">
+            <p>Aucun résultat pour <strong>« {{ searchTerm }} »</strong></p>
+          </ng-container>
+          <ng-template #noDocsMsg>
+            <p>Aucun document associé à cette procédure.</p>
+          </ng-template>
+        </div>
+      </ng-template>
+
+    </mat-card>
+
+  </ng-container>
+</section>

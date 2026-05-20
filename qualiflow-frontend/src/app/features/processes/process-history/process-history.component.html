@@ -1,0 +1,281 @@
+<section class="process-history-page">
+  <div *ngIf="loading" class="loading-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 200px; gap: 12px;">
+    <mat-spinner diameter="38"></mat-spinner>
+    <span>Chargement de l'historique du processus...</span>
+  </div>
+
+  <ng-container *ngIf="!loading && details">
+    <!-- PAGE HEADER BAR -->
+    <div class="page-header-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid rgba(0,0,0,0.06); padding-bottom: 16px;">
+      <div class="page-header-left">
+        <div class="page-subtitle" style="margin-bottom: 8px;">
+          <button type="button" class="back-link-btn" (click)="backToProcess()" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; color: #10b981; font-weight: 600;">
+            <mat-icon style="font-size: 20px; width: 20px; height: 20px;">arrow_back</mat-icon>
+            <span>Retour au processus</span>
+          </button>
+        </div>
+        <h1 class="page-title" style="margin: 0; font-size: 24px; font-weight: 800; color: #0f172a; letter-spacing: -0.02em;">
+          Journal d'Actions — {{ details.process.code }}
+        </h1>
+        <p class="page-intro" style="margin: 4px 0 0 0; color: #64748b; font-size: 14px; font-weight: 500;">
+          Historique d'audit complet de toutes les modifications apportées à ce processus.
+        </p>
+      </div>
+
+      <div class="page-header-right">
+        <button mat-stroked-button (click)="loadData()" matTooltip="Actualiser les logs" style="border-radius: 12px; font-weight: 700; height: 40px; border-color: #cbd5e1;">
+          <mat-icon>refresh</mat-icon> Actualiser
+        </button>
+      </div>
+    </div>
+
+    <div class="details-body">
+
+      <!-- GOUVERNANCE & CYCLE DE VIE DU PROCESSUS -->
+      <div class="gov-lifecycle-card" style="background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.02); padding: 28px; border: 1px solid rgba(0,0,0,0.04); display: grid; grid-template-columns: 1fr 2fr; gap: 32px; margin-bottom: 24px;">
+        
+        <!-- COLUMN 1: CRÉATEUR -->
+        <div class="gov-creator-section" style="border-right: 1px solid #f1f5f9; padding-right: 32px; display: flex; flex-direction: column; justify-content: center;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
+            <mat-icon style="color: var(--xl-green-mid); font-size: 22px; width: 22px; height: 22px;">star_border</mat-icon>
+            <h3 style="margin: 0; font-size: 14px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">Créateur du Processus</h3>
+          </div>
+          
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 56px; height: 56px; border-radius: 16px; background: var(--xl-green-xlight); color: var(--xl-green-mid); font-weight: 900; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(33, 115, 70, 0.1);">
+              {{ (creationLog?.performedByFullName || 'Système').charAt(0).toUpperCase() }}
+            </div>
+            <div>
+              <div style="font-weight: 800; font-size: 1.1rem; color: #0f172a; margin-bottom: 4px;">
+                {{ creationLog?.performedByFullName || 'Système' }}
+              </div>
+              <div style="font-size: 0.85rem; font-weight: 600; color: #64748b; display: flex; align-items: center; gap: 6px;">
+                <mat-icon style="font-size: 14px; width: 14px; height: 14px; color: #94a3b8; margin: 0;">event</mat-icon>
+                Créé le {{ details.process.createdAt | date: 'dd/MM/yyyy à HH:mm' }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- COLUMN 2: TIMELINE DE PILOTAGE -->
+        <div class="gov-timeline-section">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
+            <mat-icon style="color: #ea580c; font-size: 22px; width: 22px; height: 22px;">timeline</mat-icon>
+            <h3 style="margin: 0; font-size: 14px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">Périodes de Pilotage</h3>
+          </div>
+
+          <div class="timeline-row-container" style="display: flex; align-items: stretch; gap: 12px; overflow-x: auto; padding-top: 12px; padding-bottom: 8px;">
+            <div *ngFor="let item of pilotingTimeline; let i = index; let isLast = last" style="display: flex; align-items: center; position: relative; flex: 1; min-width: 220px;">
+              
+              <!-- Timeline node card -->
+              <div style="background: #fafafa; border: 1.5px solid #f1f5f9; border-radius: 14px; padding: 14px; width: 100%; transition: all 0.2s; position: relative;"
+                   [style.border-color]="item.endDate ? '#f1f5f9' : '#fed7aa'"
+                   [style.background]="item.endDate ? '#fafafa' : '#fffaf5'">
+                
+                <!-- Status Pill inside node -->
+                <span style="position: absolute; top: -10px; right: 12px; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 10px;"
+                      [style.background]="item.endDate ? '#e2e8f0' : '#ffedd5'"
+                      [style.color]="item.endDate ? '#475569' : '#ea580c'">
+                  {{ item.endDate ? 'Historique' : 'Pilote Actuel' }}
+                </span>
+
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                  <div style="width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.75rem;"
+                       [style.background]="item.endDate ? '#e2e8f0' : '#ffedd5'"
+                       [style.color]="item.endDate ? '#475569' : '#ea580c'">
+                    {{ item.pilotName.charAt(0).toUpperCase() }}
+                  </div>
+                  <span style="font-weight: 800; color: #1e293b; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;">
+                    {{ item.pilotName }}
+                  </span>
+                </div>
+
+                <div style="font-size: 0.78rem; font-weight: 600; color: #64748b; margin-bottom: 2px; display: flex; align-items: center; gap: 4px;">
+                  <mat-icon style="font-size: 12px; width: 12px; height: 12px; color: #94a3b8; margin: 0;">date_range</mat-icon>
+                  Du <strong>{{ formatPeriodDate(item.startDate) }}</strong> au <strong>{{ formatPeriodDate(item.endDate) }}</strong>
+                </div>
+
+                <div style="font-size: 0.75rem; font-weight: 700; color: #94a3b8; display: flex; align-items: center; gap: 4px;">
+                  <mat-icon style="font-size: 12px; width: 12px; height: 12px; color: #cbd5e1; margin: 0;">schedule</mat-icon>
+                  Durée : {{ getDurationText(item.startDate, item.endDate) }}
+                </div>
+              </div>
+
+              <!-- Connection Arrow (only if not last) -->
+              <div *ngIf="!isLast" style="display: flex; align-items: center; justify-content: center; color: #cbd5e1; padding: 0 8px;">
+                <mat-icon style="font-size: 24px; width: 24px; height: 24px; color: #d1d5db;">arrow_forward</mat-icon>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- MAIN CONTROLS PANEL -->
+      <div class="history-controls-card" style="background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.02); padding: 24px; border: 1px solid rgba(0,0,0,0.04); margin-bottom: 24px;">
+        
+        <!-- SEARCH & FILTER INTERFACES -->
+        <div class="history-controls" style="display: flex; flex-direction: column; gap: 20px;">
+          
+          <!-- Category Tabs (Pills) -->
+          <div class="history-categories" style="display: flex; flex-wrap: wrap; gap: 10px;">
+            <button type="button" class="category-pill-btn" [class.active]="selectedCategory === 'ALL'" (click)="selectedCategory = 'ALL'">
+              <mat-icon>clear_all</mat-icon>
+              <span>Tous</span>
+              <span class="category-badge count-all">{{ getCategoryCount('ALL') }}</span>
+            </button>
+
+            <button type="button" class="category-pill-btn" [class.active]="selectedCategory === 'PILOTAGE'" (click)="selectedCategory = 'PILOTAGE'">
+              <mat-icon>assignment_ind</mat-icon>
+              <span>Pilotage & Rôles</span>
+              <span class="category-badge count-pilotage">{{ getCategoryCount('PILOTAGE') }}</span>
+            </button>
+
+            <button type="button" class="category-pill-btn" [class.active]="selectedCategory === 'MODIFICATION'" (click)="selectedCategory = 'MODIFICATION'">
+              <mat-icon>edit_note</mat-icon>
+              <span>Modifications</span>
+              <span class="category-badge count-modification">{{ getCategoryCount('MODIFICATION') }}</span>
+            </button>
+
+            <button type="button" class="category-pill-btn" [class.active]="selectedCategory === 'CREATION'" (click)="selectedCategory = 'CREATION'">
+              <mat-icon>add_circle_outline</mat-icon>
+              <span>Création</span>
+              <span class="category-badge count-creation">{{ getCategoryCount('CREATION') }}</span>
+            </button>
+
+            <button type="button" class="category-pill-btn" [class.active]="selectedCategory === 'STATUS'" (click)="selectedCategory = 'STATUS'">
+              <mat-icon>published_with_changes</mat-icon>
+              <span>Statuts</span>
+              <span class="category-badge count-status">{{ getCategoryCount('STATUS') }}</span>
+            </button>
+          </div>
+
+          <!-- Search Bar -->
+          <div class="search-input-wrapper" style="position: relative; width: 100%; max-width: 450px;">
+            <mat-icon style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 20px; width: 20px; height: 20px;">search</mat-icon>
+            <input 
+              type="text" 
+              [(ngModel)]="searchText"
+              placeholder="Rechercher une action, un auteur, ou un commentaire..."
+              style="width: 100%; height: 44px; padding: 0 16px 0 46px; border: 1.5px solid rgba(226, 232, 240, 0.9); border-radius: 12px; font-size: 0.9rem; font-weight: 600; color: #1e293b; background: #f8fafc; outline: none; transition: all 0.2s;"
+              onfocus="this.style.borderColor='#10b981'; this.style.backgroundColor='#ffffff'; this.style.boxShadow='0 0 0 4px rgba(16, 185, 129, 0.1)';"
+              onblur="this.style.borderColor='rgba(226, 232, 240, 0.9)'; this.style.backgroundColor='#f8fafc'; this.style.boxShadow='none';"
+            />
+            <button 
+              *ngIf="searchText" 
+              (click)="searchText = ''"
+              style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #94a3b8; display: flex; align-items: center; justify-content: center; padding: 0;"
+            >
+              <mat-icon style="font-size: 18px; width: 18px; height: 18px;">cancel</mat-icon>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- EMPTY STATE (No Logs at all) -->
+      <div class="empty-logs" *ngIf="actionLogs.length === 0" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; text-align: center; background: #f8fafc; border-radius: 16px; border: 2.5px dashed #e2e8f0; color: #64748b;">
+        <mat-icon style="font-size: 54px; width: 54px; height: 54px; margin-bottom: 12px; color: #cbd5e1;">history_toggle_off</mat-icon>
+        <h3 style="margin: 0 0 6px 0; font-weight: 800; color: #0f172a;">Aucun log disponible</h3>
+        <p style="margin: 0; font-size: 0.85rem; font-weight: 500; color: #94a3b8;">Aucun événement n'a été enregistré pour ce processus pour l'instant.</p>
+      </div>
+
+      <!-- EMPTY SEARCH RESULTS STATE -->
+      <div class="empty-logs" *ngIf="actionLogs.length > 0 && filteredActionLogs.length === 0" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; text-align: center; background: #f8fafc; border-radius: 16px; border: 2.5px dashed #e2e8f0; color: #64748b;">
+        <mat-icon style="font-size: 54px; width: 54px; height: 54px; margin-bottom: 12px; color: #cbd5e1;">filter_alt_off</mat-icon>
+        <h3 style="margin: 0 0 6px 0; font-weight: 800; color: #0f172a;">Aucune action correspondante</h3>
+        <p style="margin: 0; font-size: 0.85rem; font-weight: 500; color: #94a3b8;">Modifiez votre recherche ou filtre pour voir plus de logs.</p>
+      </div>
+
+      <!-- FULL-WIDTH AUDIT WORKSPACE -->
+      <div class="workspace-full-width" style="width: 100%;" *ngIf="filteredActionLogs.length > 0">
+        
+        <!-- AUDIT LIST GRID -->
+        <mat-card class="table-card" style="border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.01); overflow: hidden; padding: 20px; border: 1px solid rgba(0,0,0,0.03); margin: 0; width: 100%; box-sizing: border-box;">
+          
+          <div class="card-header-clean" style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px; padding: 0 4px;">
+            <mat-icon style="color: #10b981;">history</mat-icon>
+            <h2 style="margin: 0; font-size: 18px; font-weight: 800; color: #0f172a; letter-spacing: -0.01em;">Audit du Processus</h2>
+            <span style="font-size: 0.78rem; font-weight: 800; color: #64748b; background: #f1f5f9; padding: 2px 10px; border-radius: 20px; margin-left: 10px;">
+              {{ filteredActionLogs.length }} correspondants
+            </span>
+          </div>
+
+          <div class="table-wrap" style="overflow-x: auto; border: 1px solid rgba(226, 232, 240, 0.8); border-radius: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.01);">
+            <table mat-table [dataSource]="filteredActionLogs" class="details-word-table" style="width: 100%; border-collapse: collapse;">
+              
+              <ng-container matColumnDef="action">
+                <th mat-header-cell *matHeaderCellDef style="font-weight: 800; color: #475569; padding: 16px 20px; border-bottom: 1px solid rgba(226, 232, 240, 0.8); background: #f8fafc; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.05em;">Action</th>
+                <td mat-cell *matCellDef="let log" style="padding: 16px 20px; border-bottom: 1px solid rgba(226, 232, 240, 0.8);">
+                  <div class="log-action-cell" style="display: flex; align-items: center; gap: 10px;">
+                    <div class="log-icon-badge" [ngClass]="log.actionType.toLowerCase()" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                      <mat-icon style="font-size: 18px; width: 18px; height: 18px;">{{ getActionIcon(log.actionType) }}</mat-icon>
+                    </div>
+                    <span style="font-weight: 800; color: #0f172a; font-size: 0.88rem;">{{ getActionLabel(log.actionType) }}</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="user">
+                <th mat-header-cell *matHeaderCellDef style="font-weight: 800; color: #475569; padding: 16px 20px; border-bottom: 1px solid rgba(226, 232, 240, 0.8); background: #f8fafc; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.05em;">Auteur</th>
+                <td mat-cell *matCellDef="let log" style="padding: 16px 20px; border-bottom: 1px solid rgba(226, 232, 240, 0.8); color: #1e293b; font-size: 0.85rem; font-weight: 700;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <div class="avatar-letter" style="width: 24px; height: 24px; border-radius: 6px; background: #e2e8f0; color: #475569; font-weight: 800; font-size: 0.72rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                      {{ (log.performedByFullName || 'S').charAt(0) }}
+                    </div>
+                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">{{ log.performedByFullName || 'Système' }}</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="date">
+                <th mat-header-cell *matHeaderCellDef style="font-weight: 800; color: #475569; padding: 16px 20px; border-bottom: 1px solid rgba(226, 232, 240, 0.8); background: #f8fafc; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.05em;">Date</th>
+                <td mat-cell *matCellDef="let log" style="padding: 16px 20px; border-bottom: 1px solid rgba(226, 232, 240, 0.8); color: #64748b; font-size: 0.82rem; font-weight: 600; white-space: nowrap;">
+                  {{ log.performedAt | date: 'dd/MM/yyyy HH:mm' }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="comment">
+                <th mat-header-cell *matHeaderCellDef style="font-weight: 800; color: #475569; padding: 16px 20px; border-bottom: 1px solid rgba(226, 232, 240, 0.8); background: #f8fafc; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.05em;">Résumé</th>
+                <td mat-cell *matCellDef="let log" style="padding: 16px 20px; border-bottom: 1px solid rgba(226, 232, 240, 0.8); color: #475569; font-size: 0.82rem; font-weight: 600;">
+                  <div class="log-comment" style="max-width: 450px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    {{ log.comment || '-' }}
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Actions column -->
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef style="font-weight: 800; color: #475569; padding: 16px 20px; border-bottom: 1px solid rgba(226, 232, 240, 0.8); background: #f8fafc; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.05em; text-align: center;">Détails</th>
+                <td mat-cell *matCellDef="let log" style="padding: 16px 20px; border-bottom: 1px solid rgba(226, 232, 240, 0.8); text-align: center;">
+                  <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <button 
+                      mat-icon-button 
+                      color="primary" 
+                      matTooltip="Voir Détails" 
+                      (click)="selectLog(log); $event.stopPropagation();"
+                      style="color: #3b82f6;"
+                    >
+                      <mat-icon style="font-size: 18px; width: 18px; height: 18px;">visibility</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedActionLogColumns"></tr>
+              <tr mat-row 
+                  *matRowDef="let row; columns: displayedActionLogColumns" 
+                  (click)="selectLog(row)"
+                  style="cursor: pointer;">
+              </tr>
+            </table>
+          </div>
+
+        </mat-card>
+
+      </div>
+    </div>
+  </ng-container>
+</section>

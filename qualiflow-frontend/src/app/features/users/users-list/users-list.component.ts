@@ -41,7 +41,7 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class UsersListComponent implements OnInit {
   users: UserResponse[] = [];
-  displayedColumns: string[] = ['fullName', 'email', 'role', 'status', 'lastLoginAt', 'createdAt', 'actions'];
+  displayedColumns: string[] = ['fullName', 'role', 'status', 'lastLoginAt', 'createdAt', 'actions'];
 
   readonly roleOptions: Array<{ value: UserRole; label: string }> = [
     { value: 'ADMIN_ORG', label: 'Admin org' },

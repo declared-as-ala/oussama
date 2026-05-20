@@ -85,6 +85,8 @@ export class NonconformityDetailsComponent implements OnInit {
   editingActionId: number | null = null;
   showActionForm = false;
 
+  activeActionFilter = 'TOUTES';
+
   constructor(
     private readonly fb: FormBuilder,
     private readonly route: ActivatedRoute,
@@ -124,6 +126,62 @@ export class NonconformityDetailsComponent implements OnInit {
 
   get actionFormTitle(): string {
     return this.editingActionId ? 'Modifier action corrective' : 'Ajouter action corrective';
+  }
+
+  get filteredActions(): CorrectiveActionResponse[] {
+    if (!this.details || !this.details.actions) {
+      return [];
+    }
+    const filter = this.activeActionFilter;
+    if (filter === 'TOUTES') {
+      return this.details.actions;
+    }
+    if (filter === 'EN_RETARD') {
+      return this.details.actions.filter(a => a.isOverdue && a.status !== 'TERMINEE');
+    }
+    return this.details.actions.filter(a => a.status === filter);
+  }
+
+  getCompletionPercentage(): number {
+    if (!this.details || !this.details.actions || this.details.actions.length === 0) return 0;
+    const completed = this.details.actions.filter(a => a.status === 'TERMINEE').length;
+    return Math.round((completed / this.details.actions.length) * 100);
+  }
+
+  getCompletedActionsCount(): number {
+    if (!this.details || !this.details.actions) return 0;
+    return this.details.actions.filter(a => a.status === 'TERMINEE').length;
+  }
+
+  getActionCountByStatus(status: string): number {
+    if (!this.details || !this.details.actions) return 0;
+    if (status === 'TOUTES') return this.details.actions.length;
+    if (status === 'EN_RETARD') return this.details.actions.filter(a => a.isOverdue && a.status !== 'TERMINEE').length;
+    return this.details.actions.filter(a => a.status === status).length;
+  }
+
+  updateActionStatus(action: CorrectiveActionResponse, nextStatus: CorrectiveActionStatus): void {
+    const payload: UpdateCorrectiveActionRequest = {
+      title: action.title,
+      description: action.description || null,
+      responsibleUserId: action.responsibleUserId,
+      dueDate: action.dueDate,
+      completionDate: nextStatus === 'TERMINEE' ? new Date().toISOString() : null,
+      status: nextStatus
+    };
+
+    this.savingAction = true;
+    this.nonConformityService.updateAction(this.nonConformityId, action.id, payload).subscribe({
+      next: () => {
+        this.savingAction = false;
+        this.notificationService.showSuccess('Statut de l\'action mis à jour.');
+        this.loadData();
+      },
+      error: () => {
+        this.savingAction = false;
+        this.notificationService.showError('Mise à jour du statut de l\'action impossible.');
+      }
+    });
   }
 
   loadData(): void {
@@ -270,6 +328,18 @@ export class NonconformityDetailsComponent implements OnInit {
     });
   }
 
+  toggleActionForm(): void {
+    if (this.showActionForm) {
+      this.cancelActionForm();
+    } else {
+      this.startNewAction();
+    }
+  }
+
+  cancelActionForm(): void {
+    this.cancelActionEdit();
+  }
+
   startNewAction(): void {
     this.editingActionId = null;
     this.showActionForm = true;
@@ -337,6 +407,53 @@ export class NonconformityDetailsComponent implements OnInit {
       completionDate: raw.completionDate ? `${raw.completionDate}T00:00:00Z` : null,
       status: raw.status
     };
+  }
+
+  downloadAttachment(att: any): void {
+    this.nonConformityService.downloadAttachment(att.id).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = att.originalFileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.notificationService.showError('Téléchargement du fichier impossible.');
+      }
+    });
+  }
+
+  deleteAttachment(id: number): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Supprimer la pièce jointe',
+        message: 'Êtes-vous sûr de vouloir supprimer cette pièce jointe ?',
+        confirmText: 'Supprimer',
+        cancelText: 'Annuler'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (!confirmed) {
+        return;
+      }
+
+      this.nonConformityService.deleteAttachment(id).subscribe({
+        next: () => {
+          if (this.details) {
+            this.details.attachments = this.details.attachments.filter(a => a.id !== id);
+          }
+          this.notificationService.showSuccess('Pièce jointe supprimée.');
+        },
+        error: () => {
+          this.notificationService.showError('Impossible de supprimer la pièce jointe.');
+        }
+      });
+    });
   }
 
   private toDateInputValue(value?: string | null): string {

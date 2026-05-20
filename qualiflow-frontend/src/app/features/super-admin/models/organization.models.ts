@@ -1,4 +1,4 @@
-﻿export type OrganizationType = 'UNIVERSITE' | 'INSTITUT' | 'CENTRE' | 'ENTREPRISE';
+export type OrganizationType = 'UNIVERSITE' | 'INSTITUT' | 'CENTRE' | 'ENTREPRISE';
 export type OrganizationStatus = 'ACTIF' | 'SUSPENDUE';
 
 export interface OrganizationListQueryParams {
@@ -25,7 +25,6 @@ export interface CreateOrganizationUserRequest {
   password: string;
   role: string;
   function?: string | null;
-  department?: string | null;
 }
 
 export interface CreateOrganizationRequest {

@@ -9,6 +9,11 @@
                 </p>
             </div>
             <div class="header-actions">
+                <button mat-stroked-button class="btn-map" (click)="navigateToMap()">
+                    <mat-icon>account_tree</mat-icon>
+                    Cartographie
+                </button>
+
                 <div class="view-mode-toggle">
                   <button class="toggle-btn" [class.active]="viewMode === 'cards'" (click)="viewMode = 'cards'" matTooltip="Vue Cartes">
                     <mat-icon>grid_view</mat-icon>

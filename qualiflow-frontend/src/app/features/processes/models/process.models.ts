@@ -1,4 +1,4 @@
-﻿export type ProcessType = 'PILOTAGE' | 'REALISATION' | 'SUPPORT';
+export type ProcessType = 'PILOTAGE' | 'REALISATION' | 'SUPPORT';
 export type ProcessStatus = 'ACTIF' | 'INACTIF';
 export type ProcessActorType = 'PILOTE' | 'COPILOTE' | 'CONTRIBUTEUR' | 'OBSERVATEUR';
 
@@ -26,6 +26,8 @@ export interface CreateProcessRequest {
   objectives: string[];
   pilotUserId?: number | null;
   status: ProcessStatus;
+  versionNumber?: string | null;
+  revisionComment?: string | null;
 }
 
 export type UpdateProcessRequest = CreateProcessRequest;
@@ -52,6 +54,7 @@ export interface ProcessListItemResponse {
   pilotUserId?: number | null;
   pilotFullName?: string | null;
   organizationId: number;
+  versionNumber?: string | null;
   createdAt: string;
 }
 
@@ -72,6 +75,8 @@ export interface ProcessResponse {
   pilotUserId?: number | null;
   pilotFullName?: string | null;
   status: ProcessStatus;
+  versionNumber?: string | null;
+  revisionComment?: string | null;
   createdAt: string;
   updatedAt?: string | null;
 }
@@ -81,7 +86,6 @@ export interface ProcessActorResponse {
   fullName: string;
   email: string;
   function?: string | null;
-  department?: string | null;
   actorType: ProcessActorType;
   assignedAt: string;
 }
@@ -130,3 +134,16 @@ export const PROCESS_ACTOR_TYPE_OPTIONS: Array<{ value: ProcessActorType; label:
   { value: 'CONTRIBUTEUR', label: 'Contributeur' },
   { value: 'OBSERVATEUR', label: 'Observateur' }
 ];
+
+export interface ProcessActionLogResponse {
+  id: number;
+  organizationId: number;
+  processId: number;
+  actionType: string;
+  oldValue?: string | null;
+  newValue?: string | null;
+  comment?: string | null;
+  performedByUserId: number;
+  performedByFullName?: string | null;
+  performedAt: string;
+}

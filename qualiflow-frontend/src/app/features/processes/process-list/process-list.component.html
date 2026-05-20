@@ -12,10 +12,12 @@
       </div>
       <div class="header-actions">
         <div class="view-mode-toggle">
-          <button class="toggle-btn" [class.active]="viewMode === 'cards'" (click)="viewMode = 'cards'" matTooltip="Vue Cartes">
+          <button class="toggle-btn" [class.active]="viewMode === 'cards'" (click)="viewMode = 'cards'"
+            matTooltip="Vue Cartes">
             <mat-icon>grid_view</mat-icon>
           </button>
-          <button class="toggle-btn" [class.active]="viewMode === 'table'" (click)="viewMode = 'table'" matTooltip="Vue Tableau">
+          <button class="toggle-btn" [class.active]="viewMode === 'table'" (click)="viewMode = 'table'"
+            matTooltip="Vue Tableau">
             <mat-icon>view_list</mat-icon>
           </button>
         </div>
@@ -99,12 +101,13 @@
 
       <!-- CARDS VIEW -->
       <div class="process-cards-grid" *ngIf="items.length > 0 && viewMode === 'cards'">
-        <div class="process-card glass-card" *ngFor="let item of items; trackBy: trackByProcessId" (click)="viewProcess(item)">
+        <div class="process-card glass-card" *ngFor="let item of items; trackBy: trackByProcessId"
+          (click)="viewProcess(item)">
           <div class="card-header">
             <div class="code-badge">{{ item.code }}</div>
             <span class="status-dot" [ngClass]="item.status === 'ACTIF' ? 'active' : 'inactive'"></span>
           </div>
-          
+
           <div class="card-main">
             <h3>{{ item.name }}</h3>
             <span class="type-tag">{{ getTypeLabel(item.type) }}</span>
@@ -129,8 +132,17 @@
               <mat-icon>person_outline</mat-icon>
               <span class="empty-text">Non assigné</span>
             </div>
-            <div class="actions">
-              <button mat-icon-button (click)="$event.stopPropagation(); editProcess(item)" *ngIf="canWrite">
+            <div class="actions" style="display: flex; gap: 4px;">
+              <button mat-icon-button (click)="$event.stopPropagation(); viewProcess(item, 'actors')"
+                matTooltip="Acteurs du processus">
+                <mat-icon>group</mat-icon>
+              </button>
+              <button mat-icon-button (click)="$event.stopPropagation(); viewProcess(item, 'history')"
+                matTooltip="Journal d'actions">
+                <mat-icon>history</mat-icon>
+              </button>
+              <button mat-icon-button (click)="$event.stopPropagation(); editProcess(item)" *ngIf="canWrite"
+                matTooltip="Modifier">
                 <mat-icon>edit</mat-icon>
               </button>
             </div>
@@ -197,12 +209,24 @@
 
           <!-- Actions Column -->
           <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef style="width: 140px;"></th>
+            <th mat-header-cell *matHeaderCellDef style="width: 200px;"></th>
             <td mat-cell *matCellDef="let item">
               <div class="table-actions">
                 <button mat-icon-button class="action-btn view-btn" matTooltip="Voir"
                   (click)="$event.stopPropagation(); viewProcess(item)">
                   <mat-icon>visibility</mat-icon>
+                </button>
+                <button mat-icon-button class="action-btn actors-btn" matTooltip="Acteurs"
+                  (click)="$event.stopPropagation(); viewProcess(item, 'actors')">
+                  <mat-icon>group</mat-icon>
+                </button>
+                <button mat-icon-button class="action-btn docs-btn" matTooltip="Documents"
+                  (click)="$event.stopPropagation(); viewProcess(item, 'documents')">
+                  <mat-icon>description</mat-icon>
+                </button>
+                <button mat-icon-button class="action-btn history-btn" matTooltip="Journal d'actions"
+                  (click)="$event.stopPropagation(); viewProcess(item, 'history')">
+                  <mat-icon>history</mat-icon>
                 </button>
                 <button *ngIf="canWrite" mat-icon-button class="action-btn edit-btn" matTooltip="Modifier"
                   (click)="$event.stopPropagation(); editProcess(item)">

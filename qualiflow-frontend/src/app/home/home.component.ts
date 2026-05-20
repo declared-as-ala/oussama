@@ -52,7 +52,7 @@ import { ORGANIZATION_TYPE_OPTIONS } from '../features/super-admin/models/organi
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements AfterViewInit, OnDestroy {
-  currentSection: 'all' | 'accueil' | 'services' | 'iso' | 'contact' | 'request-org' = 'all';
+  currentSection: 'all' | 'accueil' | 'services' | 'iso' | 'contact' | 'request-org' | 'reclamations' = 'all';
   private observer?: IntersectionObserver;
 
   // Propriétés du formulaire en ligne
@@ -61,6 +61,38 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   codeSent = false;
   emailValidated = false;
   organizationTypes = ORGANIZATION_TYPE_OPTIONS;
+
+  // Propriétés de la Réclamation
+  reclamationForm: FormGroup;
+  reclamationLoading = false;
+  reclamationSubmitted = false;
+  reclamationCaptchaNum1 = 0;
+  reclamationCaptchaNum2 = 0;
+  reclamationCaptchaExpected = 0;
+  reclamationCaptchaError = '';
+
+  declarantTypes = [
+    { value: 'LEARNER', label: 'Apprenant / Étudiant' },
+    { value: 'TEACHER', label: 'Enseignant / Formateur' },
+    { value: 'PARENT', label: 'Parent d\'élève / Tuteur' },
+    { value: 'STAFF', label: 'Personnel Administratif' },
+    { value: 'OTHER', label: 'Autre Bénéficiaire' }
+  ];
+
+  urgencyLevels = [
+    { value: 'LOW', label: 'Faible' },
+    { value: 'MEDIUM', label: 'Moyen' },
+    { value: 'HIGH', label: 'Élevé' }
+  ];
+
+  concernedServices = [
+    { value: 'PEDAGOGY', label: 'Enseignement / Pédagogie' },
+    { value: 'ADMINISTRATION', label: 'Administration / Secrétariat' },
+    { value: 'EXAMS', label: 'Examens / Évaluations' },
+    { value: 'INFRASTRUCTURE', label: 'Locaux / Équipements' },
+    { value: 'CATERING', label: 'Hébergement / Restauration' },
+    { value: 'OTHER', label: 'Autre Service' }
+  ];
 
   countries = [
     { name: 'Maroc', code: '+212' },
@@ -91,6 +123,20 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
       message: ['', Validators.required],
       validationCode: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]]
     });
+
+    this.reclamationForm = this.fb.group({
+      declarantType: ['', Validators.required],
+      fullName: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      phone: ['', Validators.required],
+      concernedService: ['', Validators.required],
+      urgencyLevel: ['', Validators.required],
+      subject: ['', Validators.required],
+      description: ['', Validators.required],
+      captchaAnswer: ['', [Validators.required, Validators.pattern(/^\d+$/)]]
+    });
+
+    this.regenerateReclamationCaptcha();
   }
 
   onCountryChange(countryName: string): void {
@@ -170,6 +216,39 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
         this.notificationService.showError("Une erreur est survenue lors de l'envoi de votre demande.");
       }
     });
+  }
+
+  regenerateReclamationCaptcha(): void {
+    this.reclamationCaptchaNum1 = Math.floor(Math.random() * 9) + 1;
+    this.reclamationCaptchaNum2 = Math.floor(Math.random() * 9) + 1;
+    this.reclamationCaptchaExpected = this.reclamationCaptchaNum1 + this.reclamationCaptchaNum2;
+    this.reclamationCaptchaError = '';
+    this.reclamationForm.get('captchaAnswer')?.setValue('');
+  }
+
+  onSubmitReclamation(): void {
+    if (this.reclamationForm.invalid) {
+      this.reclamationForm.markAllAsTouched();
+      return;
+    }
+
+    const captchaVal = Number(this.reclamationForm.get('captchaAnswer')?.value);
+    if (captchaVal !== this.reclamationCaptchaExpected) {
+      this.reclamationCaptchaError = 'Calcul incorrect. Veuillez reessayer.';
+      this.regenerateReclamationCaptcha();
+      return;
+    }
+
+    this.reclamationLoading = true;
+    setTimeout(() => {
+      this.reclamationLoading = false;
+      this.reclamationSubmitted = true;
+      const refCode = `QF-REC-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}`;
+      this.notificationService.showSuccess(`Votre reclamation a ete enregistree avec succes sous la reference ${refCode}. Un e-mail de confirmation a ete envoye.`);
+      this.reclamationForm.reset();
+      this.regenerateReclamationCaptcha();
+      this.reclamationSubmitted = false;
+    }, 1500);
   }
 
   openRequestDialog(): void {

@@ -11,7 +11,7 @@ RUN npm run build -- --configuration production
 # Stage 2: Serve with Nginx
 FROM nginx:1.27-alpine AS final
 
-COPY --from=build /app/dist/angular-professional-template /usr/share/nginx/html
+COPY --from=build /app/dist/qualiflow-frontend /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80

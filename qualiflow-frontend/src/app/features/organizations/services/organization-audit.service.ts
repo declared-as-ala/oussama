@@ -4,6 +4,7 @@ import { ApiService } from '../../../core/services/api.service';
 
 export interface OrganizationActivityResponse {
   type: string;
+  actionType: string;
   title: string;
   description: string;
   createdAt: string;

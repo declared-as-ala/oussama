@@ -11,6 +11,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
@@ -31,6 +33,7 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     RouterModule,
     MatCardModule,
     MatButtonModule,
@@ -41,6 +44,7 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
     MatTableModule,
     MatProgressSpinnerModule,
     MatDialogModule,
+    MatTooltipModule,
     TranslatePipe
   ],
   templateUrl: './procedure-details.component.html',
@@ -64,6 +68,7 @@ export class ProcedureDetailsComponent implements OnInit {
   details: ProcedureDetailsResponse | null = null;
   editingInstructionId: number | null = null;
   isAddingInstruction = false;
+  activeTab = 0;
 
   constructor(
     private readonly fb: FormBuilder,
@@ -121,8 +126,16 @@ export class ProcedureDetailsComponent implements OnInit {
     this.router.navigate(['/procedures']);
   }
 
+  setActiveTab(index: number): void {
+    this.activeTab = index;
+  }
+
   editProcedure(): void {
     this.router.navigate(['/procedures', this.procedureId, 'edit']);
+  }
+
+  viewHistory(): void {
+    this.router.navigate(['/procedures', this.procedureId, 'history']);
   }
 
   saveInstruction(): void {
@@ -212,6 +225,44 @@ export class ProcedureDetailsComponent implements OnInit {
     return status === 'ACTIF' ? 'Actif' : 'Inactif';
   }
 
+  getTypeLabel(type: string): string {
+    switch (type) {
+      case 'MANUEL':
+        return 'Manuel';
+      case 'PROCEDURE':
+        return 'Procédure';
+      case 'ENREGISTREMENT':
+        return 'Enregistrement';
+      case 'FORMULAIRE':
+        return 'Formulaire';
+      case 'INSTRUCTION':
+        return 'Instruction';
+      case 'POLITIQUE':
+        return 'Politique';
+      default:
+        return type || 'Autre';
+    }
+  }
+
+  getDocumentStatusLabel(status: string): string {
+    switch (status) {
+      case 'APPROUVE':
+        return 'Approuvé';
+      case 'PUBLIE':
+        return 'Publié';
+      case 'EN_REVISION':
+        return 'En révision';
+      case 'REJETE':
+        return 'Rejeté';
+      case 'PERIME':
+        return 'Périmé';
+      case 'ARCHIVE':
+        return 'Archivé';
+      default:
+        return status || 'Brouillon';
+    }
+  }
+
   startAddInstruction(): void {
     this.isAddingInstruction = true;
     this.editingInstructionId = null;
@@ -240,3 +291,4 @@ export class ProcedureDetailsComponent implements OnInit {
     };
   }
 }
+

@@ -19,6 +19,7 @@ import { ProcedureListItemResponse } from '../../procedures/models/procedure.mod
 import { ProcedureService } from '../../procedures/services/procedure.service';
 import {
   CreateNonConformityRequest,
+  NonConformityAttachmentResponse,
   NON_CONFORMITY_SEVERITY_OPTIONS,
   NON_CONFORMITY_STATUS_OPTIONS,
   NON_CONFORMITY_TYPE_OPTIONS,
@@ -76,6 +77,9 @@ export class NonconformityFormComponent implements OnInit {
   processes: ProcessListItemResponse[] = [];
   procedures: ProcedureListItemResponse[] = [];
   users: UserResponse[] = [];
+  selectedFiles: File[] = [];
+  existingAttachments: NonConformityAttachmentResponse[] = [];
+  activeTab = 0;
 
   constructor(
     private readonly fb: FormBuilder,
@@ -94,7 +98,19 @@ export class NonconformityFormComponent implements OnInit {
     this.nonConformityId = idParam ? Number(idParam) : null;
     this.isEdit = this.nonConformityId !== null && !Number.isNaN(this.nonConformityId);
 
+    if (!this.canLoadUsers) {
+      this.form.controls.responsibleUserId.disable();
+    }
+
     this.form.controls.processId.valueChanges.subscribe(processId => {
+      // Auto-select responsible from process pilot if present and not loading
+      if (!this.loading && processId) {
+        const selectedProcess = this.processes.find(item => item.id === processId);
+        if (selectedProcess?.pilotUserId) {
+          this.form.controls.responsibleUserId.setValue(selectedProcess.pilotUserId);
+        }
+      }
+
       const selectedProcedureId = this.form.controls.procedureId.value;
       if (!selectedProcedureId) {
         return;
@@ -117,9 +133,12 @@ export class NonconformityFormComponent implements OnInit {
         return;
       }
 
-      const selectedProcedure = this.procedures.find(item => item.id === procedureId);
-      if (selectedProcedure?.responsibleUserId) {
-        this.form.controls.responsibleUserId.setValue(selectedProcedure.responsibleUserId);
+      // Auto-select responsible from procedure if present and not loading
+      if (!this.loading) {
+        const selectedProcedure = this.procedures.find(item => item.id === procedureId);
+        if (selectedProcedure?.responsibleUserId) {
+          this.form.controls.responsibleUserId.setValue(selectedProcedure.responsibleUserId);
+        }
       }
     });
 
@@ -150,6 +169,7 @@ export class NonconformityFormComponent implements OnInit {
         next: ({ base, details }) => {
           this.applyReferences(base.processes.items, base.procedures.items, base.users.items);
           this.patchForm(details.nonConformity);
+          this.existingAttachments = details.attachments || [];
           this.loading = false;
         },
         error: () => {
@@ -221,9 +241,28 @@ export class NonconformityFormComponent implements OnInit {
 
     request$.subscribe({
       next: (response) => {
-        this.saving = false;
-        this.notificationService.showSuccess(this.isEdit ? 'Non-conformite mise a jour.' : 'Non-conformite creee.');
-        this.router.navigate(['/non-conformities', response.id]);
+        if (this.selectedFiles.length > 0) {
+          const uploadRequests = this.selectedFiles.map(file =>
+            this.nonConformityService.uploadAttachment(response.id, file)
+          );
+
+          forkJoin(uploadRequests).subscribe({
+            next: () => {
+              this.saving = false;
+              this.notificationService.showSuccess(this.isEdit ? 'Non-conformite mise a jour.' : 'Non-conformite creee.');
+              this.router.navigate(['/non-conformities', response.id]);
+            },
+            error: () => {
+              this.saving = false;
+              this.notificationService.showWarning(this.isEdit ? 'Non-conformite mise a jour, mais certaines pièces jointes n\'ont pas pu être importées.' : 'Non-conformite creee, mais certaines pièces jointes n\'ont pas pu être importées.');
+              this.router.navigate(['/non-conformities', response.id]);
+            }
+          });
+        } else {
+          this.saving = false;
+          this.notificationService.showSuccess(this.isEdit ? 'Non-conformite mise a jour.' : 'Non-conformite creee.');
+          this.router.navigate(['/non-conformities', response.id]);
+        }
       },
       error: () => {
         this.saving = false;
@@ -252,11 +291,54 @@ export class NonconformityFormComponent implements OnInit {
             email: currentUser.email,
             role: currentUser.role,
             function: currentUser.function,
-            department: currentUser.department,
             isActive: true,
             createdAt: currentUser.createdAt
           }
         ];
+      }
+    }
+
+    // Dynically register process pilots in the selectable users list so they can be resolved
+    for (const p of this.processes) {
+      if (p.pilotUserId) {
+        const exists = this.users.some(u => u.id === p.pilotUserId);
+        if (!exists) {
+          const names = (p.pilotFullName || 'Pilote Processus').split(' ');
+          const firstName = names[0] || 'Pilote';
+          const lastName = names.slice(1).join(' ') || 'Processus';
+          this.users.push({
+            id: p.pilotUserId,
+            organizationId: p.organizationId,
+            firstName,
+            lastName,
+            email: '',
+            role: 'UTILISATEUR',
+            isActive: true,
+            createdAt: p.createdAt
+          });
+        }
+      }
+    }
+
+    // Dynamically register procedure responsibles in the selectable users list
+    for (const proc of this.procedures) {
+      if (proc.responsibleUserId) {
+        const exists = this.users.some(u => u.id === proc.responsibleUserId);
+        if (!exists) {
+          const names = (proc.responsibleFullName || 'Responsable Procédure').split(' ');
+          const firstName = names[0] || 'Responsable';
+          const lastName = names.slice(1).join(' ') || 'Procédure';
+          this.users.push({
+            id: proc.responsibleUserId,
+            organizationId: proc.organizationId,
+            firstName,
+            lastName,
+            email: '',
+            role: 'UTILISATEUR',
+            isActive: true,
+            createdAt: proc.createdAt
+          });
+        }
       }
     }
 
@@ -266,6 +348,26 @@ export class NonconformityFormComponent implements OnInit {
   }
 
   private patchForm(nc: NonConformityResponse): void {
+    // Dynamically register non-conformity responsible in case they are not in the list
+    if (nc.responsibleUserId) {
+      const exists = this.users.some(u => u.id === nc.responsibleUserId);
+      if (!exists) {
+        const names = (nc.responsibleFullName || 'Responsable').split(' ');
+        const firstName = names[0] || 'Responsable';
+        const lastName = names.slice(1).join(' ') || 'Traitement';
+        this.users.push({
+          id: nc.responsibleUserId,
+          organizationId: nc.organizationId,
+          firstName,
+          lastName,
+          email: '',
+          role: 'UTILISATEUR',
+          isActive: true,
+          createdAt: new Date().toISOString()
+        });
+      }
+    }
+
     this.form.patchValue({
       code: nc.code,
       title: nc.title,
@@ -312,5 +414,48 @@ export class NonconformityFormComponent implements OnInit {
     const month = `${date.getUTCMonth() + 1}`.padStart(2, '0');
     const day = `${date.getUTCDate()}`.padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  onFileSelected(event: any): void {
+    const files: FileList = event.target.files;
+    if (files) {
+      for (let i = 0; i < files.length; i++) {
+        this.selectedFiles.push(files.item(i)!);
+      }
+    }
+  }
+
+  removeFile(index: number): void {
+    this.selectedFiles.splice(index, 1);
+  }
+
+  deleteExistingAttachment(id: number): void {
+    if (confirm('Êtes-vous sûr de vouloir supprimer cette pièce jointe ?')) {
+      this.nonConformityService.deleteAttachment(id).subscribe({
+        next: () => {
+          this.existingAttachments = this.existingAttachments.filter(a => a.id !== id);
+          this.notificationService.showSuccess('Pièce jointe supprimée.');
+        },
+        error: () => {
+          this.notificationService.showError('Impossible de supprimer la pièce jointe.');
+        }
+      });
+    }
+  }
+
+  setActiveTab(index: number): void {
+    this.activeTab = index;
+  }
+
+  nextTab(): void {
+    if (this.activeTab < 2) {
+      this.activeTab++;
+    }
+  }
+
+  prevTab(): void {
+    if (this.activeTab > 0) {
+      this.activeTab--;
+    }
   }
 }

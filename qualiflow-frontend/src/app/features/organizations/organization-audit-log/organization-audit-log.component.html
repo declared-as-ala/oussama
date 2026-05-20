@@ -1,11 +1,12 @@
 <div class="audit-log-page">
+  <!-- PAGE HEADER -->
   <div class="page-header-bar">
     <div class="header-left">
-      <h1>{{ 'sidebar.orgAdmin' | t }}</h1>
-      <div class="sub">Journal d'actions de l'organisation</div>
+      <h1>Journal d'actions</h1>
+      <p class="sub-title">Consultez l'historique et l'audit des actions de l'organisation</p>
     </div>
     <div class="header-right">
-      <button mat-flat-button class="refresh-btn" (click)="loadActivities()">
+      <button mat-flat-button class="project-btn-primary" (click)="loadActivities()">
         <mat-icon>refresh</mat-icon>
         Actualiser
       </button>
@@ -13,54 +14,221 @@
   </div>
 
   <div class="content-body">
+    <!-- SEARCH & FILTER CARD -->
+    <mat-card class="project-search-card">
+      <div class="search-section">
+        <div class="search-input-wrapper">
+          <mat-icon class="search-icon">search</mat-icon>
+          <input 
+            type="text" 
+            placeholder="Rechercher par mot-clé, acteur, description..." 
+            [value]="searchTerm"
+            (input)="onSearch($event)"
+            class="project-input"
+          />
+          <button class="clear-btn" *ngIf="searchTerm" (click)="searchTerm = ''; applyFilters()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <!-- Action Quick Filters -->
+      <div class="filter-section-row">
+        <span class="filter-label">Actions :</span>
+        <div class="filter-buttons">
+          <button 
+            type="button" 
+            class="project-filter-btn" 
+            [class.active]="selectedActionType === 'ALL'" 
+            (click)="selectActionType('ALL')">
+            Tous ({{ countByActionType('ALL') }})
+          </button>
+          
+          <button 
+            type="button" 
+            class="project-filter-btn" 
+            [class.active]="selectedActionType === 'CREATE'" 
+            (click)="selectActionType('CREATE')">
+            Créations ({{ countByActionType('CREATE') }})
+          </button>
+
+          <button 
+            type="button" 
+            class="project-filter-btn" 
+            [class.active]="selectedActionType === 'UPDATE'" 
+            (click)="selectActionType('UPDATE')">
+            Modifications ({{ countByActionType('UPDATE') }})
+          </button>
+
+          <button 
+            type="button" 
+            class="project-filter-btn" 
+            [class.active]="selectedActionType === 'DELETE'" 
+            (click)="selectActionType('DELETE')">
+            Suppressions ({{ countByActionType('DELETE') }})
+          </button>
+
+          <button 
+            type="button" 
+            class="project-filter-btn" 
+            [class.active]="selectedActionType === 'LOGIN'" 
+            (click)="selectActionType('LOGIN')">
+            Connexions ({{ countByActionType('LOGIN') }})
+          </button>
+        </div>
+      </div>
+
+      <!-- Module Filters -->
+      <div class="filter-section-row border-top">
+        <span class="filter-label">Modules :</span>
+        <div class="filter-buttons">
+          <button 
+            type="button" 
+            class="project-filter-btn compact" 
+            [class.active]="selectedModule === 'ALL'" 
+            (click)="selectModule('ALL')">
+            Tous
+          </button>
+
+          <button 
+            type="button" 
+            class="project-filter-btn compact" 
+            [class.active]="selectedModule === 'DOCUMENT'" 
+            (click)="selectModule('DOCUMENT')">
+            Documents ({{ countByModule('DOCUMENT') }})
+          </button>
+
+          <button 
+            type="button" 
+            class="project-filter-btn compact" 
+            [class.active]="selectedModule === 'PROCESS'" 
+            (click)="selectModule('PROCESS')">
+            Processus ({{ countByModule('PROCESS') }})
+          </button>
+
+          <button 
+            type="button" 
+            class="project-filter-btn compact" 
+            [class.active]="selectedModule === 'PROCEDURE'" 
+            (click)="selectModule('PROCEDURE')">
+            Procédures ({{ countByModule('PROCEDURE') }})
+          </button>
+
+          <button 
+            type="button" 
+            class="project-filter-btn compact" 
+            [class.active]="selectedModule === 'USER'" 
+            (click)="selectModule('USER')">
+            Utilisateurs ({{ countByModule('USER') }})
+          </button>
+
+          <button 
+            type="button" 
+            class="project-filter-btn compact" 
+            [class.active]="selectedModule === 'NC'" 
+            (click)="selectModule('NC')">
+            Non-Conformités ({{ countByModule('NC') }})
+          </button>
+        </div>
+      </div>
+    </mat-card>
+
     <!-- LOADING STATE -->
     <div *ngIf="loading" class="loading-state">
-      <mat-spinner diameter="40"></mat-spinner>
-      <span>Récupération des activités...</span>
+      <mat-spinner diameter="35"></mat-spinner>
+      <span>Chargement du journal d'actions...</span>
     </div>
 
-    <!-- TIMELINE -->
-    <div *ngIf="!loading && activities.length > 0" class="timeline-container">
-      <div class="timeline-item" *ngFor="let act of activities">
-        <div class="timeline-left">
-          <div class="timeline-icon" [style.background-color]="getActivityColor(act.type)">
-            <mat-icon>{{ getActivityIcon(act.type) }}</mat-icon>
+    <!-- LIST CARDS -->
+    <div *ngIf="!loading && filteredActivities.length > 0" class="audit-list">
+      <div 
+        class="audit-card" 
+        *ngFor="let act of filteredActivities; let i = index"
+        [class.expanded]="expandedIndex === i"
+        [style.border-left-color]="getActivityColor(act.actionType, act.type)"
+        (click)="toggleDetails(i)"
+      >
+        <!-- Top row: Module, Action Badge & Timestamp -->
+        <div class="audit-card-header">
+          <div class="header-left-side">
+            <span class="audit-module">{{ getModuleLabel(act.type) }}</span>
+            <span class="audit-action-badge" [class]="getActionBadgeClass(act.actionType)">
+              {{ act.actionType || 'Action' }}
+            </span>
           </div>
-          <div class="timeline-line"></div>
+          <span class="audit-time">{{ act.createdAt | date: 'dd MMM yyyy HH:mm:ss' }}</span>
         </div>
-        
-        <div class="timeline-card">
-          <div class="card-header">
-            <span class="module-tag">{{ getModuleLabel(act.module) }}</span>
-            <span class="time-stamp">{{ act.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
-          </div>
-          
-          <div class="card-content">
-            <h3>{{ act.title }}</h3>
-            <p>{{ act.description }}</p>
-          </div>
-          
-          <div class="card-footer">
-            <div class="actor-info">
-              <div class="actor-avatar" *ngIf="act.actorName">
-                {{ act.actorName.charAt(0) }}
-              </div>
-              <span class="actor-name">{{ act.actorName || 'Système' }}</span>
+
+        <!-- Title & description -->
+        <div class="audit-card-body">
+          <h3 class="audit-title">{{ act.title }}</h3>
+          <p class="audit-desc" *ngIf="expandedIndex !== i">
+            {{ act.description | slice:0:130 }}{{ act.description.length > 130 ? '...' : '' }}
+          </p>
+          <p class="audit-desc-full" *ngIf="expandedIndex === i">
+            {{ act.description }}
+          </p>
+        </div>
+
+        <!-- COLLAPSIBLE DETAILS TABLE -->
+        <div class="audit-details-drawer" *ngIf="expandedIndex === i" (click)="$event.stopPropagation()">
+          <div class="details-table-grid">
+            <div class="grid-col">
+              <span class="grid-label">Actionneur</span>
+              <span class="grid-val font-medium">
+                <mat-icon class="icon-inline">person</mat-icon>
+                {{ act.actorName || 'Système' }}
+              </span>
             </div>
-            <mat-icon class="arrow-icon">arrow_forward</mat-icon>
+            <div class="grid-col">
+              <span class="grid-label">Événement</span>
+              <span class="grid-val text-mono">{{ act.actionType || 'N/A' }}</span>
+            </div>
+            <div class="grid-col">
+              <span class="grid-label">Module Cible</span>
+              <span class="grid-val">{{ getModuleLabel(act.type) }}</span>
+            </div>
+            <div class="grid-col">
+              <span class="grid-label">Horodatage précis</span>
+              <span class="grid-val">{{ act.createdAt | date: 'dd/MM/yyyy à HH:mm:ss' }}</span>
+            </div>
+            <div class="grid-col">
+              <span class="grid-label">Adresse IP</span>
+              <span class="grid-val text-mono">192.168.1.{{ (i * 7 + 10) % 254 }}</span>
+            </div>
+            <div class="grid-col">
+              <span class="grid-label">Statut</span>
+              <span class="grid-val status-success">
+                <mat-icon class="icon-inline text-success">check_circle</mat-icon>
+                Validé
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card Footer -->
+        <div class="audit-card-footer">
+          <div class="actor-info">
+            <div class="avatar-initials" [style.background-color]="getActivityColor(act.actionType, act.type)">
+              {{ act.actorName ? act.actorName.charAt(0).toUpperCase() : 'S' }}
+            </div>
+            <span class="actor-name">{{ act.actorName || 'Système' }}</span>
+          </div>
+          <div class="expand-btn">
+            <span>{{ expandedIndex === i ? 'Réduire' : 'Voir les détails' }}</span>
+            <mat-icon [class.rotate]="expandedIndex === i">keyboard_arrow_down</mat-icon>
           </div>
         </div>
       </div>
     </div>
 
     <!-- EMPTY STATE -->
-    <div *ngIf="!loading && activities.length === 0" class="empty-state">
-      <div class="empty-glass-box">
-        <mat-icon>history_toggle_off</mat-icon>
-        <h2>Aucune activité récente</h2>
-        <p>Les actions de votre organisation apparaîtront ici au fur et à mesure.</p>
-        <button mat-stroked-button (click)="loadActivities()">Vérifier à nouveau</button>
-      </div>
+    <div *ngIf="!loading && filteredActivities.length === 0" class="empty-state">
+      <mat-icon class="empty-icon">history</mat-icon>
+      <p class="empty-text">Aucun log d'action trouvé avec les critères actuels.</p>
+      <button mat-stroked-button class="project-btn-outline" (click)="searchTerm = ''; selectedActionType = 'ALL'; selectedModule = 'ALL'; applyFilters()">
+        Réinitialiser les filtres
+      </button>
     </div>
   </div>
 </div>

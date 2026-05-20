@@ -1,0 +1,92 @@
+<div class="action-detail-wrapper" [class.in-modal]="isModal">
+  <!-- HEADER BAR -->
+  <div class="detail-header">
+    <div class="header-left">
+      <div class="icon-badge" [ngClass]="log.actionType.toLowerCase()">
+        <mat-icon>{{ getActionIcon(log.actionType) }}</mat-icon>
+      </div>
+      <div class="header-titles">
+        <h3>{{ getActionLabel(log.actionType) }}</h3>
+        <span class="type-tag">{{ log.actionType }}</span>
+      </div>
+    </div>
+    <div class="header-right" *ngIf="isModal">
+      <button mat-icon-button (click)="close()" class="close-btn" matTooltip="Fermer">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- CONTENT CONTAINER -->
+  <div class="detail-content">
+    
+    <!-- AUTHOR CARD -->
+    <div class="section-card author-card">
+      <div class="avatar-letter">
+        {{ (log.performedByFullName || 'S').charAt(0) }}
+      </div>
+      <div class="author-info">
+        <div class="info-label">Auteur de l'action</div>
+        <div class="author-name">{{ log.performedByFullName || 'Système' }}</div>
+        <div class="action-time">Le {{ log.performedAt | date: 'dd/MM/yyyy à HH:mm:ss' }}</div>
+      </div>
+    </div>
+
+    <!-- DETECTED CHANGES -->
+    <div class="section-card changes-card">
+      <div class="card-subtitle">Modifications Détectées</div>
+      <div class="changes-list">
+        <div *ngFor="let change of parseChanges(log.comment)" class="change-pill">
+          <mat-icon>chevron_right</mat-icon>
+          <span>{{ change }}</span>
+        </div>
+        <div *ngIf="!log.comment" class="no-comment-fallback">
+          Aucun commentaire disponible pour cette action.
+        </div>
+      </div>
+    </div>
+
+    <!-- STATES COMPARISON BOX -->
+    <div class="section-card comparison-card" *ngIf="log.oldValue || log.newValue">
+      <div class="card-subtitle">Visualisation des États</div>
+      
+      <div class="states-grid">
+        <!-- Old value box -->
+        <div class="state-box old-state">
+          <div class="state-title">
+            <mat-icon>remove_circle_outline</mat-icon>
+            <span>État Précédent</span>
+          </div>
+          <ul class="values-list">
+            <li *ngFor="let item of parseStateValues(log.oldValue)">
+              {{ item }}
+            </li>
+            <span *ngIf="!log.oldValue" class="empty-state-text">Aucune valeur précédente</span>
+          </ul>
+        </div>
+
+        <!-- New value box -->
+        <div class="state-box new-state">
+          <div class="state-title">
+            <mat-icon>add_circle_outline</mat-icon>
+            <span>Nouvel État</span>
+          </div>
+          <ul class="values-list">
+            <li *ngFor="let item of parseStateValues(log.newValue)">
+              {{ item }}
+            </li>
+            <span *ngIf="!log.newValue" class="empty-state-text">Aucune nouvelle valeur</span>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FOOTER ACTION BAR -->
+  <div class="detail-footer" style="display: flex; justify-content: flex-end; padding-top: 16px; border-top: 1px solid #f1f5f9;">
+    <button mat-flat-button color="primary" (click)="close()" style="background: #3b82f6; color: white; border-radius: 10px; font-weight: 700; padding: 0 24px;">
+      Fermer
+    </button>
+  </div>
+</div>

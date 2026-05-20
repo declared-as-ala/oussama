@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  apiUrl: '',   // empty = same origin; nginx proxies /api/ and /hubs/ to backend
+  apiUrl: 'http://localhost:5185',
   webPushPublicKey: ''
 };

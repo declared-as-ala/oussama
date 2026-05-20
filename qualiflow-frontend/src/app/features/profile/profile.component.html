@@ -21,439 +21,248 @@
         </div>
     </div>
 
-    <div class="tabs-wrapper" [class.organization-only]="organizationOnlyView">
-        <mat-tab-group animationDuration="400ms" headerPosition="above"
-            [class.organization-only-tabs]="organizationOnlyView">
-            <!-- TAB 1: MON PROFIL -->
-            <mat-tab *ngIf="!organizationOnlyView">
+    <div class="tabs-wrapper">
+        <mat-tab-group animationDuration="400ms" headerPosition="above">
+            
+            <!-- TAB 1: INFORMATIONS PERSONNELLES -->
+            <mat-tab>
                 <ng-template mat-tab-label>
-                    <mat-icon class="tab-icon">account_circle</mat-icon>
-                    <span>Mon Profil</span>
+                    <mat-icon class="tab-icon">manage_accounts</mat-icon>
+                    <span>Informations personnelles</span>
                 </ng-template>
 
-                <div class="tab-content">
-                    <div class="grid-layout" [class.organization-layout]="organizationOnlyView">
-                        <!-- PHOTO DE PROFIL -->
-                        <mat-card class="modern-card photo-card glass-card">
-                            <mat-card-header>
-                                <div class="card-icon-title">
-                                    <mat-icon>photo_camera</mat-icon>
-                                    <div>
-                                        <mat-card-title>Photo de profil</mat-card-title>
-                                        <mat-card-subtitle>Image affichée dans l'application</mat-card-subtitle>
-                                    </div>
-                                </div>
-                            </mat-card-header>
-                            <mat-card-content>
-                                <div class="upload-area">
-                                    <div class="file-drop-zone">
-                                        <input type="file" id="profilePhoto" (change)="onProfilePhotoSelected($event)"
-                                            hidden #photoInput accept="image/*">
-                                        <div class="drop-content" (click)="photoInput.click()">
-                                            <mat-icon color="primary">cloud_upload</mat-icon>
-                                            <p>{{ selectedProfilePhoto ? selectedProfilePhoto.name : 'Cliquez pour
-                                                choisir une photo' }}</p>
-                                        </div>
-                                    </div>
+                <div class="tab-pane-content">
+                    <div class="pane-header">
+                        <h2>Informations personnelles</h2>
+                        <p>Gérez vos informations de base et vos préférences de langue</p>
+                    </div>
 
-                                    <div class="upload-btn-row" *ngIf="selectedProfilePhoto">
-                                        <button mat-flat-button color="primary" (click)="uploadProfilePhoto()"
-                                            [disabled]="uploadingProfilePhoto" class="full-width-btn">
-                                            <mat-spinner diameter="20" *ngIf="uploadingProfilePhoto"></mat-spinner>
-                                            <span *ngIf="!uploadingProfilePhoto">Appliquer la photo</span>
-                                        </button>
-                                        <button mat-icon-button color="warn" (click)="removeSelectedProfilePhoto()"
-                                            [disabled]="uploadingProfilePhoto">
-                                            <mat-icon>delete_outline</mat-icon>
-                                        </button>
-                                    </div>
-                                </div>
-                            </mat-card-content>
-                        </mat-card>
+                    <form [formGroup]="personalForm" class="pane-form">
+                        <div class="form-grid">
+                            <mat-form-field appearance="outline">
+                                <mat-label>Prénom</mat-label>
+                                <input matInput formControlName="firstName" placeholder="Votre prénom">
+                            </mat-form-field>
+                            <mat-form-field appearance="outline">
+                                <mat-label>Nom</mat-label>
+                                <input matInput formControlName="lastName" placeholder="Votre nom">
+                            </mat-form-field>
+                        </div>
 
-                        <!-- INFOS PERSONNELLES -->
-                        <mat-card class="modern-card info-card glass-card">
-                            <mat-card-header>
-                                <div class="card-icon-title">
-                                    <mat-icon>manage_accounts</mat-icon>
-                                    <div>
-                                        <mat-card-title>Informations personnelles</mat-card-title>
-                                        <mat-card-subtitle>Gérez vos informations de base</mat-card-subtitle>
-                                    </div>
-                                </div>
-                            </mat-card-header>
-                            <mat-card-content>
-                                <form [formGroup]="personalForm" class="modern-form">
-                                    <div class="form-grid">
-                                        <mat-form-field appearance="outline">
-                                            <mat-label>Prénom</mat-label>
-                                            <input matInput formControlName="firstName" placeholder="Votre prénom">
-                                        </mat-form-field>
-                                        <mat-form-field appearance="outline">
-                                            <mat-label>Nom</mat-label>
-                                            <input matInput formControlName="lastName" placeholder="Votre nom">
-                                        </mat-form-field>
-                                    </div>
+                        <div class="form-grid">
+                            <mat-form-field appearance="outline">
+                                <mat-label>Date de naissance</mat-label>
+                                <input title="date" matInput type="date" formControlName="birthDate">
+                            </mat-form-field>
+                            <mat-form-field appearance="outline">
+                                <mat-label>Numéro</mat-label>
+                                <input matInput formControlName="phone" placeholder="Votre numéro">
+                            </mat-form-field>
+                        </div>
 
-                                    <div class="form-grid">
-                                        <mat-form-field appearance="outline">
-                                            <mat-label>Date de naissance</mat-label>
-                                            <input title="date" matInput type="date" formControlName="birthDate">
-                                        </mat-form-field>
-                                        <mat-form-field appearance="outline">
-                                            <mat-label>Numéro</mat-label>
-                                            <input matInput formControlName="phone" placeholder="Votre numéro">
-                                        </mat-form-field>
-                                    </div>
+                        <div class="form-grid">
+                            <mat-form-field appearance="outline">
+                                <mat-label>Ville</mat-label>
+                                <input matInput formControlName="city" placeholder="Votre ville">
+                            </mat-form-field>
+                            <mat-form-field appearance="outline">
+                                <mat-label>Langue de la plateforme</mat-label>
+                                <mat-select formControlName="preferredLanguage">
+                                    <mat-option *ngFor="let lang of languageOptions" [value]="lang.value">
+                                        {{ lang.label }}
+                                    </mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                        </div>
 
-                                    <div class="form-grid">
-                                        <mat-form-field appearance="outline">
-                                            <mat-label>Ville</mat-label>
-                                            <input matInput formControlName="city" placeholder="Votre ville">
-                                        </mat-form-field>
-                                        <mat-form-field appearance="outline">
-                                            <mat-label>Langue de la plateforme</mat-label>
-                                            <mat-select formControlName="preferredLanguage">
-                                                <mat-option *ngFor="let lang of languageOptions" [value]="lang.value">
-                                                    {{ lang.label }}
-                                                </mat-option>
-                                            </mat-select>
-                                        </mat-form-field>
-                                    </div>
+                        <div class="pane-actions">
+                            <button mat-flat-button class="btn-primary-custom" (click)="savePersonalProfile()"
+                                [disabled]="savingProfile">
+                                <mat-spinner diameter="18" *ngIf="savingProfile"></mat-spinner>
+                                <mat-icon *ngIf="!savingProfile">check_circle</mat-icon>
+                                <span *ngIf="!savingProfile">Enregistrer les modifications</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </mat-tab>
 
-                                    <div class="card-actions-right">
-                                        <button mat-flat-button color="primary" (click)="savePersonalProfile()"
-                                            [disabled]="savingProfile">
-                                            <mat-spinner diameter="20" *ngIf="savingProfile"></mat-spinner>
-                                            <mat-icon *ngIf="!savingProfile">check_circle</mat-icon>
-                                            <span *ngIf="!savingProfile">Enregistrer les modifications</span>
-                                        </button>
-                                    </div>
-                                </form>
-                            </mat-card-content>
-                        </mat-card>
+            <!-- TAB 2: PHOTO DE PROFIL -->
+            <mat-tab>
+                <ng-template mat-tab-label>
+                    <mat-icon class="tab-icon">photo_camera</mat-icon>
+                    <span>Photo de profil</span>
+                </ng-template>
 
-                        <!-- SÉCURITÉ -->
-                        <mat-card class="modern-card security-card glass-card">
-                            <mat-card-header>
-                                <div class="card-icon-title">
-                                    <mat-icon>security</mat-icon>
-                                    <div>
-                                        <mat-card-title>Sécurité du compte</mat-card-title>
-                                        <mat-card-subtitle>Gestion de votre mot de passe</mat-card-subtitle>
-                                    </div>
-                                </div>
-                            </mat-card-header>
-                            <mat-card-content>
-                                <form [formGroup]="passwordForm" class="modern-form">
-                                    <mat-form-field appearance="outline" class="full-width">
-                                        <mat-label>Mot de passe actuel</mat-label>
-                                        <input matInput type="password" formControlName="currentPassword"
-                                            placeholder="••••••••">
-                                    </mat-form-field>
+                <div class="tab-pane-content text-center">
+                    <div class="pane-header">
+                        <h2>Photo de profil</h2>
+                        <p>Image affichée dans l'en-tête et les activités de l'application</p>
+                    </div>
 
-                                    <div class="form-grid">
-                                        <mat-form-field appearance="outline">
-                                            <mat-label>Nouveau mot de passe</mat-label>
-                                            <input matInput type="password" formControlName="newPassword"
-                                                placeholder="Minimum 8 caractères">
-                                        </mat-form-field>
-                                        <mat-form-field appearance="outline">
-                                            <mat-label>Confirmer le nouveau mot de passe</mat-label>
-                                            <input matInput type="password" formControlName="confirmPassword"
-                                                placeholder="Minimum 8 caractères">
-                                        </mat-form-field>
-                                    </div>
+                    <div class="avatar-upload-container">
+                        <div class="current-avatar-preview">
+                            <img *ngIf="profilePhotoObjectUrl && !selectedProfilePhoto" [src]="profilePhotoObjectUrl" alt="Avatar Actuel" class="preview-img">
+                            <div *ngIf="!profilePhotoObjectUrl && !selectedProfilePhoto" class="preview-empty">
+                                <span>{{ profileInitials }}</span>
+                            </div>
+                            <div *ngIf="selectedProfilePhoto" class="preview-pending">
+                                <mat-icon>cloud_done</mat-icon>
+                                <span class="file-name">{{ selectedProfilePhoto.name }}</span>
+                            </div>
+                        </div>
 
-                                    <div class="card-actions-right security-footer">
-                                        <button mat-button type="button" class="forgot-pwd-link"
-                                            (click)="initiatePasswordReset()" [disabled]="sendingResetEmail">
-                                            <mat-icon>mail_outline</mat-icon>
-                                            J'ai oublié mon mot de passe actuel.
-                                        </button>
+                        <div class="upload-action-box">
+                            <input type="file" id="profilePhoto" (change)="onProfilePhotoSelected($event)"
+                                hidden #photoInput accept="image/*">
+                            
+                            <button mat-stroked-button class="btn-select-photo" (click)="photoInput.click()" [disabled]="uploadingProfilePhoto">
+                                <mat-icon>add_photo_alternate</mat-icon>
+                                {{ selectedProfilePhoto ? 'Changer de photo' : 'Choisir une photo' }}
+                            </button>
 
-                                        <button mat-flat-button class="btn-security" (click)="changePassword()"
-                                            [disabled]="changingPassword || sendingResetEmail">
-                                            <mat-spinner diameter="20" *ngIf="changingPassword"></mat-spinner>
-                                            <mat-icon *ngIf="!changingPassword">vpn_key</mat-icon>
-                                            <span *ngIf="!changingPassword">Mettre à jour mon mot de passe</span>
-                                        </button>
-                                    </div>
-                                </form>
-
-                                <form [formGroup]="resetWithCodeForm" class="modern-form"
-                                    *ngIf="forgotPasswordStep > 0">
-                                    <div *ngIf="forgotPasswordStep === 1">
-                                        <mat-form-field appearance="outline" class="full-width">
-                                            <mat-label>Code de validation</mat-label>
-                                            <input matInput type="text" maxlength="6" formControlName="code"
-                                                placeholder="Code à 6 chiffres">
-                                        </mat-form-field>
-
-                                        <div class="card-actions-right">
-                                            <button mat-stroked-button color="primary" type="button"
-                                                (click)="verifyResetCodeFromProfile()"
-                                                [disabled]="sendingResetEmail || verifyingResetCode">
-                                                <mat-spinner diameter="20" *ngIf="verifyingResetCode"></mat-spinner>
-                                                <mat-icon *ngIf="!verifyingResetCode">mark_email_read</mat-icon>
-                                                <span *ngIf="!verifyingResetCode">Valider le code</span>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div *ngIf="forgotPasswordStep === 2">
-                                        <div class="form-grid">
-                                            <mat-form-field appearance="outline">
-                                                <mat-label>Nouveau mot de passe</mat-label>
-                                                <input matInput type="password" formControlName="newPassword"
-                                                    placeholder="Minimum 8 caractères">
-                                            </mat-form-field>
-                                            <mat-form-field appearance="outline">
-                                                <mat-label>Confirmer le nouveau mot de passe</mat-label>
-                                                <input matInput type="password" formControlName="confirmPassword"
-                                                    placeholder="Minimum 8 caractères">
-                                            </mat-form-field>
-                                        </div>
-
-                                        <div class="card-actions-right">
-                                            <button mat-flat-button color="primary" type="button"
-                                                (click)="resetPasswordWithCode()"
-                                                [disabled]="resettingPasswordWithCode">
-                                                <mat-spinner diameter="20"
-                                                    *ngIf="resettingPasswordWithCode"></mat-spinner>
-                                                <mat-icon *ngIf="!resettingPasswordWithCode">lock_reset</mat-icon>
-                                                <span *ngIf="!resettingPasswordWithCode">Réinitialiser le mot de
-                                                    passe</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </form>
-                            </mat-card-content>
-                        </mat-card>
-
-                        <mat-card class="modern-card security-card glass-card">
-                            <mat-card-header>
-                                <div class="card-icon-title">
-                                    <mat-icon>mark_email_read</mat-icon>
-                                    <div>
-                                        <mat-card-title>Modifier l'email</mat-card-title>
-                                        <mat-card-subtitle>Changement sécurisé avec code de
-                                            vérification</mat-card-subtitle>
-                                    </div>
-                                </div>
-                            </mat-card-header>
-                            <mat-card-content>
-                                <form [formGroup]="emailChangeForm" class="modern-form">
-                                    <mat-form-field appearance="outline" class="full-width">
-                                        <mat-label>Nouvel email</mat-label>
-                                        <input matInput type="email" formControlName="newEmail"
-                                            placeholder="nouvel-email@domaine.com">
-                                    </mat-form-field>
-
-                                    <div class="card-actions-right" style="margin-bottom: 12px;">
-                                        <button mat-stroked-button color="primary" type="button"
-                                            (click)="requestEmailChangeCode()" [disabled]="requestingEmailCode">
-                                            <mat-spinner diameter="20" *ngIf="requestingEmailCode"></mat-spinner>
-                                            <span *ngIf="!requestingEmailCode">Envoyer le code</span>
-                                        </button>
-                                    </div>
-
-                                    <mat-form-field appearance="outline" class="full-width">
-                                        <mat-label>Code de vérification</mat-label>
-                                        <input matInput type="text" maxlength="6" formControlName="code"
-                                            placeholder="Code à 6 chiffres">
-                                    </mat-form-field>
-
-                                    <div class="card-actions-right">
-                                        <button mat-flat-button color="primary" type="button"
-                                            (click)="confirmEmailChange()" [disabled]="confirmingEmailChange">
-                                            <mat-spinner diameter="20" *ngIf="confirmingEmailChange"></mat-spinner>
-                                            <mat-icon *ngIf="!confirmingEmailChange">verified</mat-icon>
-                                            <span *ngIf="!confirmingEmailChange">Confirmer le nouvel email</span>
-                                        </button>
-                                    </div>
-                                </form>
-                            </mat-card-content>
-                        </mat-card>
+                            <div class="pending-buttons" *ngIf="selectedProfilePhoto">
+                                <button mat-flat-button class="btn-upload-photo" (click)="uploadProfilePhoto()" [disabled]="uploadingProfilePhoto">
+                                    <mat-spinner diameter="18" *ngIf="uploadingProfilePhoto"></mat-spinner>
+                                    <span *ngIf="!uploadingProfilePhoto">Appliquer la photo</span>
+                                </button>
+                                <button mat-icon-button class="btn-cancel-photo" (click)="removeSelectedProfilePhoto()" [disabled]="uploadingProfilePhoto">
+                                    <mat-icon>close</mat-icon>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </mat-tab>
 
-            <!-- TAB 2: MON ORGANISATION -->
-            <mat-tab *ngIf="canManageOrganization">
+            <!-- TAB 3: SÉCURITÉ & MOT DE PASSE -->
+            <mat-tab>
                 <ng-template mat-tab-label>
-                    <mat-icon class="tab-icon">business</mat-icon>
-                    <span>Mon Organisation</span>
+                    <mat-icon class="tab-icon">security</mat-icon>
+                    <span>Sécurité & Mot de passe</span>
                 </ng-template>
 
-                <div class="tab-content">
-                    <div class="grid-layout">
-                        <!-- LOGO ORGANISATION -->
-                        <mat-card class="modern-card logo-card glass-card">
-                            <mat-card-header>
-                                <div class="card-icon-title">
-                                    <mat-icon>brush</mat-icon>
-                                    <div>
-                                        <mat-card-title>Identité visuelle</mat-card-title>
-                                        <mat-card-subtitle>Logo officiel de l'organisation</mat-card-subtitle>
-                                    </div>
-                                </div>
-                            </mat-card-header>
-                            <mat-card-content>
-                                <div class="logo-management">
-                                    <div class="logo-visual">
-                                        <img *ngIf="logoObjectUrl && !selectedLogo" [src]="logoObjectUrl"
-                                            alt="Logo Actuel" class="org-logo-img">
-                                        <div *ngIf="!logoObjectUrl && !selectedLogo" class="logo-empty">
-                                            <mat-icon>business</mat-icon>
-                                            <p>Aucun logo défini</p>
-                                        </div>
-                                        <div *ngIf="selectedLogo" class="logo-pending">
-                                            <mat-icon color="accent">upload_file</mat-icon>
-                                            <p>{{ selectedLogo.name }}</p>
-                                            <small>Fichier prêt pour l'envoi</small>
-                                        </div>
-                                    </div>
+                <div class="tab-pane-content">
+                    <div class="pane-header">
+                        <h2>Sécurité du compte</h2>
+                        <p>Mettez régulièrement à jour votre mot de passe pour sécuriser votre compte</p>
+                    </div>
 
-                                    <div class="upload-zone-compact">
-                                        <input type="file" id="orgLogo" (change)="onLogoSelected($event)" hidden
-                                            #logoInput accept="image/*">
-                                        <button mat-stroked-button (click)="logoInput.click()"
-                                            [disabled]="uploadingLogo" class="full-width-btn">
-                                            <mat-icon>add_photo_alternate</mat-icon>
-                                            {{ selectedLogo ? 'Remplacer' : 'Choisir un logo' }}
-                                        </button>
+                    <form [formGroup]="passwordForm" class="pane-form">
+                        <mat-form-field appearance="outline" class="full-width">
+                            <mat-label>Mot de passe actuel</mat-label>
+                            <input matInput type="password" formControlName="currentPassword" placeholder="••••••••">
+                        </mat-form-field>
 
-                                        <div class="upload-btn-row" *ngIf="selectedLogo">
-                                            <button mat-flat-button color="primary" (click)="uploadLogo()"
-                                                [disabled]="uploadingLogo" class="grow-btn">
-                                                <mat-spinner diameter="20" *ngIf="uploadingLogo"></mat-spinner>
-                                                <span *ngIf="!uploadingLogo">Valider le logo</span>
-                                            </button>
-                                            <button mat-icon-button color="warn" (click)="removeSelectedLogo()"
-                                                [disabled]="uploadingLogo">
-                                                <mat-icon>close</mat-icon>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </mat-card-content>
-                        </mat-card>
+                        <div class="form-grid">
+                            <mat-form-field appearance="outline">
+                                <mat-label>Nouveau mot de passe</mat-label>
+                                <input matInput type="password" formControlName="newPassword" placeholder="Minimum 8 caractères">
+                            </mat-form-field>
+                            <mat-form-field appearance="outline">
+                                <mat-label>Confirmer le nouveau mot de passe</mat-label>
+                                <input matInput type="password" formControlName="confirmPassword" placeholder="Minimum 8 caractères">
+                            </mat-form-field>
+                        </div>
 
-                        <!-- INFOS ORGANISATION -->
-                        <mat-card class="modern-card org-details-card glass-card">
-                            <mat-card-header>
-                                <div class="card-icon-title">
-                                    <mat-icon>settings_applications</mat-icon>
-                                    <div>
-                                        <mat-card-title>Configuration de l'organisation</mat-card-title>
-                                        <mat-card-subtitle>Paramètres administratifs globaux</mat-card-subtitle>
-                                    </div>
-                                </div>
-                            </mat-card-header>
-                            <mat-card-content>
-                                <div class="org-summary-row" *ngIf="organization">
-                                    <span class="org-pill">{{ organization.code }}</span>
-                                    <span class="org-pill subtle">{{ organization.status || 'ACTIF' }}</span>
-                                </div>
+                        <div class="pane-actions-row">
+                            <button mat-button type="button" class="forgot-pwd-btn" (click)="initiatePasswordReset()" [disabled]="sendingResetEmail">
+                                <mat-icon>mail_outline</mat-icon>
+                                J'ai oublié mon mot de passe actuel.
+                            </button>
 
-                                <div class="loading-state" *ngIf="loading">
-                                    <mat-spinner diameter="48"></mat-spinner>
-                                    <p>Chargement des données...</p>
-                                </div>
+                            <button mat-flat-button class="btn-security-submit" (click)="changePassword()" [disabled]="changingPassword || sendingResetEmail">
+                                <mat-spinner diameter="18" *ngIf="changingPassword"></mat-spinner>
+                                <mat-icon *ngIf="!changingPassword">vpn_key</mat-icon>
+                                <span *ngIf="!changingPassword">Mettre à jour le mot de passe</span>
+                            </button>
+                        </div>
+                    </form>
 
-                                <form [formGroup]="organizationForm" class="modern-form" *ngIf="!loading">
-                                    <div class="form-grid">
-                                        <mat-form-field appearance="outline">
-                                            <mat-label>Code organisation</mat-label>
-                                            <input matInput [value]="organization?.code || ''" readonly>
-                                        </mat-form-field>
-                                        <mat-form-field appearance="outline">
-                                            <mat-label>Nom de l'organisation</mat-label>
-                                            <input title="organisation" matInput formControlName="name">
-                                        </mat-form-field>
-                                        <mat-form-field appearance="outline">
-                                            <mat-label>Type d'établissement</mat-label>
-                                            <mat-select formControlName="type">
-                                                <mat-option *ngFor="let type of typeOptions" [value]="type">{{ type
-                                                    }}</mat-option>
-                                            </mat-select>
-                                        </mat-form-field>
-                                    </div>
+                    <!-- Forgot Password Flow inside Tab -->
+                    <form [formGroup]="resetWithCodeForm" class="pane-form reset-flow-form" *ngIf="forgotPasswordStep > 0">
+                        <div class="divider-line"></div>
+                        <div *ngIf="forgotPasswordStep === 1">
+                            <div class="step-title">Validation du code reçu par email</div>
+                            <mat-form-field appearance="outline" class="full-width">
+                                <mat-label>Code de validation</mat-label>
+                                <input matInput type="text" maxlength="6" formControlName="code" placeholder="Code à 6 chiffres">
+                            </mat-form-field>
 
-                                    <mat-form-field appearance="outline" class="full-width">
-                                        <mat-label>Adresse complète</mat-label>
-                                        <mat-icon matIconPrefix>place</mat-icon>
-                                        <button mat-icon-button matSuffix type="button" (click)="fillAddressFromGps()"
-                                            [disabled]="locatingAddress" aria-label="Utiliser ma position GPS">
-                                            <mat-icon *ngIf="!locatingAddress">my_location</mat-icon>
-                                            <mat-spinner *ngIf="locatingAddress" diameter="18"></mat-spinner>
-                                        </button>
-                                        <input title="address" matInput formControlName="address">
-                                    </mat-form-field>
+                            <div class="pane-actions-right">
+                                <button mat-flat-button class="btn-primary-custom" type="button" (click)="verifyResetCodeFromProfile()" [disabled]="sendingResetEmail || verifyingResetCode">
+                                    <mat-spinner diameter="18" *ngIf="verifyingResetCode"></mat-spinner>
+                                    <mat-icon *ngIf="!verifyingResetCode">mark_email_read</mat-icon>
+                                    <span *ngIf="!verifyingResetCode">Valider le code</span>
+                                </button>
+                            </div>
+                        </div>
 
-                                    <div class="form-grid">
-                                        <mat-form-field appearance="outline">
-                                            <mat-label>Email officiel</mat-label>
-                                            <mat-icon matIconPrefix>alternate_email</mat-icon>
-                                            <input title="email" matInput formControlName="email">
-                                        </mat-form-field>
-                                        <mat-form-field appearance="outline">
-                                            <mat-label>Téléphone support</mat-label>
-                                            <mat-icon matIconPrefix>phone</mat-icon>
-                                            <input title="phone" matInput formControlName="phone">
-                                        </mat-form-field>
-                                    </div>
+                        <div *ngIf="forgotPasswordStep === 2">
+                            <div class="step-title">Définir le nouveau mot de passe</div>
+                            <div class="form-grid">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Nouveau mot de passe</mat-label>
+                                    <input matInput type="password" formControlName="newPassword" placeholder="Minimum 8 caractères">
+                                </mat-form-field>
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Confirmer le nouveau mot de passe</mat-label>
+                                    <input matInput type="password" formControlName="confirmPassword" placeholder="Minimum 8 caractères">
+                                </mat-form-field>
+                            </div>
 
-                                    <div class="form-grid">
-                                        <mat-form-field appearance="outline">
-                                            <mat-label>Numéro de fax</mat-label>
-                                            <mat-icon matIconPrefix>print</mat-icon>
-                                            <input title="fax" matInput formControlName="fax">
-                                        </mat-form-field>
-                                        <mat-form-field appearance="outline">
-                                            <mat-label>Site officiel</mat-label>
-                                            <mat-icon matIconPrefix>language</mat-icon>
-                                            <input title="website" matInput formControlName="website"
-                                                placeholder="https://votre-site.com">
-                                        </mat-form-field>
-                                    </div>
+                            <div class="pane-actions-right">
+                                <button mat-flat-button class="btn-primary-custom" type="button" (click)="resetPasswordWithCode()" [disabled]="resettingPasswordWithCode">
+                                    <mat-spinner diameter="18" *ngIf="resettingPasswordWithCode"></mat-spinner>
+                                    <mat-icon *ngIf="!resettingPasswordWithCode">lock_reset</mat-icon>
+                                    <span *ngIf="!resettingPasswordWithCode">Confirmer le nouveau mot de passe</span>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </mat-tab>
 
-                                    <mat-form-field appearance="outline" class="full-width">
-                                        <mat-label>Description / Présentation</mat-label>
-                                        <textarea matInput rows="6" formControlName="description"
-                                            placeholder="Présentez brièvement votre organisation..."></textarea>
-                                    </mat-form-field>
+            <!-- TAB 4: MODIFIER L'EMAIL -->
+            <mat-tab>
+                <ng-template mat-tab-label>
+                    <mat-icon class="tab-icon">mark_email_read</mat-icon>
+                    <span>Modifier l'email</span>
+                </ng-template>
 
-                                    <div class="form-grid">
-                                        <mat-form-field appearance="outline">
-                                            <mat-label>Abonnement (jours restants)</mat-label>
-                                            <mat-icon matIconPrefix>timer</mat-icon>
-                                            <input title="subscriptionDaysRemaining" matInput type="number" min="0"
-                                                formControlName="subscriptionDaysRemaining">
-                                        </mat-form-field>
+                <div class="tab-content single-card-layout">
+                    <div class="tab-pane-content">
+                        <div class="pane-header">
+                            <h2>Modifier l'adresse email</h2>
+                            <p>Changez de manière sécurisée votre adresse email d'identification</p>
+                        </div>
 
-                                        <div class="monitor-toggle-box">
-                                            <div class="toggle-label">
-                                                <mat-icon>monitor_heart</mat-icon>
-                                                <span>Moniteur automatique abonnement</span>
-                                            </div>
-                                            <mat-slide-toggle color="primary"
-                                                formControlName="subscriptionMonitorEnabled"></mat-slide-toggle>
-                                        </div>
-                                    </div>
+                        <form [formGroup]="emailChangeForm" class="pane-form">
+                            <mat-form-field appearance="outline" class="full-width">
+                                <mat-label>Nouvel email</mat-label>
+                                <input matInput type="email" formControlName="newEmail" placeholder="nouvel-email@domaine.com">
+                            </mat-form-field>
 
-                                    <div class="card-actions-right">
-                                        <button mat-flat-button color="primary" (click)="saveOrganization()"
-                                            [disabled]="savingOrganization">
-                                            <mat-spinner diameter="20" *ngIf="savingOrganization"></mat-spinner>
-                                            <mat-icon *ngIf="!savingOrganization">business_center</mat-icon>
-                                            <span *ngIf="!savingOrganization">Appliquer les changements</span>
-                                        </button>
-                                    </div>
-                                </form>
-                            </mat-card-content>
-                        </mat-card>
+                            <div class="pane-actions-right" style="margin-bottom: 16px;">
+                                <button mat-stroked-button class="btn-send-code" type="button" (click)="requestEmailChangeCode()" [disabled]="requestingEmailCode">
+                                    <mat-spinner diameter="18" *ngIf="requestingEmailCode"></mat-spinner>
+                                    <span *ngIf="!requestingEmailCode">Envoyer le code de vérification</span>
+                                </button>
+                            </div>
+
+                            <mat-form-field appearance="outline" class="full-width">
+                                <mat-label>Code de vérification</mat-label>
+                                <input matInput type="text" maxlength="6" formControlName="code" placeholder="Code à 6 chiffres">
+                            </mat-form-field>
+
+                            <div class="pane-actions-right">
+                                <button mat-flat-button class="btn-primary-custom" type="button" (click)="confirmEmailChange()" [disabled]="confirmingEmailChange">
+                                    <mat-spinner diameter="18" *ngIf="confirmingEmailChange"></mat-spinner>
+                                    <mat-icon *ngIf="!confirmingEmailChange">verified</mat-icon>
+                                    <span *ngIf="!confirmingEmailChange">Confirmer le changement d'email</span>
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </mat-tab>

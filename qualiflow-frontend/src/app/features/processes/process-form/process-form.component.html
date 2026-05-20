@@ -1,4 +1,4 @@
-﻿<section class="process-form-page">
+<section class="process-form-page">
   <!-- PAGE HEADER BAR -->
   <div class="page-header-bar">
     <div class="page-header-left">
@@ -11,26 +11,24 @@
     </div>
 
     <div class="page-header-right">
-      <button mat-stroked-button type="button" class="cancel-btn" (click)="goBack()" [disabled]="saving">
-        {{ 'common.cancel' | t }}
-      </button>
-      <button mat-flat-button color="primary" class="new-process-btn" (click)="submit()"
-        [disabled]="saving || processForm.invalid">
-        <mat-spinner *ngIf="saving" diameter="18" style="margin-right: 8px;"></mat-spinner>
-        {{ isEdit ? ('common.save' | t) : ('form.process.create' | t) }}
-      </button>
+      <span class="form-status-hint">Moderne & Épuré</span>
     </div>
   </div>
 
-  <!-- COMPLETION PROGRESS BAR -->
-  <div class="form-progress-bar">
-    <div class="progress-info">
-      <span>{{ 'common.formCompletion' | t }}</span>
-      <strong>{{ completionPercent }}%</strong>
-    </div>
-    <div class="progress-track">
-      <div class="progress-fill" [style.width.%]="completionPercent"></div>
-    </div>
+  <!-- WIZARD STEPPERS/TABS -->
+  <div class="form-tabs-container" *ngIf="!loading">
+    <button type="button" class="tab-button" [class.active]="activeTab === 0" (click)="setActiveTab(0)">
+      <mat-icon>info_outline</mat-icon>
+      <span>1. Général</span>
+    </button>
+    <button type="button" class="tab-button" [class.active]="activeTab === 1" (click)="setActiveTab(1)">
+      <mat-icon>lan</mat-icon>
+      <span>2. Cartographie</span>
+    </button>
+    <button type="button" class="tab-button" [class.active]="activeTab === 2" (click)="setActiveTab(2)">
+      <mat-icon>insights</mat-icon>
+      <span>3. Performance</span>
+    </button>
   </div>
 
   <div class="loading-box" *ngIf="loading">
@@ -42,7 +40,7 @@
     <div class="form-container">
 
       <!-- SECTION 1: INFOS -->
-      <div class="form-section-clean">
+      <div class="form-section-clean" *ngIf="activeTab === 0">
         <div class="section-header">
           <mat-icon>info_outline</mat-icon>
           <div>
@@ -78,7 +76,25 @@
             </mat-select>
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="full-width">
+          <mat-form-field appearance="outline" *ngIf="!isEdit">
+            <mat-label>Version initiale</mat-label>
+            <input matInput formControlName="versionNumber" placeholder="1.0" />
+            <mat-error *ngIf="isInvalid('versionNumber')">La version est requise.</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" *ngIf="isEdit">
+            <mat-label>Version (Incrémentation automatique)</mat-label>
+            <input matInput [value]="processForm.get('versionNumber')?.value + ' ➔ ' + nextVersion" readonly disabled />
+            <mat-hint>La version sera augmentée de 0.1 automatiquement.</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" *ngIf="isEdit">
+            <mat-label>Commentaire de révision</mat-label>
+            <input matInput formControlName="revisionComment" placeholder="Qu'est-ce qui a changé ?" />
+          </mat-form-field>
+
+          <!-- Pilote : modifiable uniquement par ADMIN_ORG / RESPONSABLE_QUALITE / SUPER_ADMIN -->
+          <mat-form-field appearance="outline" class="full-width" *ngIf="canChangePilot">
             <mat-label>{{ 'form.process.pilotOwner' | t }}</mat-label>
             <mat-select formControlName="pilotUserId">
               <mat-option [value]="null">{{ 'common.toDefine' | t }}</mat-option>
@@ -86,6 +102,12 @@
                 {{ pilot.firstName }} {{ pilot.lastName }}
               </mat-option>
             </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width" *ngIf="!canChangePilot && isEdit">
+            <mat-label>{{ 'form.process.pilotOwner' | t }}</mat-label>
+            <input matInput [value]="getPilotName()" readonly disabled />
+            <mat-hint style="color: #f59e0b; font-weight: 600;">⚠ Seul un administrateur peut modifier le pilote du processus.</mat-hint>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
@@ -96,7 +118,7 @@
       </div>
 
       <!-- SECTION 2: CARTOGRAPHIE -->
-      <div class="form-section-clean">
+      <div class="form-section-clean" *ngIf="activeTab === 1">
         <div class="section-header">
           <mat-icon>lan</mat-icon>
           <div>
@@ -126,7 +148,7 @@
       </div>
 
       <!-- SECTION 3: PERFORMANCE -->
-      <div class="form-section-clean">
+      <div class="form-section-clean" *ngIf="activeTab === 2">
         <div class="section-header">
           <mat-icon>insights</mat-icon>
           <div>
@@ -153,6 +175,25 @@
             </mat-form-field>
           </div>
         </div>
+      </div>
+
+      <!-- FORM ACTIONS BAR -->
+      <div class="form-actions-bar" style="margin-top: 24px;">
+        <button mat-button type="button" (click)="goBack()" [disabled]="saving" *ngIf="activeTab === 0">
+          {{ 'common.cancel' | t }}
+        </button>
+        <button mat-button type="button" (click)="prevTab()" [disabled]="saving" *ngIf="activeTab > 0">
+          <mat-icon>navigate_before</mat-icon> Précédent
+        </button>
+        <div class="spacer"></div>
+        <button mat-flat-button color="primary" type="button" class="submit-btn" (click)="nextTab()" *ngIf="activeTab < 2">
+          <span>Suivant</span>
+          <mat-icon>navigate_next</mat-icon>
+        </button>
+        <button mat-flat-button color="primary" type="submit" class="submit-btn" [disabled]="saving || processForm.invalid" *ngIf="activeTab === 2">
+          <mat-spinner *ngIf="saving" diameter="18" style="margin-right: 8px;"></mat-spinner>
+          <span>{{ isEdit ? ('common.save' | t) : ('form.process.create' | t) }}</span>
+        </button>
       </div>
 
     </div>

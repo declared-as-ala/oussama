@@ -171,8 +171,16 @@ export class ProcessListComponent implements OnInit {
     this.router.navigate(['/processes/map']);
   }
 
-  viewProcess(process: ProcessListItemResponse): void {
-    this.router.navigate(['/processes', process.id]);
+  viewProcess(process: ProcessListItemResponse, scrollTo?: 'actors' | 'history' | 'documents'): void {
+    if (scrollTo === 'actors') {
+      this.router.navigate(['/processes', process.id, 'actors']);
+    } else if (scrollTo === 'history') {
+      this.router.navigate(['/processes', process.id, 'history']);
+    } else if (scrollTo === 'documents') {
+      this.router.navigate(['/processes', process.id, 'documents']);
+    } else {
+      this.router.navigate(['/processes', process.id]);
+    }
   }
 
   editProcess(process: ProcessListItemResponse): void {

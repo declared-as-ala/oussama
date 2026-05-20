@@ -1,6 +1,6 @@
-<header class="topbar">
+<header class="topbar" [class.scrolled]="isScrolled">
   <a class="brand" routerLink="/">
-    <span class="brand-mark">QF</span>
+    <img src="assets/logo.png" alt="QualiFlow Logo" class="brand-logo" />
     <span class="brand-text">QualiFlow</span>
   </a>
 
@@ -16,12 +16,40 @@
        {{ item.label }}
     </a>
     <div class="mobile-actions">
+      <!-- Mobile Language Selector -->
+      <div class="lang-selector" [class.open]="isLangOpen">
+        <button class="lang-btn" (click)="toggleLangDropdown($event)">
+          <span>{{ currentFlag }}</span>
+          <span>{{ currentLang.toUpperCase() }}</span>
+          <mat-icon class="arrow-icon">arrow_drop_down</mat-icon>
+        </button>
+        <div class="lang-dropdown" [class.show]="isLangOpen">
+          <button *ngFor="let lang of languages" (click)="changeLang(lang.code)">
+            <span class="flag">{{ lang.flag }}</span>
+            <span class="name">{{ lang.name }}</span>
+          </button>
+        </div>
+      </div>
       <a class="btn btn-ghost" routerLink="/login" (click)="isMenuOpen = false">Se connecter</a>
       <a class="btn btn-primary" routerLink="/register" (click)="isMenuOpen = false">Commencer</a>
     </div>
   </nav>
 
   <div class="actions">
+    <!-- Desktop Language Selector -->
+    <div class="lang-selector" [class.open]="isLangOpen">
+      <button class="lang-btn" (click)="toggleLangDropdown($event)">
+        <span>{{ currentFlag }}</span>
+        <span>{{ currentLang.toUpperCase() }}</span>
+        <mat-icon class="arrow-icon">arrow_drop_down</mat-icon>
+      </button>
+      <div class="lang-dropdown" [class.show]="isLangOpen">
+        <button *ngFor="let lang of languages" (click)="changeLang(lang.code)">
+          <span class="flag">{{ lang.flag }}</span>
+          <span class="name">{{ lang.name }}</span>
+        </button>
+      </div>
+    </div>
     <a class="btn btn-ghost" routerLink="/login">Se connecter</a>
     <a class="btn btn-primary" routerLink="/register">Commencer</a>
   </div>

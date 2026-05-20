@@ -12,7 +12,8 @@ import {
   ProcedureResponse,
   ProcedureStatisticsResponse,
   UpdateInstructionRequest,
-  UpdateProcedureRequest
+  UpdateProcedureRequest,
+  ProcedureActionLogResponse
 } from '../models/procedure.models';
 
 @Injectable({
@@ -69,5 +70,21 @@ export class ProcedureService {
 
   deleteInstruction(procedureId: number, instructionId: number): Observable<void> {
     return this.apiService.delete<void>(`${this.endpoint}/${procedureId}/instructions/${instructionId}`);
+  }
+
+  getActionLogs(procedureId: number): Observable<ProcedureActionLogResponse[]> {
+    return this.apiService.get<ProcedureActionLogResponse[]>(`${this.endpoint}/${procedureId}/action-logs`);
+  }
+
+  deleteActionLog(logId: number): Observable<void> {
+    return this.apiService.delete<void>(`${this.endpoint}/action-logs/${logId}`);
+  }
+
+  addProcessLink(processId: number, procedureId: number): Observable<{ message: string }> {
+    return this.apiService.post<{ message: string }>(`${this.endpoint}/by-process/${processId}/link/${procedureId}`, {});
+  }
+
+  removeProcessLink(processId: number, procedureId: number): Observable<{ message: string }> {
+    return this.apiService.delete<{ message: string }>(`${this.endpoint}/by-process/${processId}/link/${procedureId}`);
   }
 }

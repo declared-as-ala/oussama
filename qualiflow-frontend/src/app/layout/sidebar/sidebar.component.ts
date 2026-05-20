@@ -56,15 +56,6 @@ export class SidebarComponent {
     ]);
   }
 
-  get canReadDepartments(): boolean {
-    return this.authService.hasRole([
-      'ADMIN_ORG',
-      'RESPONSABLE_QUALITE',
-      'CHEF_SERVICE',
-      'UTILISATEUR'
-    ]);
-  }
-
   get canReadProcesses(): boolean {
     return this.authService.hasRole([
       'ADMIN_ORG',
@@ -117,6 +108,7 @@ export class SidebarComponent {
     ]);
   }
 
+
   get isAdminOrg(): boolean {
     return this.authService.hasRole('ADMIN_ORG');
   }
@@ -124,4 +116,5 @@ export class SidebarComponent {
   get isSuperAdmin(): boolean {
     return this.authService.hasRole('SUPER_ADMIN');
   }
+
 }

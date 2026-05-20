@@ -124,13 +124,11 @@ export interface NotificationRecipientResponse {
   email: string;
   role: string;
   roleType: 'Employee' | 'DepartmentManager' | 'QualityManager' | 'SuperAdmin' | string;
-  departmentId?: number | null;
 }
 
 export interface NotificationRecipientsQueryRequest {
   eventType: string;
   documentId?: number;
-  departmentId?: number;
 }
 
 export interface NotificationLogRequest {

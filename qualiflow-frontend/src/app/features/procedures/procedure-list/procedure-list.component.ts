@@ -164,6 +164,10 @@ export class ProcedureListComponent implements OnInit {
     this.router.navigate(['/procedures/new']);
   }
 
+  navigateToMap(): void {
+    this.router.navigate(['/procedures/map']);
+  }
+
   viewProcedure(item: ProcedureListItemResponse): void {
     this.router.navigate(['/procedures', item.id]);
   }

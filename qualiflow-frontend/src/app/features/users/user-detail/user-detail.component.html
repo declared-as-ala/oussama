@@ -1,4 +1,4 @@
-﻿<div class="user-detail-container" *ngIf="!isLoading; else loadingTpl">
+<div class="user-detail-container" *ngIf="!isLoading; else loadingTpl">
   <!-- Header Section -->
   <header class="page-header">
     <div class="header-breadcrumb">
@@ -58,13 +58,6 @@
             <div class="details">
               <span class="label">Fonction</span>
               <span class="value">{{ user?.function || 'Non définie' }}</span>
-            </div>
-          </div>
-          <div class="info-item">
-            <mat-icon>business</mat-icon>
-            <div class="details">
-              <span class="label">Département</span>
-              <span class="value">{{ user?.department || 'Non défini' }}</span>
             </div>
           </div>
         </div>
@@ -164,13 +157,9 @@
           <div class="form-section">
             <h4>Poste & Organisation</h4>
             <div class="row">
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Fonction</mat-label>
                 <input matInput formControlName="function" placeholder="Chargé de qualité">
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>Département</mat-label>
-                <input matInput formControlName="department" placeholder="Production">
               </mat-form-field>
             </div>
           </div>

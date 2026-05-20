@@ -1,4 +1,4 @@
-﻿import { COMMA, ENTER } from '@angular/cdk/keycodes';
+import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -13,6 +13,7 @@ import { MatChipsModule, MatChipInputEvent } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { forkJoin } from 'rxjs';
 import { NotificationService } from '../../../core/services/notification.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { UserResponse, UserService } from '../../../core/services/user.service';
 import {
   CreateProcessRequest,
@@ -126,7 +127,9 @@ export class ProcessFormComponent implements OnInit {
     outputData: this.fb.nonNullable.control<string[]>([]),
     objectives: this.fb.nonNullable.control<string[]>([]),
     pilotUserId: this.fb.control<number | null>(null),
-    status: this.fb.nonNullable.control<ProcessStatus>('ACTIF', Validators.required)
+    status: this.fb.nonNullable.control<ProcessStatus>('ACTIF', Validators.required),
+    versionNumber: this.fb.control<string>('1.0', [Validators.required]),
+    revisionComment: this.fb.control<string>('')
   });
 
   loading = false;
@@ -134,6 +137,7 @@ export class ProcessFormComponent implements OnInit {
   isEdit = false;
   processId: number | null = null;
   pilots: UserResponse[] = [];
+  activeTab = 0;
 
   constructor(
     private readonly fb: FormBuilder,
@@ -141,7 +145,8 @@ export class ProcessFormComponent implements OnInit {
     private readonly router: Router,
     private readonly processService: ProcessService,
     private readonly userService: UserService,
-    private readonly notificationService: NotificationService
+    private readonly notificationService: NotificationService,
+    private readonly authService: AuthService
   ) { }
 
   ngOnInit(): void {
@@ -210,7 +215,24 @@ export class ProcessFormComponent implements OnInit {
       .reduce((sum, value) => sum + value, 0);
   }
 
-  isInvalid(fieldName: 'code' | 'name' | 'description'): boolean {
+  get nextVersion(): string {
+    const current = this.processForm.controls.versionNumber.value || '1.0';
+    const num = parseFloat(current);
+    return isNaN(num) ? current : (num + 0.1).toFixed(1);
+  }
+
+  get canChangePilot(): boolean {
+    return this.authService.hasRole(['ADMIN_ORG', 'RESPONSABLE_QUALITE', 'SUPER_ADMIN']);
+  }
+
+  getPilotName(): string {
+    const id = this.processForm.get('pilotUserId')?.value;
+    if (!id) return 'Non défini';
+    const p = this.pilots.find(u => u.id === id);
+    return p ? `${p.firstName} ${p.lastName}` : 'Non défini';
+  }
+
+  isInvalid(fieldName: 'code' | 'name' | 'description' | 'versionNumber'): boolean {
     const control = this.processForm.controls[fieldName];
     return !!control && control.invalid && (control.touched || control.dirty);
   }
@@ -255,6 +277,15 @@ export class ProcessFormComponent implements OnInit {
   submit(): void {
     if (this.processForm.invalid) {
       this.processForm.markAllAsTouched();
+      const invalidControls: string[] = [];
+      Object.keys(this.processForm.controls).forEach(key => {
+        const control = this.processForm.get(key);
+        if (control && control.invalid) {
+          invalidControls.push(key);
+        }
+      });
+      console.warn('Formulaire Processus invalide. Champs en erreur:', invalidControls);
+      this.notificationService.showError('Le formulaire est invalide. Veuillez vérifier les champs suivants : ' + invalidControls.join(', '));
       return;
     }
 
@@ -296,7 +327,9 @@ export class ProcessFormComponent implements OnInit {
       outputData: [...process.outputData],
       objectives: [...process.objectives],
       pilotUserId: process.pilotUserId ?? null,
-      status: process.status
+      status: process.status,
+      versionNumber: process.versionNumber ?? '1.0',
+      revisionComment: ''
     });
   }
 
@@ -316,7 +349,9 @@ export class ProcessFormComponent implements OnInit {
       outputData: this.normalizeList(raw.outputData),
       objectives: this.normalizeList(raw.objectives),
       pilotUserId: raw.pilotUserId ?? null,
-      status: raw.status
+      status: raw.status,
+      versionNumber: raw.versionNumber,
+      revisionComment: raw.revisionComment || null
     };
   }
 
@@ -326,5 +361,21 @@ export class ProcessFormComponent implements OnInit {
       .filter(value => value.length > 0);
 
     return Array.from(new Set(normalized));
+  }
+
+  setActiveTab(index: number): void {
+    this.activeTab = index;
+  }
+
+  nextTab(): void {
+    if (this.activeTab < 2) {
+      this.activeTab++;
+    }
+  }
+
+  prevTab(): void {
+    if (this.activeTab > 0) {
+      this.activeTab--;
+    }
   }
 }

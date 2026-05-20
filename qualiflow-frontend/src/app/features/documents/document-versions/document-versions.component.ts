@@ -61,6 +61,11 @@ export class DocumentVersionsComponent implements OnInit {
   isDragging = false;
   statusByVersion: Record<number, DocumentStatus> = {};
   commentByVersion: Record<number, string> = {};
+  activeFormTab = 0;
+
+  setFormTab(index: number): void {
+    this.activeFormTab = index;
+  }
 
   // Signature Pad
   private signatureCanvasElement?: HTMLCanvasElement;

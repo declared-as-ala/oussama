@@ -2,36 +2,34 @@
     <!-- PAGE HEADER BAR -->
     <div class="page-header-bar">
         <div class="page-header-left">
-            <div class="page-subtitle">
-                <button type="button" class="link-button" (click)="goBack()">
-                    <mat-icon>arrow_back</mat-icon> {{ 'common.back' | t }}
+            <div class="page-subtitle" style="margin-bottom: 12px;">
+                <button type="button" class="back-link-btn" (click)="goBack()" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; color: #10b981; font-weight: 600; padding: 0; font-family: inherit; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                    <mat-icon style="font-size: 20px; width: 20px; height: 20px;">arrow_back</mat-icon> 
+                    <span>{{ 'common.back' | t }}</span>
                 </button>
             </div>
             <h1 class="page-title">{{ isEdit ? ('form.procedure.editTitle' | t) : ('form.procedure.newTitle' | t) }}</h1>
         </div>
 
         <div class="page-header-right">
-            <button mat-stroked-button type="button" class="cancel-btn" (click)="goBack()" [disabled]="saving">
-                {{ 'common.cancel' | t }}
-            </button>
-            <button mat-flat-button color="primary" class="new-process-btn" (click)="submit()"
-                [disabled]="saving || procedureForm.invalid">
-                <mat-icon *ngIf="!saving">save</mat-icon>
-                <mat-spinner *ngIf="saving" diameter="18"></mat-spinner>
-                {{ isEdit ? ('common.save' | t) : ('form.procedure.create' | t) }}
-            </button>
+            <span class="form-status-hint">Moderne & Épuré</span>
         </div>
     </div>
 
-    <!-- PROGRESS BAR -->
-    <div class="form-progress-bar">
-        <div class="progress-info">
-            <span>{{ 'common.formCompletion' | t }}</span>
-            <strong>{{ completionPercent }}%</strong>
-        </div>
-        <div class="progress-track">
-            <div class="progress-fill" [style.width.%]="completionPercent"></div>
-        </div>
+    <!-- WIZARD STEPPERS/TABS -->
+    <div class="form-tabs-container" *ngIf="!loading">
+        <button type="button" class="tab-button" [class.active]="activeTab === 0" (click)="setActiveTab(0)">
+            <mat-icon>fingerprint</mat-icon>
+            <span>1. Identification</span>
+        </button>
+        <button type="button" class="tab-button" [class.active]="activeTab === 1" (click)="setActiveTab(1)">
+            <mat-icon>person</mat-icon>
+            <span>2. Responsabilité & Statut</span>
+        </button>
+        <button type="button" class="tab-button" [class.active]="activeTab === 2" (click)="setActiveTab(2)">
+            <mat-icon>assignment</mat-icon>
+            <span>3. Cadre & Contenu</span>
+        </button>
     </div>
 
     <div class="form-body">
@@ -40,10 +38,10 @@
             <span>{{ 'common.loadingForm' | t }}</span>
         </div>
 
-        <form *ngIf="!loading" [formGroup]="procedureForm" class="form-container">
+        <form *ngIf="!loading" [formGroup]="procedureForm" (ngSubmit)="submit()" class="form-container">
 
             <!-- SECTION 1: IDENTité -->
-            <div class="form-section-clean">
+            <div class="form-section-clean" *ngIf="activeTab === 0">
                 <div class="section-header">
                     <mat-icon>fingerprint</mat-icon>
                     <div>
@@ -76,25 +74,35 @@
                 </div>
             </div>
 
-            <!-- SECTION 2: RESPONSABILITÉ -->
-            <div class="form-section-clean">
+            <!-- SECTION 2: RESPONSABILITÉ & STATUT -->
+            <div class="form-section-clean" *ngIf="activeTab === 1">
                 <div class="section-header">
                     <mat-icon>person</mat-icon>
                     <div>
-                        <h2>{{ 'form.procedure.responsibilityStatus' | t }}</h2>
-                        <p>{{ 'form.procedure.responsibilityStatusDesc' | t }}</p>
+                        <h2>Responsabilité & Statut</h2>
+                        <p>Assigne un responsable (Responsable Qualité ou Admin) et définit l'état de la procédure.</p>
                     </div>
                 </div>
 
                 <div class="section-content grid-two">
-                    <mat-form-field appearance="outline">
+                        <!-- Responsable : modifiable uniquement par ADMIN_ORG / RESPONSABLE_QUALITE / SUPER_ADMIN -->
+                    <mat-form-field appearance="outline" *ngIf="canChangeResponsible">
                         <mat-label>{{ 'common.responsible' | t }}</mat-label>
                         <mat-select formControlName="responsibleUserId">
                             <mat-option [value]="null">{{ 'form.procedure.none' | t }}</mat-option>
-                            <mat-option *ngFor="let r of responsibles" [value]="r.id">{{ r.firstName }} {{ r.lastName
-                                }}</mat-option>
+                            <mat-option *ngFor="let r of responsibles" [value]="r.id">{{ r.firstName }} {{ r.lastName }}</mat-option>
                         </mat-select>
                     </mat-form-field>
+
+                    <mat-form-field appearance="outline" *ngIf="!canChangeResponsible && isEdit">
+                        <mat-label>{{ 'common.responsible' | t }}</mat-label>
+                        <input matInput
+                            [value]="getResponsibleName()"
+                            readonly disabled />
+                        <mat-hint style="color: #f59e0b; font-weight: 600;">⚠ Seul un administrateur peut modifier le responsable.</mat-hint>
+                    </mat-form-field>
+
+
 
                     <mat-form-field appearance="outline">
                         <mat-label>{{ 'common.status' | t }}</mat-label>
@@ -103,11 +111,28 @@
                                 }}</mat-option>
                         </mat-select>
                     </mat-form-field>
+
+                    <mat-form-field appearance="outline" *ngIf="!isEdit">
+                        <mat-label>Version initiale</mat-label>
+                        <input matInput formControlName="versionNumber" placeholder="1.0" />
+                        <mat-error *ngIf="isInvalid('versionNumber')">La version est requise.</mat-error>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline" *ngIf="isEdit">
+                        <mat-label>Version (Incrémentation automatique)</mat-label>
+                        <input matInput [value]="procedureForm.get('versionNumber')?.value + ' ➔ ' + nextVersion" readonly disabled />
+                        <mat-hint>La version sera augmentée de 0.1 automatiquement.</mat-hint>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline" *ngIf="isEdit">
+                        <mat-label>Commentaire de révision</mat-label>
+                        <input matInput formControlName="revisionComment" placeholder="Qu'est-ce qui a changé ?" />
+                    </mat-form-field>
                 </div>
             </div>
 
             <!-- SECTION 3: CADRE -->
-            <div class="form-section-clean">
+            <div class="form-section-clean" *ngIf="activeTab === 2">
                 <div class="section-header">
                     <mat-icon>assignment</mat-icon>
                     <div>
@@ -132,6 +157,26 @@
                         <textarea matInput rows="6" formControlName="description"></textarea>
                     </mat-form-field>
                 </div>
+            </div>
+
+            <!-- FORM ACTIONS BAR -->
+            <div class="form-actions-bar" style="margin-top: 24px;">
+                <button mat-button type="button" (click)="goBack()" [disabled]="saving" *ngIf="activeTab === 0">
+                    {{ 'common.cancel' | t }}
+                </button>
+                <button mat-button type="button" (click)="prevTab()" [disabled]="saving" *ngIf="activeTab > 0">
+                    <mat-icon>navigate_before</mat-icon> Précédent
+                </button>
+                <div class="spacer"></div>
+                <button mat-flat-button color="primary" type="button" class="submit-btn" (click)="nextTab()" *ngIf="activeTab < 2">
+                    <span>Suivant</span>
+                    <mat-icon>navigate_next</mat-icon>
+                </button>
+                <button mat-flat-button color="primary" type="submit" class="submit-btn" [disabled]="saving || procedureForm.invalid" *ngIf="activeTab === 2">
+                    <mat-icon *ngIf="!saving">save</mat-icon>
+                    <mat-spinner *ngIf="saving" diameter="18" style="margin-right: 8px;"></mat-spinner>
+                    <span>{{ isEdit ? ('common.save' | t) : ('form.procedure.create' | t) }}</span>
+                </button>
             </div>
 
         </form>

@@ -76,14 +76,15 @@ export interface CorrectiveActionResponse {
   updatedAt?: string | null;
 }
 
-export interface CorrectiveActionHistoryResponse {
+export interface CorrectiveActionActionLogResponse {
   id: number;
-  oldStatus?: CorrectiveActionStatus | null;
-  newStatus: CorrectiveActionStatus;
+  actionType: string;
+  oldValue?: string | null;
+  newValue?: string | null;
   comment?: string | null;
-  changedByUserId: number;
-  changedByFullName?: string | null;
-  changedAt: string;
+  performedByUserId: number;
+  performedByFullName?: string | null;
+  performedAt: string;
 }
 
 export interface CorrectiveActionDetailsResponse {
@@ -105,7 +106,7 @@ export interface CorrectiveActionDetailsResponse {
     title?: string | null;
     type?: string | null;
   } | null;
-  history: CorrectiveActionHistoryResponse[];
+  history: CorrectiveActionActionLogResponse[];
 }
 
 export interface PagedCorrectiveActionResponse {
