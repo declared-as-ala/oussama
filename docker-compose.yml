@@ -1,0 +1,174 @@
+services:
+
+  # ─────────────────────────────────────────────
+  # PostgreSQL database
+  # ─────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: qualiflow-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-qualiflowdb}
+      POSTGRES_USER: ${POSTGRES_USER:-qualiflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-qualiflow} -d ${POSTGRES_DB:-qualiflowdb}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - qualiflow-net
+
+  # ─────────────────────────────────────────────
+  # RabbitMQ message broker
+  # ─────────────────────────────────────────────
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: qualiflow-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-qualiflow}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:?RABBITMQ_PASS is required}
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - qualiflow-net
+
+  # ─────────────────────────────────────────────
+  # .NET 8 backend API
+  # ─────────────────────────────────────────────
+  backend:
+    build:
+      context: ./qualiflow-backend
+      dockerfile: Dockerfile
+    image: ${REGISTRY:-qualiflow}/qualiflow-backend:${TAG:-latest}
+    container_name: qualiflow-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:10000
+
+      # Database
+      ConnectionStrings__DefaultConnection: >-
+        Host=qualiflow-postgres;Port=5432;
+        Database=${POSTGRES_DB:-qualiflowdb};
+        Username=${POSTGRES_USER:-qualiflow};
+        Password=${POSTGRES_PASSWORD};
+        SSL Mode=Disable;
+
+      # JWT
+      JwtSettings__SecretKey: ${JWT_SECRET:?JWT_SECRET is required}
+      JwtSettings__Issuer: ${JWT_ISSUER:-QualiFlow}
+      JwtSettings__Audience: ${JWT_AUDIENCE:-QualiFlowUsers}
+      JwtSettings__ExpirationInMinutes: ${JWT_EXPIRY:-1440}
+
+      # RabbitMQ (use hostname-based, not URI)
+      RabbitMqSettings__Enabled: ${RABBITMQ_ENABLED:-true}
+      RabbitMqSettings__Uri: ${RABBITMQ_URI:-}
+      RabbitMqSettings__HostName: ${RABBITMQ_HOST:-qualiflow-rabbitmq}
+      RabbitMqSettings__Port: ${RABBITMQ_PORT:-5672}
+      RabbitMqSettings__UserName: ${RABBITMQ_USER:-qualiflow}
+      RabbitMqSettings__Password: ${RABBITMQ_PASS}
+      RabbitMqSettings__VirtualHost: ${RABBITMQ_VIRTUAL_HOST:-/}
+      RabbitMqSettings__QueueName: ${RABBITMQ_QUEUE:-qualiflow.notifications}
+
+      # SMTP Email
+      SmtpSettings__Enabled: ${SMTP_ENABLED:-false}
+      SmtpSettings__Host: ${SMTP_HOST:-smtp.gmail.com}
+      SmtpSettings__Port: ${SMTP_PORT:-587}
+      SmtpSettings__Username: ${SMTP_USER:-}
+      SmtpSettings__Password: ${SMTP_PASS:-}
+      SmtpSettings__FromEmail: ${SMTP_FROM:-}
+      SmtpSettings__FromName: ${SMTP_FROM_NAME:-QualiFlow}
+      SmtpSettings__EnableSsl: ${SMTP_ENABLE_SSL:-true}
+
+      # AI (Groq / OpenRouter)
+      OpenRouter__ApiKey: ${OPENROUTER_API_KEY:-}
+      OpenRouter__Model: ${OPENROUTER_MODEL:-llama-3.3-70b-versatile}
+      OpenRouter__ApiBaseUrl: ${OPENROUTER_URL:-https://api.groq.com/openai/v1}
+      OpenRouter__TimeoutSeconds: ${OPENROUTER_TIMEOUT_SECONDS:-30}
+      OpenRouter__Temperature: ${OPENROUTER_TEMPERATURE:-0.2}
+      OpenRouter__MaxOutputTokens: ${OPENROUTER_MAX_OUTPUT_TOKENS:-1024}
+
+      # OneSignal push (optional)
+      OneSignal__Enabled: ${ONESIGNAL_ENABLED:-false}
+      OneSignal__AppId: ${ONESIGNAL_APP_ID:-}
+      OneSignal__RestApiKey: ${ONESIGNAL_API_KEY:-}
+      OneSignal__ApiBaseUrl: ${ONESIGNAL_API_BASE_URL:-https://api.onesignal.com}
+      OneSignal__DefaultLanguage: ${ONESIGNAL_DEFAULT_LANGUAGE:-fr}
+
+      # Notifications / subscription monitor
+      NotificationSettings__RealtimeEnabled: ${NOTIFICATION_REALTIME_ENABLED:-true}
+      NotificationSettings__DedupeWindowMinutes: ${NOTIFICATION_DEDUPE_WINDOW_MINUTES:-5}
+      SubscriptionMonitor__Enabled: ${SUBSCRIPTION_MONITOR_ENABLED:-true}
+      SubscriptionMonitor__PollingIntervalMinutes: ${SUBSCRIPTION_MONITOR_POLLING_INTERVAL_MINUTES:-60}
+
+      # Support assistant
+      SupportAssistant__Name: ${SUPPORT_ASSISTANT_NAME:-Assistant Technique QualiFlow}
+      SupportAssistant__Email: ${SUPPORT_ASSISTANT_EMAIL:-support.qualiflow@gmail.com}
+      SupportAssistant__Phone: ${SUPPORT_ASSISTANT_PHONE:-+216 70 000 000}
+
+      # Storage
+      Storage__RootPath: ${STORAGE_ROOT_PATH:-StorageFiles}
+      Storage__AllowedExtensions: ${STORAGE_ALLOWED_EXTENSIONS:-.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png}
+      Storage__MaxFileSizeMb: ${STORAGE_MAX_FILE_SIZE_MB:-20}
+      Storage__OrganizationLogoMaxFileSizeMb: ${STORAGE_ORGANIZATION_LOGO_MAX_FILE_SIZE_MB:-5}
+      Storage__ProfilePhotoMaxFileSizeMb: ${STORAGE_PROFILE_PHOTO_MAX_FILE_SIZE_MB:-3}
+      Storage__PdfHeaderEnabled: ${STORAGE_PDF_HEADER_ENABLED:-true}
+      Storage__WordHeaderEnabled: ${STORAGE_WORD_HEADER_ENABLED:-true}
+      Storage__OrganizationLogosPath: ${STORAGE_ORGANIZATION_LOGOS_PATH:-StorageFiles/organization-logos}
+      Storage__ProfilePhotosPath: ${STORAGE_PROFILE_PHOTOS_PATH:-StorageFiles/profile-photos}
+      Storage__DefaultLogoPath: ${STORAGE_DEFAULT_LOGO_PATH:-../front/src/assets/logo.png}
+
+      # CORS — nginx frontend is same origin, but add your domain just in case
+      Cors__AllowedOrigins__0: ${APP_URL:-http://localhost}
+    volumes:
+      - qualiflow-storage:/app/StorageFiles
+    networks:
+      - qualiflow-net
+
+  # ─────────────────────────────────────────────
+  # Angular frontend + Nginx reverse proxy
+  # ─────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./qualiflow-frontend
+      dockerfile: Dockerfile
+    image: ${REGISTRY:-qualiflow}/qualiflow-frontend:${TAG:-latest}
+    container_name: qualiflow-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    networks:
+      - qualiflow-net
+
+# ─────────────────────────────────────────────
+# Named volumes
+# ─────────────────────────────────────────────
+volumes:
+  postgres-data:
+  rabbitmq-data:
+  qualiflow-storage:
+
+# ─────────────────────────────────────────────
+# Internal network (services talk by name)
+# ─────────────────────────────────────────────
+networks:
+  qualiflow-net:
+    driver: bridge
