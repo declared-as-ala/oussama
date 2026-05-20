@@ -111,7 +111,7 @@ jobs:
             apt-get update && apt-get install -y sshpass
             cd /opt/qualiflow
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            export REGISTRY=ghcr.io/${{ github.repository_owner }}
+            export REGISTRY=ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}
             export TAG=${{ needs.build.outputs.tag }}
             docker compose pull backend frontend
             docker compose up -d --remove-orphans
