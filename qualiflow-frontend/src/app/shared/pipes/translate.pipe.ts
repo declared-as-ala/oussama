@@ -340,7 +340,15 @@ const TRANSLATIONS: Record<AppLang, Record<string, string>> = {
     'form.process.namePlaceholder': 'Management de la qualite',
     'form.process.pilotOwner': 'Pilote responsable',
     'form.process.pilotPerformance': 'Pilotage & performance',
-    'form.process.pilotPerformanceDesc': 'Finalites et objectifs cibles.'
+    'form.process.pilotPerformanceDesc': 'Finalites et objectifs cibles.',
+    'home.nav.accueil': 'Accueil',
+    'home.nav.services': 'Services',
+    'home.nav.iso': 'ISO 21001',
+    'home.nav.requestOrg': 'Demander un Espace',
+    'home.nav.reclamations': 'Réclamations',
+    'home.nav.contact': 'Contact',
+    'home.nav.login': 'Se connecter',
+    'home.nav.register': 'Commencer'
   },
   en: {
     'settings.title': 'Settings',
@@ -677,7 +685,15 @@ const TRANSLATIONS: Record<AppLang, Record<string, string>> = {
     'form.process.namePlaceholder': 'Quality management',
     'form.process.pilotOwner': 'Pilot owner',
     'form.process.pilotPerformance': 'Steering & performance',
-    'form.process.pilotPerformanceDesc': 'Purposes and target objectives.'
+    'form.process.pilotPerformanceDesc': 'Purposes and target objectives.',
+    'home.nav.accueil': 'Home',
+    'home.nav.services': 'Services',
+    'home.nav.iso': 'ISO 21001',
+    'home.nav.requestOrg': 'Request a Space',
+    'home.nav.reclamations': 'Complaints & Suggestions',
+    'home.nav.contact': 'Contact',
+    'home.nav.login': 'Login',
+    'home.nav.register': 'Get Started'
   },
   ar: {
     'settings.title': 'الاعدادات',
@@ -908,7 +924,15 @@ const TRANSLATIONS: Record<AppLang, Record<string, string>> = {
     'form.indicator.select': 'اختر',
     'form.indicator.targetValue': 'القيمة المستهدفة',
     'form.indicator.unit': 'وحدة القياس',
-    'form.indicator.unitPlaceholder': '%، كغ، الخ'
+    'form.indicator.unitPlaceholder': '%، كغ، الخ',
+    'home.nav.accueil': 'الرئيسية',
+    'home.nav.services': 'الخدمات',
+    'home.nav.iso': 'ISO 21001',
+    'home.nav.requestOrg': 'طلب مساحة',
+    'home.nav.reclamations': 'الشكاوى والاقتراحات',
+    'home.nav.contact': 'اتصل بنا',
+    'home.nav.login': 'تسجيل الدخول',
+    'home.nav.register': 'ابدأ الآن'
   }
 };
 

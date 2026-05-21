@@ -13,7 +13,7 @@
        (click)="selectSection(item.section)" 
        [class.active]="activeSection === item.section"
        href="javascript:void(0)">
-       {{ item.label }}
+       {{ item.key | t }}
     </a>
     <div class="mobile-actions">
       <!-- Mobile Language Selector -->
@@ -30,8 +30,8 @@
           </button>
         </div>
       </div>
-      <a class="btn btn-ghost" routerLink="/login" (click)="isMenuOpen = false">Se connecter</a>
-      <a class="btn btn-primary" routerLink="/register" (click)="isMenuOpen = false">Commencer</a>
+      <a class="btn btn-ghost" routerLink="/login" (click)="isMenuOpen = false">{{ 'home.nav.login' | t }}</a>
+      <a class="btn btn-primary" routerLink="/register" (click)="isMenuOpen = false">{{ 'home.nav.register' | t }}</a>
     </div>
   </nav>
 
@@ -50,7 +50,7 @@
         </button>
       </div>
     </div>
-    <a class="btn btn-ghost" routerLink="/login">Se connecter</a>
-    <a class="btn btn-primary" routerLink="/register">Commencer</a>
+    <a class="btn btn-ghost" routerLink="/login">{{ 'home.nav.login' | t }}</a>
+    <a class="btn btn-primary" routerLink="/register">{{ 'home.nav.register' | t }}</a>
   </div>
 </header>

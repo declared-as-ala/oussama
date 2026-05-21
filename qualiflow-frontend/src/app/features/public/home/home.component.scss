@@ -55,18 +55,21 @@
   left: 0;
   right: 0;
   z-index: 1000;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(2, 6, 23, 0.93);
-  backdrop-filter: blur(8px);
-  transition: all 0.25s ease;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(5, 10, 28, 0.85);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &.scrolled {
-    background: rgba(2, 6, 23, 0.98);
+    background: rgba(5, 10, 28, 0.97);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
   }
 }
 
 .nav-inner {
-  min-height: 78px;
+  min-height: 72px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -78,83 +81,251 @@
   background: transparent;
   padding: 0;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
 
   .main-logo {
-    height: 54px;
+    height: 38px;
     width: auto;
+    filter: brightness(1.1);
+  }
+
+  .logo-text {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.02em;
+
+    span {
+      color: #22c55e;
+    }
   }
 }
 
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 22px;
+  gap: 4px;
 
   a {
-    color: rgba(248, 250, 252, 0.9);
+    color: rgba(248, 250, 252, 0.75);
     text-decoration: none;
-    font-weight: 600;
-    font-size: 0.95rem;
+    font-weight: 500;
+    font-size: 0.9rem;
     cursor: pointer;
+    padding: 8px 14px;
+    border-radius: 8px;
+    position: relative;
+    transition: all 0.2s ease;
+    letter-spacing: 0.01em;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      left: 50%;
+      transform: translateX(-50%) scaleX(0);
+      width: 70%;
+      height: 2px;
+      background: linear-gradient(90deg, #22c55e, #0f7a3f);
+      border-radius: 2px;
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    &:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.07);
+
+      &::after {
+        transform: translateX(-50%) scaleX(1);
+      }
+    }
+
+    &.active {
+      color: #ffffff;
+
+      &::after {
+        transform: translateX(-50%) scaleX(1);
+      }
+    }
   }
 }
 
+/* ─── Language Switcher ────────────────────────────────────────────── */
+.lang-switcher {
+  position: relative;
+
+  .lang-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 13px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.07);
+    color: rgba(248, 250, 252, 0.9);
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.04em;
+
+    .lang-flag {
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    .chevron {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+      transition: transform 0.2s;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.13);
+      border-color: rgba(255, 255, 255, 0.3);
+      color: #fff;
+    }
+  }
+
+  &.open .lang-btn {
+    background: rgba(255, 255, 255, 0.13);
+    border-color: rgba(34, 197, 94, 0.4);
+
+    .chevron {
+      transform: rotate(180deg);
+    }
+  }
+
+  .lang-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    min-width: 150px;
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    animation: dropIn 0.18s ease;
+
+    .lang-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 16px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: rgba(248, 250, 252, 0.8);
+      cursor: pointer;
+      transition: all 0.15s;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+
+      .lang-flag { font-size: 1.1rem; }
+      .lang-name { flex: 1; }
+      .lang-native { font-size: 0.78rem; color: rgba(255,255,255,0.35); }
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+      }
+
+      &.selected {
+        color: #22c55e;
+        background: rgba(34, 197, 94, 0.08);
+
+        .lang-native { color: rgba(34, 197, 94, 0.5); }
+      }
+    }
+  }
+}
+
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Desktop actions ────────────────────────────────────────────── */
 .desktop-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .mobile-actions {
   display: none;
 }
 
+/* ─── Buttons ───────────────────────────────────────────────────── */
 .btn {
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   cursor: pointer;
   font-weight: 700;
-  padding: 10px 18px;
-  font-size: 0.92rem;
+  padding: 10px 20px;
+  font-size: 0.88rem;
   transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 
   &.btn-primary {
-    background: linear-gradient(140deg, var(--primary), var(--primary-dark));
+    background: linear-gradient(135deg, #22c55e, #0f7a3f);
     color: #fff;
+    box-shadow: 0 4px 14px rgba(34, 197, 94, 0.25);
 
     &:hover {
-      filter: brightness(1.08);
+      filter: brightness(1.1);
       transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(34, 197, 94, 0.35);
     }
   }
 
   &.btn-outline {
     background: transparent;
-    color: #f8fafc;
-    border: 1px solid rgba(248, 250, 252, 0.45);
+    color: rgba(248, 250, 252, 0.88);
+    border: 1px solid rgba(248, 250, 252, 0.22);
 
     &:hover {
-      border-color: rgba(248, 250, 252, 0.9);
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(248, 250, 252, 0.5);
+      color: #fff;
     }
 
     &.light {
-      border-color: rgba(255, 255, 255, 0.6);
+      border-color: rgba(255, 255, 255, 0.5);
       color: #fff;
     }
   }
 }
 
+/* ─── Mobile menu toggle ─────────────────────────────────────────── */
 .menu-toggle {
   width: 42px;
   height: 42px;
   border-radius: 10px;
-  border: 1px solid rgba(248, 250, 252, 0.35);
-  background: transparent;
+  border: 1px solid rgba(248, 250, 252, 0.2);
+  background: rgba(255, 255, 255, 0.06);
   color: #f8fafc;
   display: none;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.35);
+  }
 }
+
 
 .hero {
   padding-top: 140px;

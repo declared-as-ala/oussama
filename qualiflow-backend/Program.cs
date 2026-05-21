@@ -281,6 +281,10 @@ if (!app.Environment.IsDevelopment() && !isRenderEnvironment)
 
 app.UseCors("AllowFrontend");
 
+// Required for SignalR WebSocket transport (skipNegotiation=true mode).
+// Must be placed before UseAuthentication/UseAuthorization.
+app.UseWebSockets();
+
 app.UseAuthentication();
 app.UseAuthorization();
 

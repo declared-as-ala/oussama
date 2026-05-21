@@ -3,11 +3,12 @@ import { Component, EventEmitter, Output, HostListener } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { MatIconModule } from '@angular/material/icon';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 
 @Component({
   selector: 'app-header-home',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatIconModule],
+  imports: [CommonModule, RouterLink, MatIconModule, TranslatePipe],
   templateUrl: './header-home.component.html',
   styleUrls: ['./header-home.component.scss']
 })
@@ -50,12 +51,12 @@ export class HeaderHomeComponent {
   }
 
   navItems = [
-    { label: 'Accueil', section: 'accueil' },
-    { label: 'Services', section: 'services' },
-    { label: 'ISO 21001', section: 'iso' },
-    { label: 'Demander un Espace', section: 'request-org' },
-    { label: 'Réclamations', section: 'reclamations' },
-    { label: 'Contact', section: 'contact' }
+    { label: 'Accueil', key: 'home.nav.accueil', section: 'accueil' },
+    { label: 'Services', key: 'home.nav.services', section: 'services' },
+    { label: 'ISO 21001', key: 'home.nav.iso', section: 'iso' },
+    { label: 'Demander un Espace', key: 'home.nav.requestOrg', section: 'request-org' },
+    { label: 'Réclamations', key: 'home.nav.reclamations', section: 'reclamations' },
+    { label: 'Contact', key: 'home.nav.contact', section: 'contact' }
   ];
 
   toggleMenu(): void {
