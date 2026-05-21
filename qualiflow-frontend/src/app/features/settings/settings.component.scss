@@ -1,4 +1,4 @@
-﻿.settings-page {
+.settings-page {
   padding: 24px;
   min-height: calc(100vh - var(--topbar-h));
   gap: 24px;
@@ -438,5 +438,61 @@
 
   .language-field {
     width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .settings-page {
+    padding: 8px;
+    gap: 12px;
+  }
+
+  .dashboard-header-card {
+    padding: 16px;
+    border-radius: 12px;
+
+    .title-section h1 {
+      font-size: 22px;
+    }
+
+    .title-section p {
+      font-size: 13px;
+    }
+  }
+
+  .panel-card {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .about-container {
+    .about-branding {
+      gap: 12px;
+
+      .logo-circle {
+        width: 44px;
+        height: 44px;
+        font-size: 16px;
+      }
+
+      .branding-info h3 {
+        font-size: 16px;
+      }
+    }
+
+    .about-actions {
+      flex-direction: column;
+
+      button {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  }
+
+  .setting-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
   }
 }

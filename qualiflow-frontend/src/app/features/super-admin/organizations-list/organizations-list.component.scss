@@ -1,4 +1,4 @@
-﻿.org-list-page {
+.org-list-page {
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -338,4 +338,56 @@
 mat-paginator {
   background: var(--bg-raised) !important;
   border-top: 1px solid var(--border) !important;
+}
+
+/* ======================== RESPONSIVE ======================== */
+@media (max-width: 768px) {
+  .org-list-page {
+    padding: 12px;
+    gap: 16px;
+  }
+
+  .glass-filters .filter-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .header-actions {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .btn-create {
+    flex: 1;
+    justify-content: center;
+    height: 40px;
+    font-size: 13px;
+  }
+
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 480px) {
+  .org-list-page {
+    padding: 8px;
+    gap: 12px;
+  }
+
+  .btn-create {
+    width: 100%;
+  }
+
+  .org-cell {
+    gap: 8px;
+
+    .org-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+    }
+  }
 }

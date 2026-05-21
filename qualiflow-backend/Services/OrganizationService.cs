@@ -262,6 +262,16 @@ namespace DocApi.Services
             };
         }
 
+        private static readonly byte[] TransparentPng = new byte[]
+        {
+            0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
+            0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+            0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4, 0x89, 0x00, 0x00, 0x00,
+            0x0B, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9C, 0x63, 0x60, 0x00, 0x00, 0x00,
+            0x02, 0x00, 0x01, 0x48, 0xAF, 0xA4, 0x70, 0x00, 0x00, 0x00, 0x00, 0x49,
+            0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
+        };
+
         public async Task<(Stream Stream, string ContentType, string FileName)> GetOrganizationLogoAsync(int id, UserContext userContext)
         {
             if (!userContext.IsSuperAdmin)
@@ -280,10 +290,19 @@ namespace DocApi.Services
 
             if (string.IsNullOrWhiteSpace(organization.LogoPath))
             {
-                throw new NotFoundException("Organization logo not found");
+                var ms = new MemoryStream(TransparentPng);
+                return (ms, "image/png", "default-logo.png");
             }
 
-            return await _organizationLogoStorageService.OpenReadAsync(organization.LogoPath);
+            try
+            {
+                return await _organizationLogoStorageService.OpenReadAsync(organization.LogoPath);
+            }
+            catch (Exception)
+            {
+                var ms = new MemoryStream(TransparentPng);
+                return (ms, "image/png", "default-logo.png");
+            }
         }
 
         public async Task<(Stream Stream, string ContentType, string FileName)> GetMyOrganizationLogoAsync(UserContext userContext)

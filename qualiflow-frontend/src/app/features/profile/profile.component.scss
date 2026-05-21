@@ -541,6 +541,14 @@
     text-align: center;
   }
 
+  .badge-row {
+    justify-content: center;
+  }
+
+  .email-text {
+    justify-content: center;
+  }
+
   .tabs-wrapper {
     margin-top: -30px;
   }
@@ -553,6 +561,87 @@
     grid-column: 1 / -1;
   }
 }
+
+@media (max-width: 768px) {
+  .header-banner {
+    padding: 24px 16px 56px;
+  }
+
+  .tabs-wrapper {
+    padding: 0 12px;
+    margin-top: -28px;
+  }
+
+  .tab-pane-content {
+    padding: 20px 16px;
+  }
+
+  .pane-header {
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+
+    h2 {
+      font-size: 17px;
+    }
+  }
+
+  .pane-actions,
+  .pane-actions-right {
+    justify-content: stretch;
+
+    button {
+      width: 100%;
+    }
+  }
+
+  .pane-actions-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+
+    button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .header-banner {
+    padding: 18px 12px 50px;
+  }
+
+  .avatar-circle {
+    width: 80px;
+    height: 80px;
+  }
+
+  .avatar-initials {
+    font-size: 28px;
+  }
+
+  .profile-info h1 {
+    font-size: 20px;
+  }
+
+  .tabs-wrapper {
+    padding: 0 8px;
+    margin-top: -24px;
+  }
+
+  .tab-pane-content {
+    padding: 14px 10px;
+  }
+
+  .form-grid {
+    gap: 10px;
+  }
+
+  .org-summary-row {
+    flex-wrap: wrap;
+  }
+}
+
 
 .single-card-layout {
   max-width: 800px;

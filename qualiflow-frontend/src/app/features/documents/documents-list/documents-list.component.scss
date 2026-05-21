@@ -855,6 +855,17 @@ mat-paginator {
   .quality-queue-banner {
     flex-direction: column;
     align-items: flex-start;
+
+    .queue-actions {
+      width: 100%;
+      flex-wrap: wrap;
+      gap: 8px;
+
+      button {
+        flex: 1;
+        justify-content: center;
+      }
+    }
   }
 
   .table-container {
@@ -877,7 +888,38 @@ mat-paginator {
     gap: 12px;
   }
 
+  .header-main .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+
+    .btn-import,
+    .btn-trash,
+    .btn-create {
+      width: 100%;
+      min-width: unset;
+      justify-content: center;
+    }
+  }
+
+  .glass-filters .filter-buttons {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
   .summary-cards {
     grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .quality-queue-banner {
+    .queue-main {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+    }
   }
 }
