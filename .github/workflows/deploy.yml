@@ -54,7 +54,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./qualiflow-backend
-          dockerfile: ./qualiflow-backend/Dockerfile
+          file: ./qualiflow-backend/Dockerfile
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:latest
@@ -67,7 +67,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./qualiflow-frontend
-          dockerfile: ./qualiflow-frontend/Dockerfile
+          file: ./qualiflow-frontend/Dockerfile
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:latest
