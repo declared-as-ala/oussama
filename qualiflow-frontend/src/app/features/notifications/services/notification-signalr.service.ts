@@ -38,7 +38,9 @@ export class NotificationSignalRService implements OnDestroy {
     if (!this.hubConnection) {
       this.hubConnection = new signalR.HubConnectionBuilder()
         .withUrl(`${environment.apiUrl}/hubs/notifications`, {
-          accessTokenFactory: () => this.authService.getAccessToken() ?? ''
+          accessTokenFactory: () => this.authService.getAccessToken() ?? '',
+          skipNegotiation: true,
+          transport: signalR.HttpTransportType.WebSockets
         })
         .withAutomaticReconnect({
           nextRetryDelayInMilliseconds: (retryContext) => {

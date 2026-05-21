@@ -389,6 +389,31 @@ mat-paginator {
         padding: 12px;
         gap: 16px;
     }
+
+    .header-actions {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+
+        .view-mode-toggle {
+            flex-shrink: 0;
+        }
+    }
+
+    .btn-create {
+        flex: 1;
+        justify-content: center;
+        height: 40px;
+        font-size: 13px;
+    }
+
+    .procedure-cards-grid {
+        grid-template-columns: 1fr;
+        padding: 12px 0;
+        gap: 16px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -396,4 +421,23 @@ mat-paginator {
         padding: 8px;
         gap: 12px;
     }
-}
+
+    .header-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+
+        .view-mode-toggle {
+            width: 100%;
+            justify-content: center;
+
+            .toggle-btn {
+                flex: 1;
+            }
+        }
+    }
+
+    .btn-create {
+        width: 100%;
+    }
+}
