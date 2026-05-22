@@ -113,6 +113,11 @@ export class CorrectiveActionListComponent implements OnInit {
     return !!currentUserId && this.filtersForm.get('responsibleUserId')?.value === currentUserId;
   }
 
+  canChangeItemStatus(item: CorrectiveActionListItemResponse): boolean {
+    const currentUserId = this.authService.getCurrentUser()?.id ?? null;
+    return this.canWrite || (!!currentUserId && item.responsibleUserId === currentUserId);
+  }
+
   toggleFilters(): void {
     this.showFilters = !this.showFilters;
   }

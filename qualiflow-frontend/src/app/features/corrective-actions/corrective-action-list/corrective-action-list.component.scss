@@ -7,6 +7,24 @@
   min-height: calc(100vh - var(--topbar-h));
 }
 
+.glass-header {
+  .header-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .header-actions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: nowrap;
+  }
+}
+
 .btn-create {
   height: 42px;
   padding: 0 20px !important;
@@ -14,7 +32,9 @@
   font-weight: 600 !important;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+  white-space: nowrap;
   background: var(--xl-green-mid) !important;
   color: white !important;
   transition: transform 0.2s;
@@ -41,7 +61,9 @@
   border-color: rgba(0, 135, 90, 0.28) !important;
   display: inline-flex !important;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+  white-space: nowrap;
 
   mat-icon {
     font-size: 19px;
@@ -509,7 +531,9 @@ mat-paginator {
   .header-actions {
     width: 100%;
     display: flex;
-    justify-content: flex-end;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: stretch;
     align-items: center;
     gap: 10px;
   }
@@ -577,10 +601,17 @@ mat-paginator {
   .header-actions {
     width: 100%;
     margin-top: 4px;
+    flex-direction: row;
+    flex-wrap: nowrap;
   }
 
   .btn-create {
-    width: 100%;
+    width: auto;
+    min-width: 0;
+  }
+
+  .btn-my-actions {
+    min-width: 0;
   }
 
   .btn-toggle-filters {

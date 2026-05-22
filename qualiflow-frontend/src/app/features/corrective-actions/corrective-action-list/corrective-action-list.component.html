@@ -166,7 +166,7 @@
                   (click)="edit(item)">
                   <mat-icon>edit</mat-icon>
                 </button>
-                <button *ngIf="canWrite" mat-icon-button class="action-btn status-btn" [matMenuTriggerFor]="statusMenu"
+                <button *ngIf="canChangeItemStatus(item)" mat-icon-button class="action-btn status-btn" [matMenuTriggerFor]="statusMenu"
                   (click)="selectForStatus(item)" matTooltip="Changer statut">
                   <mat-icon>published_with_changes</mat-icon>
                 </button>

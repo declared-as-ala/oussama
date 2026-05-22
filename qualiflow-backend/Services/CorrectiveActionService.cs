@@ -289,10 +289,11 @@ namespace DocApi.Services
             EnsureAccessToOrganization(action, organizationId);
 
             bool isOrgAdminOrQa = userContext.Role == UserRoles.ADMIN_ORG || userContext.Role == UserRoles.RESPONSABLE_QUALITE;
+            bool isActionResponsible = action.ResponsibleUserId == userContext.UserId;
 
-            if (!isOrgAdminOrQa)
+            if (!isOrgAdminOrQa && !isActionResponsible)
             {
-                throw new ForbiddenException("Seul le responsable qualité ou l'administrateur de l'organisation peut modifier la situation de cette action corrective.");
+                throw new ForbiddenException("Seul le responsable de l'action, le responsable qualité ou l'administrateur de l'organisation peut modifier la situation de cette action corrective.");
             }
 
             var nextStatus = NormalizeStatus(request.Status);

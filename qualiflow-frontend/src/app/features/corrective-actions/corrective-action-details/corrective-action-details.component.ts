@@ -126,7 +126,11 @@ export class CorrectiveActionDetailsComponent implements OnInit {
   }
 
   get canCompleteFromPlan(): boolean {
-    return this.canWrite;
+    return this.canChangeStatus;
+  }
+
+  get canChangeStatus(): boolean {
+    return this.canWrite || this.isAssignee;
   }
 
   get completedStepsCount(): number {
@@ -273,30 +277,47 @@ export class CorrectiveActionDetailsComponent implements OnInit {
   completeActionFromPlan(): void {
     if (!this.shouldOfferCompletion || !this.canCompleteFromPlan) {
       if (!this.canCompleteFromPlan) {
-        this.notificationService.showWarning('Plan terminé. Demandez au responsable qualité de passer l action en réalisée.');
+        this.notificationService.showWarning('Plan terminé. Le responsable ou l admin organisation peut changer la situation en réalisée.');
       }
       return;
     }
 
-    this.savingCompletion = true;
-
-    this.correctiveActionService.updateCorrectiveActionStatus(this.actionId, {
-      status: 'REALISEE',
-      comment: 'Plan d action terminé : toutes les étapes sont cochées.'
-    }).subscribe({
-      next: () => {
-        this.savingCompletion = false;
-        this.notificationService.showRealtimeNotification(
-          'Action corrective réalisée',
-          'Le plan est complet. Le responsable peut passer à la vérification.',
-          'SUCCESS'
-        );
-        this.load();
-      },
-      error: () => {
-        this.savingCompletion = false;
-        this.notificationService.showError('Impossible de marquer l action comme réalisée.');
+    const responsibleName = this.details?.responsible.fullName || 'le responsable';
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Confirmer la fin de l action',
+        message: `Toutes les tâches sont cochées. Confirmez-vous que ${responsibleName} a terminé cette action corrective et qu elle peut passer au statut réalisée ?`,
+        confirmText: 'Confirmer terminée',
+        cancelText: 'Annuler',
+        type: 'info'
       }
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (!confirmed) {
+        return;
+      }
+
+      this.savingCompletion = true;
+
+      this.correctiveActionService.updateCorrectiveActionStatus(this.actionId, {
+        status: 'REALISEE',
+        comment: 'Plan d action terminé : toutes les étapes sont cochées et confirmées.'
+      }).subscribe({
+        next: () => {
+          this.savingCompletion = false;
+          this.notificationService.showRealtimeNotification(
+            'Action corrective réalisée',
+            'Confirmation enregistrée. La situation de l action est passée à réalisée.',
+            'SUCCESS'
+          );
+          this.load();
+        },
+        error: () => {
+          this.savingCompletion = false;
+          this.notificationService.showError('Impossible de marquer l action comme réalisée.');
+        }
+      });
     });
   }
 
@@ -489,7 +510,7 @@ export class CorrectiveActionDetailsComponent implements OnInit {
     this.planAutoCompletionNotified = true;
     this.notificationService.showRealtimeNotification(
       'Plan terminé',
-      'Toutes les étapes sont cochées. Le responsable doit passer l action en réalisée.',
+      'Toutes les étapes sont cochées. Confirmez la fin de l action pour la passer en réalisée.',
       'SUCCESS'
     );
 

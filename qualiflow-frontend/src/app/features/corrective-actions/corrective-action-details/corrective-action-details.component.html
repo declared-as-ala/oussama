@@ -128,7 +128,7 @@
                 <p>Aucune preuve associée.</p>
               </ng-template>
             </div>
-            <div class="info-item full-width" *ngIf="canWrite">
+            <div class="info-item full-width" *ngIf="canChangeStatus">
               <label>Changer le statut</label>
               <div class="status-grid">
                 <button mat-stroked-button type="button" *ngFor="let option of statusOptions"
