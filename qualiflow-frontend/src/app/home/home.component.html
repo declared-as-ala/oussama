@@ -204,7 +204,7 @@
       </section>
     </div>
 
-    <div *ngIf="currentSection === 'all' || currentSection === 'reclamations'">
+    <div *ngIf="false">
       <!-- Section Réclamations et Suggestions ISO 21001 -->
       <section id="reclamations" class="section reclamations-section reveal">
         <div class="section-title">
@@ -349,7 +349,126 @@
     </div>
   </main>
 
-  <app-footer-home></app-footer-home>
+  <app-footer-home (reclamationClick)="openReclamationPopup()"></app-footer-home>
+
+  <div class="reclamation-modal-backdrop" *ngIf="isReclamationPopupOpen" (click)="closeReclamationPopup()">
+    <section
+      class="reclamation-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="reclamation-modal-title"
+      (click)="$event.stopPropagation()">
+      <div class="reclamation-modal-header">
+        <div>
+          <span class="modal-kicker">ISO 21001</span>
+          <h2 id="reclamation-modal-title">Réclamation ou suggestion</h2>
+          <p>Remplissez le formulaire, votre demande sera enregistrée avec une référence de suivi.</p>
+        </div>
+
+        <button
+          mat-icon-button
+          type="button"
+          class="modal-close-btn"
+          aria-label="Fermer le formulaire de réclamation"
+          (click)="closeReclamationPopup()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <form [formGroup]="reclamationForm" (ngSubmit)="onSubmitReclamation()" class="reclamation-popup-form">
+        <div class="form-grid">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Vous êtes ? (Type de déclarant)</mat-label>
+            <mat-select formControlName="declarantType">
+              <mat-option *ngFor="let opt of declarantTypes" [value]="opt.value">
+                {{ opt.label }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matPrefix>switch_account</mat-icon>
+            <mat-error *ngIf="reclamationForm.get('declarantType')?.hasError('required')">Le type de déclarant est obligatoire</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Nom complet</mat-label>
+            <input matInput formControlName="fullName" placeholder="Ex: Sarah Martin">
+            <mat-icon matPrefix>person</mat-icon>
+            <mat-error *ngIf="reclamationForm.get('fullName')?.hasError('required')">Le nom est obligatoire</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Email de contact</mat-label>
+            <input matInput formControlName="email" type="email" placeholder="Ex: sarah.martin@mail.com">
+            <mat-icon matPrefix>email</mat-icon>
+            <mat-error *ngIf="reclamationForm.get('email')?.hasError('required')">L'email est obligatoire</mat-error>
+            <mat-error *ngIf="reclamationForm.get('email')?.hasError('email')">Format email invalide</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Numéro de téléphone</mat-label>
+            <input matInput formControlName="phone" placeholder="Ex: +216 99 999 999">
+            <mat-icon matPrefix>phone</mat-icon>
+            <mat-error *ngIf="reclamationForm.get('phone')?.hasError('required')">Le téléphone est obligatoire</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Niveau d'urgence</mat-label>
+            <mat-select formControlName="urgencyLevel">
+              <mat-option *ngFor="let opt of urgencyLevels" [value]="opt.value">
+                {{ opt.label }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matPrefix>priority_high</mat-icon>
+            <mat-error *ngIf="reclamationForm.get('urgencyLevel')?.hasError('required')">Le niveau d'urgence est obligatoire</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Service ou processus concerné</mat-label>
+            <mat-select formControlName="concernedService">
+              <mat-option *ngFor="let opt of concernedServices" [value]="opt.value">
+                {{ opt.label }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matPrefix>business</mat-icon>
+            <mat-error *ngIf="reclamationForm.get('concernedService')?.hasError('required')">Le service concerné est obligatoire</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Objet de votre demande</mat-label>
+            <input matInput formControlName="subject" placeholder="Ex: Retard dans la publication des notes">
+            <mat-icon matPrefix>title</mat-icon>
+            <mat-error *ngIf="reclamationForm.get('subject')?.hasError('required')">L'objet est obligatoire</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Description détaillée des faits / suggestion</mat-label>
+            <textarea matInput formControlName="description" rows="4" placeholder="Décrivez la situation, les dates et toute information pertinente..."></textarea>
+            <mat-icon matPrefix>description</mat-icon>
+            <mat-error *ngIf="reclamationForm.get('description')?.hasError('required')">La description est obligatoire</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Vérification de sécurité : {{ reclamationCaptchaNum1 }} + {{ reclamationCaptchaNum2 }} = ?</mat-label>
+            <input matInput formControlName="captchaAnswer" placeholder="Entrez le résultat de l'addition">
+            <mat-icon matPrefix>lock</mat-icon>
+            <button mat-icon-button type="button" matSuffix (click)="regenerateReclamationCaptcha()" matTooltip="Générer un autre calcul">
+              <mat-icon>refresh</mat-icon>
+            </button>
+            <mat-error *ngIf="reclamationForm.get('captchaAnswer')?.hasError('required')">La réponse de sécurité est requise</mat-error>
+            <mat-hint *ngIf="reclamationCaptchaError" class="text-danger">{{ reclamationCaptchaError }}</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <div class="modal-actions">
+          <button mat-stroked-button type="button" class="cancel-btn" (click)="closeReclamationPopup()">Annuler</button>
+          <button mat-flat-button color="primary" type="submit" [disabled]="reclamationForm.invalid || reclamationLoading" class="submit-btn">
+            <mat-icon *ngIf="!reclamationLoading">send</mat-icon>
+            <mat-spinner diameter="20" *ngIf="reclamationLoading"></mat-spinner>
+            <span>Soumettre</span>
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
 
   <div class="fixed-request-container">
     <button mat-fab class="request-fab animate-bounce-slow" 

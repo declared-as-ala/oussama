@@ -190,6 +190,10 @@ body {
     overflow-y: auto;
 }
 
+body.modal-open {
+    overflow: hidden;
+}
+
 app-root {
     display: block;
     min-height: 100vh;

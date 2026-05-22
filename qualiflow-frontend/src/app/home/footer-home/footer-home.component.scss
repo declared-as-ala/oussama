@@ -47,14 +47,26 @@
 }
 
 .footer-links a,
-.footer-links p {
+.footer-links p,
+.footer-action-btn {
   margin: 0 0 0.55rem;
   display: block;
   color: #b6ccdf;
   text-decoration: none;
 }
 
-.footer-links a:hover {
+.footer-action-btn {
+  width: fit-content;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.footer-links a:hover,
+.footer-action-btn:hover {
   color: #fff;
 }
 
@@ -75,5 +87,9 @@
 @media (max-width: 720px) {
   .footer {
     grid-template-columns: 1fr;
+  }
+
+  .footer-action-btn {
+    width: 100%;
   }
 }

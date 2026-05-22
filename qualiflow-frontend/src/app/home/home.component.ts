@@ -66,6 +66,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   reclamationForm: FormGroup;
   reclamationLoading = false;
   reclamationSubmitted = false;
+  isReclamationPopupOpen = false;
   reclamationCaptchaNum1 = 0;
   reclamationCaptchaNum2 = 0;
   reclamationCaptchaExpected = 0;
@@ -248,7 +249,19 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
       this.reclamationForm.reset();
       this.regenerateReclamationCaptcha();
       this.reclamationSubmitted = false;
+      this.closeReclamationPopup();
     }, 1500);
+  }
+
+  openReclamationPopup(): void {
+    this.reclamationCaptchaError = '';
+    this.isReclamationPopupOpen = true;
+    document.body.classList.add('modal-open');
+  }
+
+  closeReclamationPopup(): void {
+    this.isReclamationPopupOpen = false;
+    document.body.classList.remove('modal-open');
   }
 
   openRequestDialog(): void {
@@ -272,6 +285,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.observer?.disconnect();
+    document.body.classList.remove('modal-open');
   }
 
   private initRevealAnimations(): void {
