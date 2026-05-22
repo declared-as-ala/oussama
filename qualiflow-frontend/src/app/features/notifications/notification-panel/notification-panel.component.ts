@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -32,6 +33,8 @@ export class NotificationPanelComponent implements OnInit, OnDestroy {
 
   unreadCount = 0;
   loading = false;
+  markingAllAsRead = false;
+  openingNotificationId: number | null = null;
   recentNotifications: NotificationListItemResponse[] = [];
 
   constructor(
@@ -77,7 +80,14 @@ export class NotificationPanelComponent implements OnInit, OnDestroy {
 
   markAllAsRead(event: MouseEvent): void {
     event.stopPropagation();
-    this.notificationService.markAllAsRead().subscribe({
+    if (this.markingAllAsRead || this.unreadCount === 0) {
+      return;
+    }
+
+    this.markingAllAsRead = true;
+    this.notificationService.markAllAsRead().pipe(
+      finalize(() => this.markingAllAsRead = false)
+    ).subscribe({
       next: () => {
         this.recentNotifications = this.recentNotifications.map(item => ({ ...item, isRead: true }));
         this.refreshUnreadCount();
@@ -101,7 +111,10 @@ export class NotificationPanelComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.notificationService.markAsRead(item.id).subscribe({
+    this.openingNotificationId = item.id;
+    this.notificationService.markAsRead(item.id).pipe(
+      finalize(() => this.openingNotificationId = null)
+    ).subscribe({
       next: () => {
         item.isRead = true;
         this.refreshUnreadCount();

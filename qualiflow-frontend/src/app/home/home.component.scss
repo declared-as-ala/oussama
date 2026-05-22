@@ -430,6 +430,15 @@ main {
         font-weight: 600;
         background-color: #000 !important;
         color: #fff !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        min-width: 96px;
+
+        mat-spinner {
+          flex: 0 0 auto;
+        }
       }
     }
 
@@ -448,6 +457,11 @@ main {
         color: white !important;
         box-shadow: 0 8px 20px rgba(31, 166, 122, 0.3);
         transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-width: 260px;
 
         &:hover:not([disabled]) {
           transform: translateY(-2px);
@@ -455,7 +469,7 @@ main {
         }
 
         mat-spinner {
-          margin-right: 8px;
+          flex: 0 0 auto;
         }
       }
     }

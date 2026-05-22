@@ -57,7 +57,9 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
 
   // Propriétés du formulaire en ligne
   requestForm: FormGroup;
-  loading = false;
+  sendingCode = false;
+  verifyingCode = false;
+  submittingRequest = false;
   codeSent = false;
   emailValidated = false;
   organizationTypes = ORGANIZATION_TYPE_OPTIONS;
@@ -140,6 +142,10 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
     this.regenerateReclamationCaptcha();
   }
 
+  get requestLoading(): boolean {
+    return this.sendingCode || this.verifyingCode || this.submittingRequest;
+  }
+
   onCountryChange(countryName: string): void {
     const country = this.countries.find(c => c.name === countryName);
     if (country) {
@@ -151,10 +157,10 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
     const email = this.requestForm.get('email')?.value;
     if (!email || this.requestForm.get('email')?.invalid) return;
 
-    this.loading = true;
+    this.sendingCode = true;
     this.publicService.sendVerificationCode(email).subscribe({
       next: (res) => {
-        this.loading = false;
+        this.sendingCode = false;
         if (res.success) {
           this.codeSent = true;
           this.notificationService.showInfo(res.message);
@@ -164,7 +170,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
         }
       },
       error: () => {
-        this.loading = false;
+        this.sendingCode = false;
         this.notificationService.showError("Erreur lors de l'envoi du code.");
       }
     });
@@ -175,10 +181,10 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
     const code = this.requestForm.get('validationCode')?.value;
     if (!email || !code || this.requestForm.get('validationCode')?.invalid) return;
 
-    this.loading = true;
+    this.verifyingCode = true;
     this.publicService.verifyCode(email, code).subscribe({
       next: (res) => {
-        this.loading = false;
+        this.verifyingCode = false;
         if (res.success) {
           this.emailValidated = true;
           this.notificationService.showSuccess(res.message);
@@ -188,7 +194,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
         }
       },
       error: (err) => {
-        this.loading = false;
+        this.verifyingCode = false;
         this.notificationService.showError(err.error?.message || "Le code de validation est incorrect ou a expiré.");
       }
     });
@@ -197,12 +203,12 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   onSubmitRequest(): void {
     if (this.requestForm.invalid) return;
 
-    this.loading = true;
+    this.submittingRequest = true;
     const request = this.requestForm.getRawValue();
 
     this.publicService.submitOrganizationRequest(request).subscribe({
       next: (response: OrganizationRequestResponse) => {
-        this.loading = false;
+        this.submittingRequest = false;
         if (response.success) {
           this.notificationService.showSuccess(response.message);
           this.requestForm.reset();
@@ -213,7 +219,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
         }
       },
       error: () => {
-        this.loading = false;
+        this.submittingRequest = false;
         this.notificationService.showError("Une erreur est survenue lors de l'envoi de votre demande.");
       }
     });

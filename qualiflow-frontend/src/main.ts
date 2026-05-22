@@ -36,6 +36,12 @@ function initResponsiveTables(): void {
     });
   };
 
+  const decorateFilterPanels = (root: ParentNode = document): void => {
+    root
+      .querySelectorAll('.glass-filters, .search-card, .project-search-card')
+      .forEach((panel) => decorateFilterPanel(panel as HTMLElement));
+  };
+
   const decorateTable = (table: HTMLTableElement): void => {
     if (table.closest('.no-mobile-cards')) {
       return;
@@ -60,7 +66,33 @@ function initResponsiveTables(): void {
     });
   };
 
+  const decorateFilterPanel = (panel: HTMLElement): void => {
+    if (panel.classList.contains('mobile-collapsible-filters') || panel.closest('.no-mobile-filter-toggle')) {
+      return;
+    }
+
+    panel.classList.add('mobile-collapsible-filters');
+    panel.id ||= `mobile-filter-panel-${Math.random().toString(36).slice(2, 9)}`;
+
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'mobile-filter-toggle';
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.setAttribute('aria-controls', panel.id);
+    toggle.innerHTML = '<span class="material-symbols-outlined">manage_search</span><span>Recherche et filtres</span>';
+
+    toggle.addEventListener('click', () => {
+      const isOpen = panel.classList.toggle('is-mobile-filter-open');
+      toggle.classList.toggle('is-open', isOpen);
+      toggle.setAttribute('aria-expanded', String(isOpen));
+      toggle.querySelector('span:last-child')!.textContent = isOpen ? 'Masquer les filtres' : 'Recherche et filtres';
+    });
+
+    panel.parentElement?.insertBefore(toggle, panel);
+  };
+
   decorateTables();
+  decorateFilterPanels();
 
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
@@ -76,6 +108,7 @@ function initResponsiveTables(): void {
             decorateTable(table);
           }
           decorateTables(node);
+          decorateFilterPanels(node);
         }
       });
     });

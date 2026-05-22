@@ -11,8 +11,9 @@
         <h2>Notifications</h2>
         <span class="count-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
       </div>
-      <button mat-button class="mark-all-btn" (click)="markAllAsRead($event)">
-        Tout marquer comme lu
+      <button mat-button class="mark-all-btn" (click)="markAllAsRead($event)" [disabled]="loading || markingAllAsRead || unreadCount === 0">
+        <mat-spinner diameter="16" *ngIf="markingAllAsRead"></mat-spinner>
+        <span>{{ markingAllAsRead ? 'Traitement...' : 'Tout marquer comme lu' }}</span>
       </button>
     </div>
 
@@ -36,6 +37,7 @@
         <div class="notif-body">
           <div class="notif-top">
             <span class="notif-title">{{ item.title }}</span>
+            <mat-spinner class="notif-action-spinner" diameter="16" *ngIf="openingNotificationId === item.id"></mat-spinner>
             <span class="notif-time">{{ getTimeAgo(item.createdAt) }}</span>
           </div>
           <p class="notif-msg">{{ item.message }}</p>

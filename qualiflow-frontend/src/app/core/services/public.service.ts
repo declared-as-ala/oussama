@@ -25,18 +25,31 @@ export interface OrganizationRequestResponse {
 })
 export class PublicService {
   private readonly apiUrl = `${environment.apiUrl}/api/public`;
+  private readonly skipLoadingHeader = { 'X-Skip-Loading': 'true' };
 
   constructor(private readonly http: HttpClient) { }
 
   sendVerificationCode(email: string): Observable<OrganizationRequestResponse> {
-    return this.http.post<OrganizationRequestResponse>(`${this.apiUrl}/send-verification-code`, { email });
+    return this.http.post<OrganizationRequestResponse>(
+      `${this.apiUrl}/send-verification-code`,
+      { email },
+      { headers: this.skipLoadingHeader }
+    );
   }
 
   verifyCode(email: string, code: string): Observable<OrganizationRequestResponse> {
-    return this.http.post<OrganizationRequestResponse>(`${this.apiUrl}/verify-code`, { email, code });
+    return this.http.post<OrganizationRequestResponse>(
+      `${this.apiUrl}/verify-code`,
+      { email, code },
+      { headers: this.skipLoadingHeader }
+    );
   }
 
   submitOrganizationRequest(request: OrganizationRequest): Observable<OrganizationRequestResponse> {
-    return this.http.post<OrganizationRequestResponse>(`${this.apiUrl}/organization-request`, request);
+    return this.http.post<OrganizationRequestResponse>(
+      `${this.apiUrl}/organization-request`,
+      request,
+      { headers: this.skipLoadingHeader }
+    );
   }
 }

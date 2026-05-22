@@ -69,9 +69,18 @@
         padding: 0 8px;
         height: 28px;
         line-height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        min-width: 132px;
 
         &:hover {
             background: var(--xl-green-xlight);
+        }
+
+        &[disabled] {
+            opacity: 0.55;
         }
     }
 }
@@ -176,6 +185,10 @@
         color: #94a3b8;
         white-space: nowrap;
         text-transform: uppercase;
+    }
+
+    .notif-action-spinner {
+        flex: 0 0 auto;
     }
 
     .notif-msg {

@@ -426,6 +426,54 @@ app-root {
 
 /* Mobile table cards: applied automatically by main.ts from table headers. */
 @media (max-width: 768px) {
+    .mobile-filter-toggle {
+        width: 100%;
+        min-height: 46px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin: 10px 0 0;
+        padding: 0 16px;
+        border: 1px solid rgba(16, 124, 65, 0.2);
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--xl-green-mid), var(--xl-green));
+        color: #fff;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 800;
+        box-shadow: 0 8px 20px rgba(16, 124, 65, 0.18);
+        cursor: pointer;
+        touch-action: manipulation;
+    }
+
+    .mobile-filter-toggle .material-symbols-outlined {
+        font-size: 20px;
+        line-height: 1;
+    }
+
+    .mobile-filter-toggle.is-open {
+        background: #fff;
+        color: var(--xl-green-mid);
+        border-color: var(--xl-green-hover);
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+    }
+
+    .mobile-collapsible-filters {
+        display: none !important;
+    }
+
+    .mobile-collapsible-filters.is-mobile-filter-open {
+        display: block !important;
+        margin-top: 10px !important;
+    }
+
+    form.mobile-collapsible-filters.is-mobile-filter-open,
+    mat-card.mobile-collapsible-filters.is-mobile-filter-open,
+    .mobile-collapsible-filters.is-mobile-filter-open {
+        animation: mobileFiltersIn 0.18s ease-out;
+    }
+
     table.mobile-card-table {
         display: block !important;
         width: 100% !important;
@@ -512,6 +560,17 @@ app-root {
     table.mobile-card-table .mat-mdc-cell .mat-icon,
     table.mobile-card-table td .mat-icon {
         vertical-align: middle;
+    }
+}
+
+@keyframes mobileFiltersIn {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }
 

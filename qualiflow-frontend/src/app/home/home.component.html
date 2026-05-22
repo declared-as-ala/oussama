@@ -127,8 +127,9 @@
                   <button mat-flat-button color="accent" matSuffix 
                           (click)="onSendCode()" 
                           type="button"
-                          [disabled]="requestForm.get('email')?.invalid || codeSent">
-                    {{ codeSent ? 'Code envoyé' : 'Vérifier' }}
+                          [disabled]="requestForm.get('email')?.invalid || codeSent || requestLoading">
+                    <mat-spinner diameter="16" *ngIf="sendingCode"></mat-spinner>
+                    <span>{{ sendingCode ? 'Envoi...' : (codeSent ? 'Code envoyé' : 'Vérifier') }}</span>
                   </button>
                   <mat-error *ngIf="requestForm.get('email')?.hasError('required')">L'email est obligatoire</mat-error>
                   <mat-error *ngIf="requestForm.get('email')?.hasError('email')">Email invalide</mat-error>
@@ -141,8 +142,9 @@
                   <button mat-flat-button color="primary" matSuffix 
                           (click)="onVerifyCode()" 
                           type="button"
-                          [disabled]="requestForm.get('validationCode')?.invalid || emailValidated">
-                    {{ emailValidated ? 'E-mail validé' : 'Valider' }}
+                          [disabled]="requestForm.get('validationCode')?.invalid || emailValidated || requestLoading">
+                    <mat-spinner diameter="16" *ngIf="verifyingCode"></mat-spinner>
+                    <span>{{ verifyingCode ? 'Validation...' : (emailValidated ? 'E-mail validé' : 'Valider') }}</span>
                   </button>
                   <mat-error *ngIf="requestForm.get('validationCode')?.hasError('required')">Le code est obligatoire</mat-error>
                 </mat-form-field>
@@ -192,10 +194,10 @@
               </div>
 
               <div class="form-actions" *ngIf="emailValidated">
-                <button mat-flat-button color="primary" type="submit" [disabled]="requestForm.invalid || loading" class="submit-btn">
-                  <mat-icon *ngIf="!loading">send</mat-icon>
-                  <mat-spinner diameter="20" *ngIf="loading"></mat-spinner>
-                  <span>Envoyer la demande d'achat</span>
+                <button mat-flat-button color="primary" type="submit" [disabled]="requestForm.invalid || submittingRequest" class="submit-btn">
+                  <mat-icon *ngIf="!submittingRequest">send</mat-icon>
+                  <mat-spinner diameter="20" *ngIf="submittingRequest"></mat-spinner>
+                  <span>{{ submittingRequest ? 'Envoi de la demande...' : 'Envoyer la demande d’achat' }}</span>
                 </button>
               </div>
             </form>

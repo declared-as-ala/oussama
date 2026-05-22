@@ -24,6 +24,10 @@ export class NotificationSignalRService implements OnDestroy {
   async startConnection(): Promise<void> {
     this.isExplicitlyStopped = false;
 
+    if (!environment.realtimeNotificationsEnabled) {
+      return;
+    }
+
     if (!this.authService.isAuthenticated()) {
       return;
     }
@@ -142,6 +146,10 @@ export class NotificationSignalRService implements OnDestroy {
   }
 
   private scheduleStartRetry(): void {
+    if (!environment.realtimeNotificationsEnabled) {
+      return;
+    }
+
     this.clearReconnectTimeout();
     const delayMs = Math.min(5000 * Math.pow(2, this.startRetryCount), 60000);
     this.startRetryCount += 1;
