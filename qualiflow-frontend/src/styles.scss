@@ -436,31 +436,33 @@ app-root {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 10px;
-        margin: 10px 0 0;
+        gap: 8px;
+        margin: 12px 0 0;
         padding: 0 16px;
-        border: 1px solid rgba(16, 124, 65, 0.2);
+        border: 1px solid rgba(16, 124, 65, 0.24);
         border-radius: 12px;
-        background: linear-gradient(135deg, var(--xl-green-mid), var(--xl-green));
-        color: #fff;
+        background: #ffffff;
+        color: var(--xl-green-mid);
         font-family: inherit;
         font-size: 14px;
         font-weight: 800;
-        box-shadow: 0 8px 20px rgba(16, 124, 65, 0.18);
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
         cursor: pointer;
         touch-action: manipulation;
     }
 
-    .mobile-filter-toggle .material-symbols-outlined {
+    .mobile-filter-toggle .material-icons {
         font-size: 20px;
+        width: 20px;
+        height: 20px;
         line-height: 1;
     }
 
     .mobile-filter-toggle.is-open {
-        background: #fff;
-        color: var(--xl-green-mid);
-        border-color: var(--xl-green-hover);
-        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+        background: linear-gradient(135deg, var(--xl-green-mid), var(--xl-green));
+        color: #fff;
+        border-color: transparent;
+        box-shadow: 0 8px 18px rgba(16, 124, 65, 0.18);
     }
 
     .mobile-collapsible-filters {

@@ -52,6 +52,22 @@
   }
 }
 
+.btn-map {
+    height: 42px;
+    padding: 0 18px !important;
+    border-radius: 10px !important;
+    border-color: var(--border-mid) !important;
+    color: var(--text-primary) !important;
+    font-weight: 700 !important;
+
+    mat-icon {
+        color: var(--xl-green-mid);
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+    }
+}
+
 .btn-create {
     height: 42px;
     padding: 0 20px !important;
@@ -390,29 +406,111 @@ mat-paginator {
         gap: 16px;
     }
 
+    .glass-header {
+        padding: 16px !important;
+        gap: 14px !important;
+        border-radius: 12px !important;
+    }
+
+    .glass-header .header-main {
+        gap: 14px !important;
+
+        .title-section {
+            h1 {
+                font-size: 22px !important;
+                line-height: 1.2;
+                margin-bottom: 6px;
+            }
+
+            .subtitle {
+                font-size: 14px !important;
+                line-height: 1.45;
+            }
+        }
+    }
+
     .header-actions {
         width: 100%;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
         gap: 10px;
 
+        .btn-map,
+        .btn-create {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn-map {
+            height: 44px;
+            background: #ffffff !important;
+        }
+
         .view-mode-toggle {
-            flex-shrink: 0;
+            width: 100%;
+            height: 56px;
+            justify-content: space-between;
+            padding: 5px;
+            border-radius: 14px;
+            background: #f8fafc;
+            border-color: var(--border);
+
+            .toggle-btn {
+                flex: 1;
+                height: 46px;
+                border-radius: 10px;
+            }
         }
     }
 
     .btn-create {
-        flex: 1;
         justify-content: center;
-        height: 40px;
+        height: 44px;
         font-size: 13px;
+        border-radius: 999px !important;
+        box-shadow: 0 6px 14px rgba(16, 124, 65, 0.16) !important;
     }
 
     .procedure-cards-grid {
         grid-template-columns: 1fr;
-        padding: 12px 0;
-        gap: 16px;
+        padding: 0;
+        gap: 12px;
+    }
+
+    .procedure-card {
+        padding: 16px;
+        border-radius: 14px;
+        gap: 14px;
+
+        .card-main {
+            h3 {
+                font-size: 15px;
+            }
+
+            .process-ref {
+                align-items: flex-start;
+                line-height: 1.35;
+
+                span {
+                    min-width: 0;
+                    overflow-wrap: anywhere;
+                }
+            }
+        }
+
+        .card-footer {
+            align-items: flex-start;
+            gap: 12px;
+
+            .responsible-info {
+                min-width: 0;
+
+                span {
+                    min-width: 0;
+                    overflow-wrap: anywhere;
+                }
+            }
+        }
     }
 }
 
@@ -423,9 +521,7 @@ mat-paginator {
     }
 
     .header-actions {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
+        gap: 10px;
 
         .view-mode-toggle {
             width: 100%;
@@ -440,4 +536,4 @@ mat-paginator {
     .btn-create {
         width: 100%;
     }
-}
+}

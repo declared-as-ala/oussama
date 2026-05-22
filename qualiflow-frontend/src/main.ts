@@ -79,13 +79,13 @@ function initResponsiveTables(): void {
     toggle.className = 'mobile-filter-toggle';
     toggle.setAttribute('aria-expanded', 'false');
     toggle.setAttribute('aria-controls', panel.id);
-    toggle.innerHTML = '<span class="material-symbols-outlined">manage_search</span><span>Recherche et filtres</span>';
+    toggle.innerHTML = '<span class="material-icons" aria-hidden="true">manage_search</span><span class="filter-toggle-label">Recherche et filtres</span>';
 
     toggle.addEventListener('click', () => {
       const isOpen = panel.classList.toggle('is-mobile-filter-open');
       toggle.classList.toggle('is-open', isOpen);
       toggle.setAttribute('aria-expanded', String(isOpen));
-      toggle.querySelector('span:last-child')!.textContent = isOpen ? 'Masquer les filtres' : 'Recherche et filtres';
+      toggle.querySelector('.filter-toggle-label')!.textContent = isOpen ? 'Masquer les filtres' : 'Recherche et filtres';
     });
 
     panel.parentElement?.insertBefore(toggle, panel);
