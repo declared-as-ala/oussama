@@ -59,7 +59,7 @@ export class ProcessActorsComponent implements OnInit {
   readonly displayedActorColumns: string[] = ['fullName', 'email', 'function', 'actorType', 'assignedAt', 'actions'];
 
   get assignableActorTypeOptions() {
-    return this.actorTypeOptions.filter(option => option.value !== 'PILOTE');
+    return this.actorTypeOptions.filter(option => option.value !== 'PILOTE' && option.value !== 'PILOTE_PROCEDURE');
   }
 
   readonly actorForm = this.fb.group({

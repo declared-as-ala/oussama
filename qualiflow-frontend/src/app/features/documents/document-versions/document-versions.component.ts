@@ -48,7 +48,6 @@ export class DocumentVersionsComponent implements OnInit {
   readonly allowedFileFormatsLabel = 'PDF, Word (.docx) ou Excel (.xlsx)';
 
   readonly createVersionForm = this.fb.group({
-    versionNumber: this.fb.nonNullable.control('v1.0', [Validators.required, Validators.maxLength(30)]),
     status: this.fb.nonNullable.control<DocumentStatus>('BROUILLON', Validators.required),
     revisionComment: this.fb.control<string>(''),
     effectiveDate: this.fb.control<string>(this.getTodayAsInputDate()),
@@ -267,18 +266,12 @@ export class DocumentVersionsComponent implements OnInit {
     }
 
     const payload: CreateDocumentVersionRequest = {
-      versionNumber: raw.versionNumber.trim(),
       status: raw.status,
       revisionComment: raw.revisionComment?.trim() || null,
       effectiveDate: raw.effectiveDate || this.getTodayAsInputDate(),
       expiryDate: raw.expiryDate || null,
       signature: signatureBase64
     };
-
-    if (!payload.versionNumber) {
-      this.notificationService.showWarning('Le numero de version est obligatoire.');
-      return;
-    }
 
     this.submitting = true;
 
@@ -290,7 +283,6 @@ export class DocumentVersionsComponent implements OnInit {
         this.selectedFile = null;
         this.clearSignature();
         this.createVersionForm.reset({
-          versionNumber: this.nextVersionNumber(),
           status: 'BROUILLON',
           revisionComment: '',
           effectiveDate: this.getTodayAsInputDate(),
@@ -354,24 +346,8 @@ export class DocumentVersionsComponent implements OnInit {
     }
 
     this.createVersionForm.patchValue({
-      versionNumber: this.nextVersionNumber()
+      effectiveDate: this.getTodayAsInputDate()
     });
-  }
-
-  private nextVersionNumber(): string {
-    const current = this.versions[0]?.versionNumber;
-    if (!current) {
-      return 'v1.0';
-    }
-
-    const match = /^v?(\d+)\.(\d+)$/i.exec(current.trim());
-    if (!match) {
-      return 'v1.0';
-    }
-
-    const major = Number(match[1]);
-    const minor = Number(match[2]) + 1;
-    return `v${major}.${minor}`;
   }
 
   private saveBlob(blob: Blob, fileName: string): void {

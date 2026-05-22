@@ -9,9 +9,8 @@ namespace DocApi.DTOs.Documents
         [Required]
         public IFormFile? File { get; set; }
 
-        [Required]
         [MaxLength(30)]
-        public string VersionNumber { get; set; } = "v1.0";
+        public string? VersionNumber { get; set; }
 
         [MaxLength(20)]
         public string Status { get; set; } = "BROUILLON";

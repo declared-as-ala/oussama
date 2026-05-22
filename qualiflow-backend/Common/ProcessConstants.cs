@@ -12,6 +12,7 @@ namespace DocApi.Common
         public const string StatusInactif = "INACTIF";
 
         public const string ActorPilote = "PILOTE";
+        public const string ActorPiloteProcedure = "PILOTE_PROCEDURE";
         public const string ActorCopilote = "COPILOTE";
         public const string ActorContributeur = "CONTRIBUTEUR";
         public const string ActorObservateur = "OBSERVATEUR";
@@ -32,6 +33,7 @@ namespace DocApi.Common
         public static readonly HashSet<string> AllowedActorTypes = new()
         {
             ActorPilote,
+            ActorPiloteProcedure,
             ActorCopilote,
             ActorContributeur,
             ActorObservateur

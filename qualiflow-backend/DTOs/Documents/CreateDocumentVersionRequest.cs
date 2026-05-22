@@ -5,9 +5,8 @@ namespace DocApi.DTOs.Documents
 {
     public class CreateDocumentVersionRequest
     {
-        [Required]
         [MaxLength(30)]
-        public required string VersionNumber { get; set; }
+        public string? VersionNumber { get; set; }
 
         [MaxLength(20)]
         public string Status { get; set; } = "BROUILLON";

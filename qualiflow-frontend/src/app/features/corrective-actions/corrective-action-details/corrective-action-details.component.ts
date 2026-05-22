@@ -10,6 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
 import { AuthService } from '../../../core/services/auth.service';
@@ -21,6 +22,12 @@ import {
   CorrectiveActionStatus
 } from '../models/corrective-action.models';
 import { CorrectiveActionService } from '../services/corrective-action.service';
+
+interface CorrectiveActionPlanStep {
+  id: number;
+  title: string;
+  completed: boolean;
+}
 
 @Component({
   selector: 'app-corrective-action-details',
@@ -37,6 +44,7 @@ import { CorrectiveActionService } from '../services/corrective-action.service';
     MatSelectModule,
     MatTableModule,
     MatProgressSpinnerModule,
+    MatCheckboxModule,
     MatDialogModule,
     MatMenuModule
   ],
@@ -46,6 +54,9 @@ import { CorrectiveActionService } from '../services/corrective-action.service';
 export class CorrectiveActionDetailsComponent implements OnInit {
   readonly statusOptions = CORRECTIVE_ACTION_STATUS_OPTIONS;
   readonly historyColumns = ['action', 'comment', 'user', 'date', 'actions'];
+  activeTab = 0;
+  planSteps: CorrectiveActionPlanStep[] = [];
+  planAutoCompletionNotified = false;
 
   readonly verificationForm = this.fb.group({
     effectivenessVerified: this.fb.nonNullable.control(true, Validators.required),
@@ -54,6 +65,10 @@ export class CorrectiveActionDetailsComponent implements OnInit {
 
   readonly completionForm = this.fb.group({
     comment: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(3)])
+  });
+
+  readonly newStepForm = this.fb.group({
+    title: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(3)])
   });
 
   loading = false;
@@ -106,12 +121,50 @@ export class CorrectiveActionDetailsComponent implements OnInit {
     return this.details.action.status === 'REALISEE' || this.details.action.status === 'VERIFIEE';
   }
 
+  get canManagePlan(): boolean {
+    return this.canWrite || this.isAssignee;
+  }
+
+  get canCompleteFromPlan(): boolean {
+    return this.canWrite;
+  }
+
+  get completedStepsCount(): number {
+    return this.planSteps.filter(step => step.completed).length;
+  }
+
+  get planProgress(): number {
+    if (this.planSteps.length === 0) {
+      return 0;
+    }
+
+    return Math.round((this.completedStepsCount / this.planSteps.length) * 100);
+  }
+
+  get isPlanCompleted(): boolean {
+    return this.planSteps.length > 0 && this.completedStepsCount === this.planSteps.length;
+  }
+
+  get shouldOfferCompletion(): boolean {
+    if (!this.details) {
+      return false;
+    }
+
+    return this.isPlanCompleted
+      && this.details.action.status !== 'REALISEE'
+      && this.details.action.status !== 'VERIFIEE';
+  }
+
   get statusLabel(): string {
     if (!this.details) {
       return '';
     }
 
     return this.getStatusLabel(this.details.action.status);
+  }
+
+  setActiveTab(index: number): void {
+    this.activeTab = index;
   }
 
   goBack(): void {
@@ -169,6 +222,81 @@ export class CorrectiveActionDetailsComponent implements OnInit {
         this.load();
       },
       error: () => this.notificationService.showError('Transition de statut impossible.')
+    });
+  }
+
+  addPlanStep(): void {
+    if (this.newStepForm.invalid) {
+      this.newStepForm.markAllAsTouched();
+      return;
+    }
+
+    const title = this.newStepForm.controls.title.value.trim();
+    const nextId = this.planSteps.length > 0
+      ? Math.max(...this.planSteps.map(step => step.id)) + 1
+      : 1;
+
+    this.planSteps = [
+      ...this.planSteps,
+      {
+        id: nextId,
+        title,
+        completed: false
+      }
+    ];
+    this.newStepForm.reset({ title: '' });
+    this.savePlanSteps();
+  }
+
+  togglePlanStep(step: CorrectiveActionPlanStep, completed: boolean): void {
+    if (!this.canManagePlan) {
+      return;
+    }
+
+    this.planSteps = this.planSteps.map(item =>
+      item.id === step.id ? { ...item, completed } : item
+    );
+    this.savePlanSteps();
+    this.handlePlanProgressChanged();
+  }
+
+  removePlanStep(step: CorrectiveActionPlanStep): void {
+    if (!this.canManagePlan) {
+      return;
+    }
+
+    this.planSteps = this.planSteps.filter(item => item.id !== step.id);
+    this.savePlanSteps();
+    this.handlePlanProgressChanged();
+  }
+
+  completeActionFromPlan(): void {
+    if (!this.shouldOfferCompletion || !this.canCompleteFromPlan) {
+      if (!this.canCompleteFromPlan) {
+        this.notificationService.showWarning('Plan terminé. Demandez au responsable qualité de passer l action en réalisée.');
+      }
+      return;
+    }
+
+    this.savingCompletion = true;
+
+    this.correctiveActionService.updateCorrectiveActionStatus(this.actionId, {
+      status: 'REALISEE',
+      comment: 'Plan d action terminé : toutes les étapes sont cochées.'
+    }).subscribe({
+      next: () => {
+        this.savingCompletion = false;
+        this.notificationService.showRealtimeNotification(
+          'Action corrective réalisée',
+          'Le plan est complet. Le responsable peut passer à la vérification.',
+          'SUCCESS'
+        );
+        this.load();
+      },
+      error: () => {
+        this.savingCompletion = false;
+        this.notificationService.showError('Impossible de marquer l action comme réalisée.');
+      }
     });
   }
 
@@ -304,6 +432,7 @@ export class CorrectiveActionDetailsComponent implements OnInit {
     this.correctiveActionService.getCorrectiveActionById(this.actionId).subscribe({
       next: details => {
         this.details = details;
+        this.loadPlanSteps(details);
         this.verificationForm.patchValue({
           effectivenessVerified: details.action.effectivenessVerified ?? true,
           effectivenessComment: details.action.effectivenessComment || ''
@@ -316,5 +445,60 @@ export class CorrectiveActionDetailsComponent implements OnInit {
         this.router.navigate(['/corrective-actions']);
       }
     });
+  }
+
+  private loadPlanSteps(details: CorrectiveActionDetailsResponse): void {
+    const saved = localStorage.getItem(this.planStorageKey(details.action.id));
+    this.planAutoCompletionNotified = false;
+
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved) as CorrectiveActionPlanStep[];
+        this.planSteps = Array.isArray(parsed) ? parsed : this.buildDefaultPlanSteps();
+        return;
+      } catch {
+        this.planSteps = this.buildDefaultPlanSteps();
+        this.savePlanSteps();
+        return;
+      }
+    }
+
+    this.planSteps = this.buildDefaultPlanSteps();
+    this.savePlanSteps();
+  }
+
+  private buildDefaultPlanSteps(): CorrectiveActionPlanStep[] {
+    return [
+      { id: 1, title: 'Analyser la cause et le périmètre de l action', completed: false },
+      { id: 2, title: 'Préparer les mesures correctives à appliquer', completed: false },
+      { id: 3, title: 'Exécuter les tâches prévues avec le responsable', completed: false },
+      { id: 4, title: 'Ajouter ou vérifier la preuve de réalisation', completed: false },
+      { id: 5, title: 'Confirmer que l action peut passer au statut réalisée', completed: false }
+    ];
+  }
+
+  private savePlanSteps(): void {
+    localStorage.setItem(this.planStorageKey(this.actionId), JSON.stringify(this.planSteps));
+  }
+
+  private handlePlanProgressChanged(): void {
+    if (!this.isPlanCompleted || this.planAutoCompletionNotified) {
+      return;
+    }
+
+    this.planAutoCompletionNotified = true;
+    this.notificationService.showRealtimeNotification(
+      'Plan terminé',
+      'Toutes les étapes sont cochées. Le responsable doit passer l action en réalisée.',
+      'SUCCESS'
+    );
+
+    if (this.canCompleteFromPlan && this.shouldOfferCompletion) {
+      this.completeActionFromPlan();
+    }
+  }
+
+  private planStorageKey(actionId: number): string {
+    return `corrective-action-plan:${actionId}`;
   }
 }

@@ -45,7 +45,7 @@ export interface CreateDocumentRequest {
 export type UpdateDocumentRequest = CreateDocumentRequest;
 
 export interface CreateDocumentVersionRequest {
-  versionNumber: string;
+  versionNumber?: string | null;
   status: DocumentStatus;
   revisionComment?: string | null;
   effectiveDate?: string | null;

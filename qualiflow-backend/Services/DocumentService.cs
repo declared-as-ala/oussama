@@ -744,7 +744,8 @@ namespace DocApi.Services
             }
 
             var normalizedStatus = ResolveSubmittedStatus(request.Status, userContext);
-            await ValidateVersionPayloadAsync(documentId, request.VersionNumber, normalizedStatus);
+            var versionNumber = await ResolveVersionNumberAsync(documentId, request.VersionNumber);
+            await ValidateVersionPayloadAsync(documentId, versionNumber, normalizedStatus);
 
             var stored = await ReadDocumentFileForDatabaseAsync(
                 request.File);
@@ -755,7 +756,7 @@ namespace DocApi.Services
                     document,
                     new DocumentVersionData
                     {
-                        VersionNumber = request.VersionNumber.Trim(),
+                        VersionNumber = versionNumber,
                         Status = normalizedStatus,
                         Signature = request.Signature
                     });
@@ -768,7 +769,7 @@ namespace DocApi.Services
                     document,
                     new DocumentVersionData
                     {
-                        VersionNumber = request.VersionNumber.Trim(),
+                        VersionNumber = versionNumber,
                         Status = normalizedStatus,
                         Signature = request.Signature
                     });
@@ -781,7 +782,7 @@ namespace DocApi.Services
                     document,
                     new DocumentVersionData
                     {
-                        VersionNumber = request.VersionNumber.Trim(),
+                        VersionNumber = versionNumber,
                         Status = normalizedStatus,
                         Signature = request.Signature
                     });
@@ -797,7 +798,7 @@ namespace DocApi.Services
             {
                 DocumentId = documentId,
                 OrganizationId = document.OrganizationId,
-                VersionNumber = request.VersionNumber.Trim(),
+                VersionNumber = versionNumber,
                 Status = normalizedStatus,
                 FileName = stored.FileName,
                 OriginalFileName = stored.OriginalFileName,
@@ -959,7 +960,7 @@ namespace DocApi.Services
                     NotificationConstants.TypeDocumentApprovalRequired,
                     NotificationConstants.CategoryInfo,
                     $"Validation requise pour {document.Code}",
-                    $"Le document {document.Title} (v{versionNumber}) est en revision et attend validation.",
+                    $"Le document {document.Title} ({versionNumber}) est en revision et attend validation.",
                     NotificationConstants.PriorityMedium,
                     "DOCUMENT",
                     document.Id.ToString(),
@@ -975,7 +976,7 @@ namespace DocApi.Services
                     NotificationConstants.TypeDocumentExpired,
                     NotificationConstants.CategoryWarning,
                     $"Document expire {document.Code}",
-                    $"Le document {document.Title} (v{versionNumber}) est expire/perime.",
+                    $"Le document {document.Title} ({versionNumber}) est expire/perime.",
                     NotificationConstants.PriorityHigh,
                     "DOCUMENT",
                     document.Id.ToString(),
@@ -988,7 +989,7 @@ namespace DocApi.Services
                     NotificationConstants.TypeDocumentExpired,
                     NotificationConstants.CategoryWarning,
                     $"Document expire {document.Code}",
-                    $"Votre document {document.Title} (v{versionNumber}) est expire/perime.",
+                    $"Votre document {document.Title} ({versionNumber}) est expire/perime.",
                     NotificationConstants.PriorityHigh,
                     "DOCUMENT",
                     document.Id.ToString(),
@@ -1004,7 +1005,7 @@ namespace DocApi.Services
                     NotificationConstants.TypeSystemAlert,
                     NotificationConstants.CategorySuccess,
                     $"Document approuve {document.Code}",
-                    $"Le document {document.Title} (v{versionNumber}) a ete approuve et attend publication.",
+                    $"Le document {document.Title} ({versionNumber}) a ete approuve et attend publication.",
                     NotificationConstants.PriorityMedium,
                     "DOCUMENT",
                     document.Id.ToString(),
@@ -1017,7 +1018,7 @@ namespace DocApi.Services
                     NotificationConstants.TypeSystemAlert,
                     NotificationConstants.CategorySuccess,
                     $"Document approuve {document.Code}",
-                    $"Votre document {document.Title} (v{versionNumber}) a ete approuve et attend publication.",
+                    $"Votre document {document.Title} ({versionNumber}) a ete approuve et attend publication.",
                     NotificationConstants.PriorityMedium,
                     "DOCUMENT",
                     document.Id.ToString(),
@@ -1033,7 +1034,7 @@ namespace DocApi.Services
                     NotificationConstants.TypeDocumentNewVersion,
                     NotificationConstants.CategorySuccess,
                     $"Nouvelle version publiee {document.Code}",
-                    $"Le document {document.Title} (v{versionNumber}) a ete approuve et publie.",
+                    $"Le document {document.Title} ({versionNumber}) a ete approuve et publie.",
                     NotificationConstants.PriorityMedium,
                     "DOCUMENT",
                     document.Id.ToString(),
@@ -1046,7 +1047,7 @@ namespace DocApi.Services
                     NotificationConstants.TypeDocumentNewVersion,
                     NotificationConstants.CategorySuccess,
                     $"Nouvelle version publiee {document.Code}",
-                    $"Votre document {document.Title} (v{versionNumber}) a ete approuve et publie.",
+                    $"Votre document {document.Title} ({versionNumber}) a ete approuve et publie.",
                     NotificationConstants.PriorityMedium,
                     "DOCUMENT",
                     document.Id.ToString(),
@@ -1062,7 +1063,7 @@ namespace DocApi.Services
                     NotificationConstants.TypeSystemAlert,
                     NotificationConstants.CategoryWarning,
                     $"Document rejete {document.Code}",
-                    $"Le document {document.Title} (v{versionNumber}) a ete rejete.",
+                    $"Le document {document.Title} ({versionNumber}) a ete rejete.",
                     NotificationConstants.PriorityHigh,
                     "DOCUMENT",
                     document.Id.ToString(),
@@ -1078,7 +1079,7 @@ namespace DocApi.Services
                     NotificationConstants.TypeSystemAlert,
                     NotificationConstants.CategoryInfo,
                     $"Document archive {document.Code}",
-                    $"Le document {document.Title} (v{versionNumber}) a ete archive.",
+                    $"Le document {document.Title} ({versionNumber}) a ete archive.",
                     NotificationConstants.PriorityMedium,
                     "DOCUMENT",
                     document.Id.ToString(),
@@ -1491,6 +1492,79 @@ namespace DocApi.Services
                     throw new ForbiddenException("Le responsable doit appartenir a la meme organisation.");
                 }
             }
+        }
+
+        private async Task<string> ResolveVersionNumberAsync(int documentId, string? requestedVersionNumber)
+        {
+            if (!string.IsNullOrWhiteSpace(requestedVersionNumber))
+            {
+                return requestedVersionNumber.Trim();
+            }
+
+            var versions = (await _documentVersionRepository.GetByDocumentIdAsync(documentId)).ToList();
+            if (versions.Count == 0)
+            {
+                return "v1.0";
+            }
+
+            var bestMajor = 1;
+            var bestMinor = -1;
+
+            foreach (var version in versions)
+            {
+                if (!TryParseVersionNumber(version.VersionNumber, out var major, out var minor))
+                {
+                    continue;
+                }
+
+                if (major > bestMajor || (major == bestMajor && minor > bestMinor))
+                {
+                    bestMajor = major;
+                    bestMinor = minor;
+                }
+            }
+
+            if (bestMinor < 0)
+            {
+                bestMajor = 1;
+                bestMinor = versions.Count - 1;
+            }
+
+            var nextMajor = bestMajor;
+            var nextMinor = bestMinor + 1;
+            string candidate;
+            do
+            {
+                candidate = $"v{nextMajor}.{nextMinor}";
+                nextMinor++;
+            }
+            while (await _documentVersionRepository.ExistsVersionNumberAsync(documentId, candidate));
+
+            return candidate;
+        }
+
+        private static bool TryParseVersionNumber(string? value, out int major, out int minor)
+        {
+            major = 0;
+            minor = 0;
+
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return false;
+            }
+
+            var normalized = value.Trim();
+            if (normalized.StartsWith("v", StringComparison.OrdinalIgnoreCase))
+            {
+                normalized = normalized[1..];
+            }
+
+            var parts = normalized.Split('.', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            return parts.Length == 2
+                && int.TryParse(parts[0], out major)
+                && int.TryParse(parts[1], out minor)
+                && major >= 0
+                && minor >= 0;
         }
 
         private async Task ValidateVersionPayloadAsync(int documentId, string versionNumber, string status)

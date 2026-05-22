@@ -89,7 +89,6 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
     procedureId: this.fb.control<number | null>(null),
     ownerUserId: this.fb.control<number | null>(null),
     isActive: this.fb.nonNullable.control(true),
-    initialVersionNumber: this.fb.nonNullable.control('v1.0', [Validators.maxLength(30)]),
     initialVersionStatus: this.fb.nonNullable.control<DocumentStatus>('BROUILLON'),
     initialRevisionComment: this.fb.control<string>(''),
     initialEffectiveDate: this.fb.control<Date | null>(null),
@@ -573,11 +572,6 @@ COMMENTAIRES LIBRES :
       return;
     }
 
-    if (this.selectedFile && !this.documentForm.controls.initialVersionNumber.value.trim()) {
-      this.notificationService.showWarning('Le numero de version est obligatoire pour l upload.');
-      return;
-    }
-
     const payload = this.buildDocumentPayload();
     if (!this.canValidateStatus) {
       this.documentForm.controls.initialVersionStatus.setValue('EN_REVISION');
@@ -681,7 +675,6 @@ COMMENTAIRES LIBRES :
     const raw = this.documentForm.getRawValue();
 
     return {
-      versionNumber: raw.initialVersionNumber.trim(),
       status: this.canValidateStatus ? raw.initialVersionStatus : 'EN_REVISION',
       revisionComment: raw.initialRevisionComment?.trim() || null,
       effectiveDate: this.formatDateForApi(raw.initialEffectiveDate) || this.getTodayInputDate(),
@@ -701,7 +694,6 @@ COMMENTAIRES LIBRES :
       procedureId: document.procedureId ?? null,
       ownerUserId: document.ownerUserId ?? null,
       isActive: document.isActive,
-      initialVersionNumber: document.currentVersionNumber ?? 'v1.0',
       initialVersionStatus: document.currentVersionStatus ?? 'BROUILLON',
       initialRevisionComment: '',
       initialEffectiveDate: document.currentVersionNumber ? new Date() : null,

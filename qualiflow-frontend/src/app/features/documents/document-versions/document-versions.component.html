@@ -35,7 +35,7 @@
       <div class="form-tabs-container" style="margin-bottom: 24px; display: flex; gap: 12px; border: 1px solid rgba(0,0,0,0.04); border-radius: 12px; padding: 6px 12px; background: #fbfcfd;">
         <button type="button" class="tab-button" [class.active]="activeFormTab === 0" (click)="setFormTab(0)">
           <mat-icon>description</mat-icon>
-          <span>1. Métadonnées de Version</span>
+          <span>1. Métadonnées de version</span>
         </button>
         <button type="button" class="tab-button" [class.active]="activeFormTab === 1" (click)="setFormTab(1)">
           <mat-icon>cloud_upload</mat-icon>
@@ -48,11 +48,6 @@
         <!-- STEP 1: METADATA -->
         <div class="tab-content-container" *ngIf="activeFormTab === 0">
           <div class="form-grid">
-            <mat-form-field appearance="outline">
-              <mat-label>Numéro de version</mat-label>
-              <input matInput formControlName="versionNumber" placeholder="ex: v1.1" />
-            </mat-form-field>
-
             <mat-form-field appearance="outline">
               <mat-label>Statut</mat-label>
               <mat-select formControlName="status">

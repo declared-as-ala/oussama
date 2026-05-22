@@ -68,28 +68,40 @@
 }
 
 .btn-create {
-  height: 42px;
-  padding: 0 20px !important;
-  border-radius: 10px !important;
+  min-height: 44px;
+  padding: 0 22px !important;
+  border-radius: 12px !important;
   font-weight: 700 !important;
-  display: flex;
+  display: inline-flex !important;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  background: var(--xl-green-mid) !important;
+  line-height: 1 !important;
+  white-space: nowrap;
+  letter-spacing: 0;
+  background: linear-gradient(135deg, var(--xl-green-mid), var(--xl-green)) !important;
   color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2) !important;
+  box-shadow: 0 10px 22px rgba(16, 185, 129, 0.22) !important;
 
   &:hover {
     transform: translateY(-2px);
     background: var(--xl-green) !important;
-    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3) !important;
+    box-shadow: 0 14px 28px rgba(16, 185, 129, 0.3) !important;
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 6px 14px rgba(16, 185, 129, 0.22) !important;
   }
 
   mat-icon {
-    font-size: 18px;
-    width: 18px;
-    height: 18px;
+    margin: 0 !important;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
   }
 }
 
@@ -484,7 +496,7 @@ mat-paginator {
   .btn-create {
     flex: 1;
     justify-content: center;
-    height: 40px;
+    min-height: 44px;
     font-size: 13px;
   }
 
@@ -519,4 +531,4 @@ mat-paginator {
   .btn-create {
     width: 100%;
   }
-}
+}

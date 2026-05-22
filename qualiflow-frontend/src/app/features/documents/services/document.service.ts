@@ -99,8 +99,11 @@ export class DocumentService {
   uploadVersion(documentId: number, file: File, metadata: CreateDocumentVersionRequest): Observable<DocumentVersionResponse> {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('versionNumber', metadata.versionNumber);
     formData.append('status', metadata.status);
+
+    if (metadata.versionNumber) {
+      formData.append('versionNumber', metadata.versionNumber);
+    }
 
     if (metadata.revisionComment) {
       formData.append('revisionComment', metadata.revisionComment);

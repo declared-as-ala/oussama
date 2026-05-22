@@ -38,6 +38,26 @@ namespace DocApi.Repositories
             return await connection.QueryAsync<ProcessActorDetails>(sql, new { ProcessId = processId });
         }
 
+        public async Task<bool> AddActorIfMissingAsync(int processId, int organizationId, int userId, string actorType)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+
+            const string sql = @"
+                INSERT INTO ProcessActors (OrganizationId, ProcessId, UserId, ActorType, AssignedAt)
+                VALUES (@OrganizationId, @ProcessId, @UserId, @ActorType, NOW())
+                ON CONFLICT (ProcessId, UserId) DO NOTHING;";
+
+            var rows = await connection.ExecuteAsync(sql, new
+            {
+                OrganizationId = organizationId,
+                ProcessId = processId,
+                UserId = userId,
+                ActorType = actorType
+            });
+
+            return rows > 0;
+        }
+
         public async Task ReplaceActorsAsync(int processId, int organizationId, IEnumerable<ProcessActor> actors)
         {
             using var connection = _connectionFactory.CreateConnection();

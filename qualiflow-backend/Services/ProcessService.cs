@@ -369,6 +369,18 @@ namespace DocApi.Services
                 .Select(group => group.First())
                 .ToList();
 
+            var oldActors = (await _processActorRepository.GetActorsByProcessIdAsync(processId)).ToList();
+            var protectedProcedurePilots = oldActors
+                .Where(actor => string.Equals(actor.ActorType, ProcessConstants.ActorPiloteProcedure, StringComparison.OrdinalIgnoreCase))
+                .Where(actor => normalizedActors.All(requestedActor => requestedActor.UserId != actor.UserId))
+                .Select(actor => new AssignProcessActorItemRequest
+                {
+                    UserId = actor.UserId,
+                    ActorType = ProcessConstants.ActorPiloteProcedure
+                });
+
+            normalizedActors.AddRange(protectedProcedurePilots);
+
             foreach (var actor in normalizedActors)
             {
                 if (actor.UserId <= 0)
@@ -407,7 +419,6 @@ namespace DocApi.Services
                 }
             }
 
-            var oldActors = await _processActorRepository.GetActorsByProcessIdAsync(processId);
             var oldActorsListStr = string.Join(", ", oldActors.Select(a => $"{a.FirstName} {a.LastName} ({a.ActorType})"));
 
             var now = DateTime.UtcNow;
@@ -480,6 +491,14 @@ namespace DocApi.Services
             {
                 throw new ServiceException("Le pilote principal du processus ne peut pas Ãªtre retirÃ© de la liste des acteurs. Veuillez modifier le pilote dans les dÃ©tails du processus.");
             }
+
+            var currentActors = await _processActorRepository.GetActorsByProcessIdAsync(processId);
+            var actorToRemove = currentActors.FirstOrDefault(actor => actor.UserId == userId);
+            if (actorToRemove != null && string.Equals(actorToRemove.ActorType, ProcessConstants.ActorPiloteProcedure, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ServiceException("Le pilote de procedure est lie au responsable de procedure et ne peut pas etre retire depuis les acteurs du processus.");
+            }
+
             var actorUser = await _userRepository.GetByIdAsync(userId);
             var actorName = actorUser != null ? $"{actorUser.FirstName} {actorUser.LastName}".Trim() : $"ID: {userId}";
 
@@ -979,6 +998,7 @@ namespace DocApi.Services
             switch (actorType?.Trim().ToUpperInvariant())
             {
                 case "PILOTE": return "Pilote";
+                case "PILOTE_PROCEDURE": return "Pilote procedure";
                 case "COPILOTE": return "Co-pilote";
                 case "ACTEUR": return "Acteur";
                 case "OBSERVATEUR": return "Observateur";

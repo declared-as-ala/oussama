@@ -175,6 +175,7 @@ namespace DocApi.Services
 
             var id = await _procedureRepository.CreateAsync(procedure);
             var created = await GetProcedureOrThrowAsync(id);
+            await EnsureResponsibleIsProcessActorAsync(created.ProcessId, created.OrganizationId, created.ResponsibleUserId);
 
             await LogProcedureActionAsync(
                 created,
@@ -240,6 +241,7 @@ namespace DocApi.Services
             procedure.UpdatedAt = DateTime.UtcNow;
 
             await _procedureRepository.UpdateAsync(procedure);
+            await EnsureResponsibleIsProcessActorAsync(procedure.ProcessId, procedure.OrganizationId, procedure.ResponsibleUserId);
 
             var changesList = new List<string>();
             if (oldCode != procedure.Code) changesList.Add($"Code : '{oldCode}' Ã¢â€ â€™ '{procedure.Code}'");
@@ -599,6 +601,26 @@ namespace DocApi.Services
             {
                 throw new ForbiddenException("Le responsable d'une procédure doit être un Responsable Qualité ou un Administrateur.");
             }
+        }
+
+        private async Task EnsureResponsibleIsProcessActorAsync(int processId, int organizationId, int? responsibleUserId)
+        {
+            if (!responsibleUserId.HasValue)
+            {
+                return;
+            }
+
+            var isAlreadyActor = await _processActorRepository.HasActorAsync(processId, responsibleUserId.Value);
+            if (isAlreadyActor)
+            {
+                return;
+            }
+
+            await _processActorRepository.AddActorIfMissingAsync(
+                processId,
+                organizationId,
+                responsibleUserId.Value,
+                ProcessConstants.ActorPiloteProcedure);
         }
 
         private async Task<Procedure> GetProcedureOrThrowAsync(int id)
@@ -994,6 +1016,8 @@ namespace DocApi.Services
             var linked = await _procedureRepository.AddProcessLinkAsync(processId, procedureId);
             if (linked)
             {
+                await EnsureResponsibleIsProcessActorAsync(processId, process.OrganizationId, procedure.ResponsibleUserId);
+
                 await LogProcedureActionAsync(
                     procedure,
                     "PROCEDURE_UPDATED",

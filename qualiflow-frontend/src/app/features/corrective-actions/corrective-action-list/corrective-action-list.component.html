@@ -7,9 +7,11 @@
         <p class="subtitle">Planification, suivi et vérification des actions de traitement</p>
       </div>
       <div class="header-actions">
-        <button mat-stroked-button type="button" class="btn-toggle-filters" (click)="toggleFilters()">
-          <mat-icon>{{ showFilters ? 'visibility_off' : 'tune' }}</mat-icon>
-          {{ showFilters ? 'Masquer filtres' : 'Afficher filtres' }}
+        <button mat-stroked-button type="button" class="btn-my-actions"
+          [class.active]="isMyActionsFilterActive" (click)="toggleMyActionsFilter()">
+          <mat-icon>person_check</mat-icon>
+          Mes actions
+          <span class="count-pill">{{ myActionsCount }}</span>
         </button>
         <button *ngIf="canWrite" mat-flat-button color="primary" class="btn-create" (click)="create()">
           <mat-icon>add</mat-icon>
@@ -17,94 +19,6 @@
         </button>
       </div>
     </div>
-
-    <!-- MODERN FILTERS -->
-    <form class="glass-filters" *ngIf="showFilters" [formGroup]="filtersForm" (ngSubmit)="onSearch()">
-      <div class="filter-grid primary-filter-grid">
-        <div class="filter-item">
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>Recherche</mat-label>
-            <mat-icon matPrefix>search</mat-icon>
-            <input matInput formControlName="search" placeholder="Titre, description, NC ou responsable" />
-          </mat-form-field>
-        </div>
-
-        <div class="filter-item">
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>Statut</mat-label>
-            <mat-select formControlName="status">
-              <mat-option value="">Tous les statuts</mat-option>
-              <mat-option *ngFor="let option of statusOptions" [value]="option.value">{{ option.label }}</mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-
-        <div class="filter-item">
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>Type</mat-label>
-            <mat-select formControlName="type">
-              <mat-option value="">Tous les types</mat-option>
-              <mat-option *ngFor="let option of typeOptions" [value]="option.value">{{ option.label }}</mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-
-        <div class="filter-item">
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>Responsable</mat-label>
-            <mat-select formControlName="responsibleUserId">
-              <mat-option [value]="null">Tous les responsables</mat-option>
-              <mat-option *ngFor="let user of users" [value]="user.id">
-                {{ user.firstName }} {{ user.lastName }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-
-        <div class="filter-buttons">
-          <button mat-flat-button class="btn-apply" type="submit">
-            <mat-icon>filter_list</mat-icon>
-            Filtrer
-          </button>
-          <button mat-stroked-button class="btn-reset" type="button" (click)="clearFilters()">
-            <mat-icon>restart_alt</mat-icon>
-            Réinitialiser
-          </button>
-        </div>
-      </div>
-
-      <!-- Advanced Filters Toggle (Optional/Future) -->
-      <div class="filter-grid advanced-filter-grid">
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Non-conformité</mat-label>
-          <mat-select formControlName="nonConformityId">
-            <mat-option [value]="null">Toutes les NC</mat-option>
-            <mat-option *ngFor="let nc of nonConformities" [value]="nc.id">
-              {{ nc.code }} - {{ nc.title }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Retard</mat-label>
-          <mat-select formControlName="isOverdue">
-            <mat-option value="">Tous</mat-option>
-            <mat-option value="true">En retard</mat-option>
-            <mat-option value="false">À jour</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Du</mat-label>
-          <input matInput type="date" formControlName="fromDate" title="Date de début" placeholder="Date de début" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Au</mat-label>
-          <input matInput type="date" formControlName="toDate" title="Date de fin" placeholder="Date de fin" />
-        </mat-form-field>
-      </div>
-    </form>
   </div>
 
   <!-- SUMMARY CARDS -->
@@ -116,6 +30,16 @@
         {{ statistics.total }}
       </div>
       <span class="sc-subtext">Actions enregistrées</span>
+    </div>
+
+    <div class="summary-card shadow-sm clickable-card" [class.active-filter]="isMyActionsFilterActive"
+      (click)="toggleMyActionsFilter()">
+      <span class="sc-label">Mes actions</span>
+      <div class="sc-value">
+        <mat-icon class="icon-user">person_check</mat-icon>
+        {{ myActionsCount }}
+      </div>
+      <span class="sc-subtext">Actions dont je suis responsable</span>
     </div>
 
     <div class="summary-card shadow-sm">
@@ -156,7 +80,7 @@
       <div class="empty-box" *ngIf="items.length === 0">
         <mat-icon>task_alt</mat-icon>
         <h3>Aucune action corrective</h3>
-        <p>Ajuste les filtres ou crée une nouvelle action.</p>
+        <p>Aucune action disponible pour le moment.</p>
       </div>
 
       <div class="table-container" *ngIf="items.length > 0">

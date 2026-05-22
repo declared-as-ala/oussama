@@ -1,6 +1,6 @@
 export type ProcessType = 'PILOTAGE' | 'REALISATION' | 'SUPPORT';
 export type ProcessStatus = 'ACTIF' | 'INACTIF';
-export type ProcessActorType = 'PILOTE' | 'COPILOTE' | 'CONTRIBUTEUR' | 'OBSERVATEUR';
+export type ProcessActorType = 'PILOTE' | 'PILOTE_PROCEDURE' | 'COPILOTE' | 'CONTRIBUTEUR' | 'OBSERVATEUR';
 
 export interface ProcessQueryParams {
   pageNumber?: number;
@@ -130,6 +130,7 @@ export const PROCESS_STATUS_OPTIONS: Array<{ value: ProcessStatus; label: string
 
 export const PROCESS_ACTOR_TYPE_OPTIONS: Array<{ value: ProcessActorType; label: string }> = [
   { value: 'PILOTE', label: 'Pilote' },
+  { value: 'PILOTE_PROCEDURE', label: 'Pilote procédure' },
   { value: 'COPILOTE', label: 'Copilote' },
   { value: 'CONTRIBUTEUR', label: 'Contributeur' },
   { value: 'OBSERVATEUR', label: 'Observateur' }

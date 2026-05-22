@@ -100,7 +100,7 @@
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef style="width: 60px;"></th>
               <td mat-cell *matCellDef="let actor" style="text-align: center;">
-                <button *ngIf="canWrite && actor.actorType !== 'PILOTE'" mat-icon-button color="warn" type="button" (click)="removeActor(actor)" matTooltip="Retirer cet acteur">
+                <button *ngIf="canWrite && actor.actorType !== 'PILOTE' && actor.actorType !== 'PILOTE_PROCEDURE'" mat-icon-button color="warn" type="button" (click)="removeActor(actor)" matTooltip="Retirer cet acteur">
                   <mat-icon>delete_outline</mat-icon>
                 </button>
               </td>

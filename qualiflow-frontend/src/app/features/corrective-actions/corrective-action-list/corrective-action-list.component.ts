@@ -79,6 +79,7 @@ export class CorrectiveActionListComponent implements OnInit {
   users: UserResponse[] = [];
   nonConformities: NonConformityListItemResponse[] = [];
   selectedAction: CorrectiveActionListItemResponse | null = null;
+  myActionsCount = 0;
 
   total = 0;
   pageNumber = 1;
@@ -107,6 +108,11 @@ export class CorrectiveActionListComponent implements OnInit {
     return this.authService.hasRole(['ADMIN_ORG', 'RESPONSABLE_QUALITE']);
   }
 
+  get isMyActionsFilterActive(): boolean {
+    const currentUserId = this.authService.getCurrentUser()?.id ?? null;
+    return !!currentUserId && this.filtersForm.get('responsibleUserId')?.value === currentUserId;
+  }
+
   toggleFilters(): void {
     this.showFilters = !this.showFilters;
   }
@@ -126,6 +132,22 @@ export class CorrectiveActionListComponent implements OnInit {
       isOverdue: '',
       fromDate: '',
       toDate: ''
+    });
+
+    this.pageNumber = 1;
+    this.refresh();
+  }
+
+  toggleMyActionsFilter(): void {
+    const currentUserId = this.authService.getCurrentUser()?.id ?? null;
+
+    if (!currentUserId) {
+      this.notificationService.showError('Utilisateur courant introuvable.');
+      return;
+    }
+
+    this.filtersForm.patchValue({
+      responsibleUserId: this.isMyActionsFilterActive ? null : currentUserId
     });
 
     this.pageNumber = 1;
@@ -270,11 +292,13 @@ export class CorrectiveActionListComponent implements OnInit {
 
     forkJoin({
       page: this.correctiveActionService.getCorrectiveActions(this.buildQuery()),
-      stats: this.correctiveActionService.getCorrectiveActionStatistics()
+      stats: this.correctiveActionService.getCorrectiveActionStatistics(),
+      myActionsPage: this.loadMyActionsCount()
     }).subscribe({
-      next: ({ page, stats }) => {
+      next: ({ page, stats, myActionsPage }) => {
         this.applyPage(page);
         this.statistics = stats;
+        this.myActionsCount = myActionsPage.total;
         this.loading = false;
       },
       error: () => {
@@ -282,6 +306,30 @@ export class CorrectiveActionListComponent implements OnInit {
         this.notificationService.showError('Erreur lors du chargement des actions correctives.');
       }
     });
+  }
+
+  private loadMyActionsCount() {
+    const currentUserId = this.authService.getCurrentUser()?.id ?? null;
+
+    if (!currentUserId) {
+      return of({
+        total: 0,
+        pageNumber: 1,
+        pageSize: 1,
+        items: [] as CorrectiveActionListItemResponse[]
+      });
+    }
+
+    return this.correctiveActionService.getCorrectiveActions({
+      pageNumber: 1,
+      pageSize: 1,
+      responsibleUserId: currentUserId
+    }).pipe(catchError(() => of({
+      total: 0,
+      pageNumber: 1,
+      pageSize: 1,
+      items: [] as CorrectiveActionListItemResponse[]
+    })));
   }
 
   private applyPage(page: PagedCorrectiveActionResponse): void {

@@ -38,25 +38,40 @@
 }
 
 .btn-create {
-  height: 44px;
-  padding: 0 24px !important;
-  border-radius: 10px !important;
+  min-height: 44px;
+  padding: 0 22px !important;
+  border-radius: 12px !important;
   font-weight: 700 !important;
-  background: #00875a !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  line-height: 1 !important;
+  white-space: nowrap;
+  letter-spacing: 0;
+  background: linear-gradient(135deg, #00875a, #006644) !important;
   color: white !important;
-  box-shadow: 0 4px 12px rgba(0, 135, 90, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 0 10px 22px rgba(0, 135, 90, 0.22);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
     transform: translateY(-2px);
     background: #006644 !important;
-    box-shadow: 0 8px 20px rgba(0, 135, 90, 0.3);
+    box-shadow: 0 14px 28px rgba(0, 135, 90, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 6px 14px rgba(0, 135, 90, 0.22);
   }
 
   mat-icon {
+    margin: 0 !important;
     font-size: 20px;
     width: 20px;
     height: 20px;
+    line-height: 20px;
   }
 }
 
