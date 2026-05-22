@@ -70,6 +70,8 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
   isCanvasEmpty = true;
   readonly typeOptions = DOCUMENT_TYPE_OPTIONS;
   readonly statusOptions = DOCUMENT_STATUS_OPTIONS;
+  readonly acceptedFileTypes = '.pdf,.docx,.xlsx';
+  readonly allowedFileFormatsLabel = 'PDF, Word (.docx) ou Excel (.xlsx)';
 
   readonly documentForm = this.fb.group({
     code: this.fb.nonNullable.control('', [
@@ -541,7 +543,9 @@ COMMENTAIRES LIBRES :
   onFileSelected(event: Event): void {
     const target = event.target as HTMLInputElement;
     const file = target.files?.[0] ?? null;
-    this.selectedFile = file;
+    if (!this.assignSelectedFile(file)) {
+      target.value = '';
+    }
   }
 
   clearFile(): void {
@@ -560,6 +564,12 @@ COMMENTAIRES LIBRES :
   submit(): void {
     if (this.documentForm.invalid) {
       this.documentForm.markAllAsTouched();
+      return;
+    }
+
+    if (!this.isEdit && !this.selectedFile) {
+      this.activeTab = 3;
+      this.notificationService.showWarning('Veuillez deposer un fichier PDF, Word ou Excel pour creer le document.');
       return;
     }
 
@@ -615,24 +625,6 @@ COMMENTAIRES LIBRES :
 
   private uploadIfNeeded(documentId: number) {
     if (!this.selectedFile) {
-      const raw = this.documentForm.getRawValue();
-      if (raw.description && raw.description.trim().length > 0) {
-        // Automatically create a TXT file from the description!
-        const blob = new Blob([raw.description], { type: 'text/plain;charset=utf-8' });
-        const fileName = `${raw.code.trim().replace(/[^a-zA-Z0-9_-]/g, '_')}_v1.0.txt`;
-        const autoFile = new File([blob], fileName, { type: 'text/plain' });
-
-        const versionPayload = this.buildVersionPayload();
-        return this.documentService.uploadVersion(documentId, autoFile, versionPayload).pipe(
-          switchMap(() => {
-            this.documentId = documentId;
-            this.selectedFile = null;
-            return of(true);
-          })
-        );
-      }
-    }
-    if (!this.selectedFile) {
       return of(false);
     }
 
@@ -644,6 +636,27 @@ COMMENTAIRES LIBRES :
         return of(true);
       })
     );
+  }
+
+  private assignSelectedFile(file: File | null): boolean {
+    if (!file) {
+      this.selectedFile = null;
+      return true;
+    }
+
+    if (!this.isAllowedDocumentFile(file)) {
+      this.selectedFile = null;
+      this.notificationService.showWarning(`Format non autorise. Deposez uniquement: ${this.allowedFileFormatsLabel}.`);
+      return false;
+    }
+
+    this.selectedFile = file;
+    return true;
+  }
+
+  private isAllowedDocumentFile(file: File): boolean {
+    const name = file.name.toLowerCase();
+    return name.endsWith('.pdf') || name.endsWith('.docx') || name.endsWith('.xlsx');
   }
 
   private buildDocumentPayload(): CreateDocumentRequest {

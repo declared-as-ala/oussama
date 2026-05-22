@@ -97,9 +97,10 @@
                 <mat-icon>cloud_upload</mat-icon>
                 <div class="dropzone-text">
                   <p>Cliquez ou glissez un fichier ici</p>
-                  <span>Fichier (optionnel)</span>
+                  <span>{{ allowedFileFormatsLabel }}</span>
                 </div>
-                <input #fileInput type="file" style="display: none;" (change)="onFileSelected($event)" />
+                <input #fileInput type="file" style="display: none;" [attr.accept]="acceptedFileTypes"
+                  (change)="onFileSelected($event)" />
               </div>
 
               <div class="file-chip" *ngIf="selectedFile">

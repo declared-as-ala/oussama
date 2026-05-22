@@ -44,6 +44,8 @@ import { DocumentService } from '../services/document.service';
 export class DocumentVersionsComponent implements OnInit {
   readonly statusOptions = DOCUMENT_STATUS_OPTIONS;
   readonly displayedColumns: string[] = ['version', 'status', 'file', 'effectiveDate', 'author', 'comment', 'actions'];
+  readonly acceptedFileTypes = '.pdf,.docx,.xlsx';
+  readonly allowedFileFormatsLabel = 'PDF, Word (.docx) ou Excel (.xlsx)';
 
   readonly createVersionForm = this.fb.group({
     versionNumber: this.fb.nonNullable.control('v1.0', [Validators.required, Validators.maxLength(30)]),
@@ -133,7 +135,10 @@ export class DocumentVersionsComponent implements OnInit {
   // File Upload & Dropzone
   onFileSelected(event: Event): void {
     const target = event.target as HTMLInputElement;
-    this.selectedFile = target.files?.[0] ?? null;
+    const file = target.files?.[0] ?? null;
+    if (!this.assignSelectedFile(file)) {
+      target.value = '';
+    }
   }
 
   onDragOver(event: DragEvent): void {
@@ -154,12 +159,33 @@ export class DocumentVersionsComponent implements OnInit {
     this.isDragging = false;
 
     if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
-      this.selectedFile = event.dataTransfer.files[0];
+      this.assignSelectedFile(event.dataTransfer.files[0]);
     }
   }
 
   clearSelectedFile(): void {
     this.selectedFile = null;
+  }
+
+  private assignSelectedFile(file: File | null): boolean {
+    if (!file) {
+      this.selectedFile = null;
+      return true;
+    }
+
+    if (!this.isAllowedDocumentFile(file)) {
+      this.selectedFile = null;
+      this.notificationService.showWarning(`Format non autorise. Deposez uniquement: ${this.allowedFileFormatsLabel}.`);
+      return false;
+    }
+
+    this.selectedFile = file;
+    return true;
+  }
+
+  private isAllowedDocumentFile(file: File): boolean {
+    const name = file.name.toLowerCase();
+    return name.endsWith('.pdf') || name.endsWith('.docx') || name.endsWith('.xlsx');
   }
 
   // Signature Pad Logic

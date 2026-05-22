@@ -152,6 +152,7 @@ builder.Services.AddScoped<IActionLogRepository, ActionLogRepository>();
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddScoped<IPdfHeaderStampService, PdfHeaderStampService>();
 builder.Services.AddScoped<IWordHeaderStampService, WordHeaderStampService>();
+builder.Services.AddScoped<IExcelHeaderStampService, ExcelHeaderStampService>();
 builder.Services.AddScoped<IOrganizationLogoStorageService, OrganizationLogoStorageService>();
 builder.Services.AddScoped<IProfilePhotoStorageService, ProfilePhotoStorageService>();
 

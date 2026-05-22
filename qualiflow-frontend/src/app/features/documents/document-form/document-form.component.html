@@ -252,14 +252,15 @@
 
         <!-- UPLOAD ZONE -->
         <div class="upload-zone full-width" [class.has-file]="selectedFile">
-          <input type="file" id="file-input" (change)="onFileSelected($event)" class="file-input-hidden" />
+          <input type="file" id="file-input" (change)="onFileSelected($event)" class="file-input-hidden"
+            [attr.accept]="acceptedFileTypes" />
           <label for="file-input" class="upload-label">
             <mat-icon *ngIf="!selectedFile">cloud_upload</mat-icon>
             <mat-icon *ngIf="selectedFile" class="file-icon">description</mat-icon>
 
             <div class="label-text" *ngIf="!selectedFile">
-              <span class="main-text">Cliquez ici pour sélectionner un fichier</span>
-              <span class="sub-text">PDF, DOCX, XLSX ou JPG (Max 50Mo)</span>
+              <span class="main-text">Cliquez ici pour sélectionner un fichier obligatoire</span>
+              <span class="sub-text">{{ allowedFileFormatsLabel }}</span>
             </div>
 
             <div class="label-text" *ngIf="selectedFile">

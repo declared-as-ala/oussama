@@ -124,12 +124,13 @@ services:
 
       # Storage
       Storage__RootPath: ${STORAGE_ROOT_PATH:-StorageFiles}
-      Storage__AllowedExtensions: ${STORAGE_ALLOWED_EXTENSIONS:-.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png}
+      Storage__AllowedExtensions: ${STORAGE_ALLOWED_EXTENSIONS:-.pdf,.docx,.xlsx}
       Storage__MaxFileSizeMb: ${STORAGE_MAX_FILE_SIZE_MB:-20}
       Storage__OrganizationLogoMaxFileSizeMb: ${STORAGE_ORGANIZATION_LOGO_MAX_FILE_SIZE_MB:-5}
       Storage__ProfilePhotoMaxFileSizeMb: ${STORAGE_PROFILE_PHOTO_MAX_FILE_SIZE_MB:-3}
-      Storage__PdfHeaderEnabled: ${STORAGE_PDF_HEADER_ENABLED:-false}
-      Storage__WordHeaderEnabled: ${STORAGE_WORD_HEADER_ENABLED:-false}
+      Storage__PdfHeaderEnabled: ${STORAGE_PDF_HEADER_ENABLED:-true}
+      Storage__WordHeaderEnabled: ${STORAGE_WORD_HEADER_ENABLED:-true}
+      Storage__ExcelHeaderEnabled: ${STORAGE_EXCEL_HEADER_ENABLED:-true}
       Storage__OrganizationLogosPath: ${STORAGE_ORGANIZATION_LOGOS_PATH:-StorageFiles/organization-logos}
       Storage__ProfilePhotosPath: ${STORAGE_PROFILE_PHOTOS_PATH:-StorageFiles/profile-photos}
       Storage__DefaultLogoPath: ${STORAGE_DEFAULT_LOGO_PATH:-../front/src/assets/logo.png}

@@ -33,8 +33,15 @@ namespace DocApi.Services
         private readonly IFileStorageService _fileStorageService;
         private readonly IPdfHeaderStampService _pdfHeaderStampService;
         private readonly IWordHeaderStampService _wordHeaderStampService;
+        private readonly IExcelHeaderStampService _excelHeaderStampService;
         private readonly INotificationEventPublisher _notificationEventPublisher;
         private readonly IActionLogger _actionLogger;
+        private static readonly HashSet<string> SupportedDocumentFileExtensions = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ".pdf",
+            ".docx",
+            ".xlsx"
+        };
         private readonly HashSet<string> _allowedDocumentExtensions;
         private readonly long _maxDocumentFileSizeBytes;
 
@@ -51,6 +58,7 @@ namespace DocApi.Services
             IFileStorageService fileStorageService,
             IPdfHeaderStampService pdfHeaderStampService,
             IWordHeaderStampService wordHeaderStampService,
+            IExcelHeaderStampService excelHeaderStampService,
             INotificationEventPublisher notificationEventPublisher,
             IActionLogger actionLogger,
             IConfiguration configuration)
@@ -67,6 +75,7 @@ namespace DocApi.Services
             _fileStorageService = fileStorageService;
             _pdfHeaderStampService = pdfHeaderStampService;
             _wordHeaderStampService = wordHeaderStampService;
+            _excelHeaderStampService = excelHeaderStampService;
             _notificationEventPublisher = notificationEventPublisher;
             _actionLogger = actionLogger;
             _allowedDocumentExtensions = ParseAllowedExtensions(configuration["Storage:AllowedExtensions"]);
@@ -637,6 +646,11 @@ namespace DocApi.Services
             }
 
             var normalizedExtension = extension.Trim().ToLowerInvariant();
+            if (!SupportedDocumentFileExtensions.Contains(normalizedExtension))
+            {
+                throw new ServiceException("Seuls les fichiers PDF, Word (.docx) et Excel (.xlsx) sont autorises.");
+            }
+
             if (_allowedDocumentExtensions.Count > 0 && !_allowedDocumentExtensions.Contains(normalizedExtension))
             {
                 throw new ServiceException("Le type de fichier n'est pas autorise.");
@@ -664,6 +678,32 @@ namespace DocApi.Services
             {
                 await File.WriteAllBytesAsync(tempPath, fileContent);
                 await _wordHeaderStampService.ApplyFirstPageHeaderAsync(tempPath, headerMetadata);
+                return await File.ReadAllBytesAsync(tempPath);
+            }
+            finally
+            {
+                try
+                {
+                    if (File.Exists(tempPath))
+                    {
+                        File.Delete(tempPath);
+                    }
+                }
+                catch
+                {
+                    // Temporary file cleanup should not hide the upload result.
+                }
+            }
+        }
+
+        private async Task<byte[]> StampUploadedXlsxAsync(byte[] fileContent, PdfHeaderMetadata headerMetadata)
+        {
+            var tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.xlsx");
+
+            try
+            {
+                await File.WriteAllBytesAsync(tempPath, fileContent);
+                await _excelHeaderStampService.ApplyWorkbookHeaderAsync(tempPath, headerMetadata);
                 return await File.ReadAllBytesAsync(tempPath);
             }
             finally
@@ -711,6 +751,18 @@ namespace DocApi.Services
                         Signature = request.Signature
                     });
                 stored.FileContent = await StampUploadedDocxAsync(stored.FileContent, headerMetadata);
+            }
+            else if (string.Equals(stored.FileExtension, ".xlsx", StringComparison.OrdinalIgnoreCase))
+            {
+                var headerMetadata = await BuildPdfHeaderMetadataAsync(
+                    document,
+                    new DocumentVersionData
+                    {
+                        VersionNumber = request.VersionNumber.Trim(),
+                        Status = normalizedStatus,
+                        Signature = request.Signature
+                    });
+                stored.FileContent = await StampUploadedXlsxAsync(stored.FileContent, headerMetadata);
             }
 
             var now = DateTime.UtcNow;
@@ -1046,6 +1098,13 @@ namespace DocApi.Services
                 contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
                 fileName = EnsureDocxExtension(fileName, document.Code, current.VersionNumber);
             }
+            else if (ShouldStampXlsx(current.MimeType, current.OriginalFileName))
+            {
+                outputStream = await StampXlsxWithHeaderAsync(stream, document, current);
+                stream.Dispose();
+                contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                fileName = EnsureXlsxExtension(fileName, document.Code, current.VersionNumber);
+            }
             else if (ShouldConvertTextToPdf(current.MimeType, current.OriginalFileName))
             {
                 outputStream = await ConvertTextToPdfWithHeaderAsync(stream, document, current);
@@ -1104,6 +1163,13 @@ namespace DocApi.Services
                 contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
                 fileName = EnsureDocxExtension(fileName, document.Code, version.VersionNumber);
             }
+            else if (ShouldStampXlsx(version.MimeType, version.OriginalFileName))
+            {
+                outputStream = await StampXlsxWithHeaderAsync(stream, document, version);
+                stream.Dispose();
+                contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                fileName = EnsureXlsxExtension(fileName, document.Code, version.VersionNumber);
+            }
             else if (ShouldConvertTextToPdf(version.MimeType, version.OriginalFileName))
             {
                 outputStream = await ConvertTextToPdfWithHeaderAsync(stream, document, version);
@@ -1155,6 +1221,12 @@ namespace DocApi.Services
                 outputStream = await StampDocxWithHeaderAsync(stream, document, current);
                 stream.Dispose();
                 contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            }
+            else if (ShouldStampXlsx(current.MimeType, current.OriginalFileName))
+            {
+                outputStream = await StampXlsxWithHeaderAsync(stream, document, current);
+                stream.Dispose();
+                contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
             }
             else if (ShouldConvertTextToPdf(current.MimeType, current.OriginalFileName))
             {
@@ -1215,6 +1287,44 @@ namespace DocApi.Services
                 }
 
                 await _wordHeaderStampService.ApplyFirstPageHeaderAsync(tempPath, metadata);
+
+                var bytes = await File.ReadAllBytesAsync(tempPath);
+                return new MemoryStream(bytes);
+            }
+            finally
+            {
+                try
+                {
+                    if (File.Exists(tempPath))
+                    {
+                        File.Delete(tempPath);
+                    }
+                }
+                catch
+                {
+                    // Keep response flow resilient if temp cleanup fails.
+                }
+            }
+        }
+
+        private async Task<Stream> StampXlsxWithHeaderAsync(Stream sourceStream, Document document, DocumentVersionData version)
+        {
+            var metadata = await BuildPdfHeaderMetadataAsync(document, version);
+            var tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.xlsx");
+
+            try
+            {
+                if (sourceStream.CanSeek)
+                {
+                    sourceStream.Position = 0;
+                }
+
+                await using (var tempWrite = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                {
+                    await sourceStream.CopyToAsync(tempWrite);
+                }
+
+                await _excelHeaderStampService.ApplyWorkbookHeaderAsync(tempPath, metadata);
 
                 var bytes = await File.ReadAllBytesAsync(tempPath);
                 return new MemoryStream(bytes);
@@ -1775,6 +1885,23 @@ namespace DocApi.Services
             return false;
         }
 
+        private static bool ShouldStampXlsx(string? mimeType, string? fileName)
+        {
+            if (!string.IsNullOrWhiteSpace(mimeType) &&
+                mimeType.Contains("spreadsheetml.sheet", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (!string.IsNullOrWhiteSpace(fileName) &&
+                fileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         private async Task<Stream> OpenVersionContentAsync(int versionId, string? legacyFilePath, string notFoundMessage)
         {
             var fileContent = await _documentVersionRepository.GetFileContentAsync(versionId);
@@ -1847,6 +1974,26 @@ namespace DocApi.Services
             }
 
             return $"{withoutExt}.docx";
+        }
+
+        private static string EnsureXlsxExtension(string? originalFileName, string documentCode, string versionNumber)
+        {
+            var baseName = string.IsNullOrWhiteSpace(originalFileName)
+                ? $"{documentCode}_{versionNumber}"
+                : originalFileName.Trim();
+
+            if (baseName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
+            {
+                return baseName;
+            }
+
+            var withoutExt = Path.GetFileNameWithoutExtension(baseName);
+            if (string.IsNullOrWhiteSpace(withoutExt))
+            {
+                withoutExt = $"{documentCode}_{versionNumber}";
+            }
+
+            return $"{withoutExt}.xlsx";
         }
 
         private sealed class DatabaseDocumentFile
