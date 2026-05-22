@@ -424,6 +424,97 @@ app-root {
     }
 }
 
+/* Mobile table cards: applied automatically by main.ts from table headers. */
+@media (max-width: 768px) {
+    table.mobile-card-table {
+        display: block !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+        background: transparent !important;
+    }
+
+    table.mobile-card-table thead,
+    table.mobile-card-table tr.mat-mdc-header-row,
+    table.mobile-card-table tr.mdc-data-table__header-row,
+    table.mobile-card-table .mat-mdc-header-row,
+    table.mobile-card-table .mdc-data-table__header-row {
+        display: none !important;
+    }
+
+    table.mobile-card-table tbody {
+        display: grid !important;
+        gap: 12px !important;
+        width: 100% !important;
+    }
+
+    table.mobile-card-table tr,
+    table.mobile-card-table tr.mat-mdc-row,
+    table.mobile-card-table tr.mdc-data-table__row {
+        display: block !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+        padding: 12px !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 12px !important;
+        background: var(--bg-white) !important;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06) !important;
+    }
+
+    table.mobile-card-table td,
+    table.mobile-card-table td.mat-mdc-cell,
+    table.mobile-card-table td.mdc-data-table__cell {
+        display: grid !important;
+        grid-template-columns: minmax(96px, 38%) minmax(0, 1fr) !important;
+        gap: 12px !important;
+        align-items: center !important;
+        width: 100% !important;
+        min-height: 0 !important;
+        padding: 9px 0 !important;
+        border: 0 !important;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.22) !important;
+        color: var(--text-primary) !important;
+        white-space: normal !important;
+        text-align: right !important;
+        word-break: break-word !important;
+    }
+
+    table.mobile-card-table td:last-child,
+    table.mobile-card-table td.mat-mdc-cell:last-child,
+    table.mobile-card-table td.mdc-data-table__cell:last-child {
+        border-bottom: 0 !important;
+    }
+
+    table.mobile-card-table td::before,
+    table.mobile-card-table td.mat-mdc-cell::before,
+    table.mobile-card-table td.mdc-data-table__cell::before {
+        content: attr(data-label);
+        color: var(--text-muted);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        text-align: left;
+        text-transform: uppercase;
+    }
+
+    table.mobile-card-table .mat-sort-header-container {
+        justify-content: flex-start !important;
+    }
+
+    table.mobile-card-table .mat-mdc-cell > *,
+    table.mobile-card-table td > * {
+        min-width: 0;
+        justify-self: end;
+    }
+
+    table.mobile-card-table .mat-mdc-cell .mat-icon,
+    table.mobile-card-table td .mat-icon {
+        vertical-align: middle;
+    }
+}
+
 .glass-filters {
     .filter-grid {
         display: grid;

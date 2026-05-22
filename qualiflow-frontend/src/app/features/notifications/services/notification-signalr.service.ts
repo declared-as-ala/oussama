@@ -14,6 +14,7 @@ export class NotificationSignalRService implements OnDestroy {
   private readonly unreadCountSubject = new BehaviorSubject<number>(0);
   private reconnectTimeout?: any;
   private isExplicitlyStopped = false;
+  private startRetryCount = 0;
 
   readonly notificationReceived$ = this.notificationReceivedSubject.asObservable();
   readonly unreadCount$ = this.unreadCountSubject.asObservable();
@@ -38,9 +39,7 @@ export class NotificationSignalRService implements OnDestroy {
     if (!this.hubConnection) {
       this.hubConnection = new signalR.HubConnectionBuilder()
         .withUrl(`${environment.apiUrl}/hubs/notifications`, {
-          accessTokenFactory: () => this.authService.getAccessToken() ?? '',
-          skipNegotiation: true,
-          transport: signalR.HttpTransportType.WebSockets
+          accessTokenFactory: () => this.authService.getAccessToken() ?? ''
         })
         .withAutomaticReconnect({
           nextRetryDelayInMilliseconds: (retryContext) => {
@@ -49,7 +48,7 @@ export class NotificationSignalRService implements OnDestroy {
             return delay;
           }
         })
-        .configureLogging(signalR.LogLevel.Information)
+        .configureLogging(environment.production ? signalR.LogLevel.Warning : signalR.LogLevel.Information)
         .build();
 
       this.registerNotificationHandler();
@@ -59,10 +58,15 @@ export class NotificationSignalRService implements OnDestroy {
 
     try {
       await this.hubConnection.start();
-      console.log('SignalR connected successfully to notifications hub.');
+      this.startRetryCount = 0;
+      if (!environment.production) {
+        console.log('SignalR connected successfully to notifications hub.');
+      }
     } catch (err) {
-      console.error('Error starting SignalR connection:', err);
       if (!this.isExplicitlyStopped && this.authService.isAuthenticated()) {
+        if (!environment.production) {
+          console.warn('SignalR start failed. A retry will be scheduled.', err);
+        }
         this.scheduleStartRetry();
       }
     }
@@ -79,9 +83,13 @@ export class NotificationSignalRService implements OnDestroy {
     if (this.hubConnection.state !== signalR.HubConnectionState.Disconnected) {
       try {
         await this.hubConnection.stop();
-        console.log('SignalR connection stopped.');
+        if (!environment.production) {
+          console.log('SignalR connection stopped.');
+        }
       } catch (err) {
-        console.error('Error stopping SignalR connection:', err);
+        if (!environment.production) {
+          console.warn('Error stopping SignalR connection:', err);
+        }
       }
     }
   }
@@ -103,16 +111,22 @@ export class NotificationSignalRService implements OnDestroy {
     });
 
     this.hubConnection.onreconnecting((error) => {
-      console.warn('SignalR connection lost. Reconnecting automatically...', error);
+      if (!environment.production) {
+        console.warn('SignalR connection lost. Reconnecting automatically...', error);
+      }
     });
 
     this.hubConnection.onreconnected(() => {
-      console.log('SignalR connection re-established.');
+      if (!environment.production) {
+        console.log('SignalR connection re-established.');
+      }
       this.refreshConnectionState();
     });
 
     this.hubConnection.onclose((error) => {
-      console.error('SignalR connection closed permanently.', error);
+      if (!environment.production) {
+        console.warn('SignalR connection closed permanently.', error);
+      }
       if (!this.isExplicitlyStopped && this.authService.isAuthenticated()) {
         this.scheduleStartRetry();
       }
@@ -127,9 +141,13 @@ export class NotificationSignalRService implements OnDestroy {
     void this.stopConnection();
   }
 
-  private scheduleStartRetry(delayMs = 5000): void {
+  private scheduleStartRetry(): void {
     this.clearReconnectTimeout();
-    console.log(`Scheduling SignalR reconnect attempt in ${delayMs / 1000} seconds...`);
+    const delayMs = Math.min(5000 * Math.pow(2, this.startRetryCount), 60000);
+    this.startRetryCount += 1;
+    if (!environment.production) {
+      console.log(`Scheduling SignalR reconnect attempt in ${delayMs / 1000} seconds...`);
+    }
     this.reconnectTimeout = setTimeout(() => {
       if (!this.isExplicitlyStopped && this.authService.isAuthenticated()) {
         void this.startConnection();

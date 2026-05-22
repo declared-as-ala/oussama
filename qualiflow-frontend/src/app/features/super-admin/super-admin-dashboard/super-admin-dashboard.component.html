@@ -7,18 +7,18 @@
     </div>
     <form [formGroup]="filterForm" class="ph-actions">
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="period-select">
-        <mat-label>Période d'analyse</mat-label>
+        <mat-label>Période</mat-label>
         <mat-select formControlName="period" (selectionChange)="applyFilters()">
           <mat-option *ngFor="let p of periods" [value]="p.value">{{ p.label }}</mat-option>
         </mat-select>
       </mat-form-field>
       
-      <button class="btn btn-primary btn-refresh" (click)="refresh()" [disabled]="loading">
+      <button type="button" class="btn btn-primary btn-refresh" (click)="refresh()" [disabled]="loading">
         <mat-icon [class.animate-spin]="loading">sync</mat-icon>
         <span>Actualiser</span>
       </button>
       
-      <button mat-icon-button (click)="resetFilters()" matTooltip="Réinitialiser les filtres" class="btn-reset-icon">
+      <button type="button" mat-icon-button (click)="resetFilters()" matTooltip="Réinitialiser les filtres" class="btn-reset-icon">
         <mat-icon>filter_alt_off</mat-icon>
       </button>
     </form>
