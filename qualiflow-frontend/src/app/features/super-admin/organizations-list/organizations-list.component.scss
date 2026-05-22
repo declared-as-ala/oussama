@@ -32,7 +32,7 @@
 /* FILTERS OVERRIDE (Specific Grid) */
 .glass-filters {
   .filter-grid {
-    grid-template-columns: 2fr 1fr 1fr auto;
+    grid-template-columns: minmax(260px, 2fr) minmax(180px, 1fr) minmax(180px, 1fr) auto;
   }
 }
 
@@ -368,6 +368,19 @@ mat-paginator {
   .table-container {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 1100px) and (min-width: 769px) {
+  .glass-filters {
+    .filter-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .filter-buttons {
+      grid-column: 1 / -1;
+      justify-content: flex-end;
+    }
   }
 }
 

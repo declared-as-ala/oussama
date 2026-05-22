@@ -579,11 +579,19 @@ app-root {
 }
 
 .glass-filters {
+    min-width: 0;
+    max-width: 100%;
+
     .filter-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
         gap: 16px;
         align-items: flex-end;
+    }
+
+    .filter-item,
+    mat-form-field {
+        min-width: 0;
     }
 
     mat-form-field {
@@ -599,6 +607,8 @@ app-root {
         display: flex;
         gap: 12px;
         padding-bottom: 4px;
+        min-width: 0;
+        flex-wrap: wrap;
 
         .btn-apply {
             background: var(--xl-green-mid) !important;
@@ -632,11 +642,26 @@ app-root {
     left: 50% !important;
     right: auto !important;
     transform: translateX(-50%) !important;
+    max-width: min(92vw, 560px) !important;
+
+    .mdc-snackbar__surface {
+        max-width: 100% !important;
+    }
+
+    .mdc-snackbar__label {
+        white-space: normal !important;
+        overflow-wrap: anywhere !important;
+        word-break: break-word !important;
+    }
 
     &.success-snackbar,
     &.error-snackbar,
     &.warning-snackbar,
-    &.info-snackbar {
+    &.info-snackbar,
+    &.success-toast,
+    &.error-toast,
+    &.warning-toast,
+    &.info-toast {
         --mdc-snackbar-container-color: white !important;
         --mdc-snackbar-container-elevation-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
 
@@ -651,6 +676,7 @@ app-root {
             border-radius: 12px !important;
             padding: 4px 8px !important;
             min-width: 320px !important;
+            max-width: min(92vw, 560px) !important;
             border: 1px solid var(--border) !important;
             overflow: hidden !important;
             position: relative !important;
@@ -675,6 +701,8 @@ app-root {
         }
 
         .mdc-snackbar__actions {
+            flex-shrink: 0 !important;
+
             .mdc-button__label {
                 color: var(--xl-green-mid) !important;
                 font-weight: 700 !important;
@@ -684,7 +712,8 @@ app-root {
         }
     }
 
-    &.success-snackbar {
+    &.success-snackbar,
+    &.success-toast {
         .mdc-snackbar__surface {
             border-left: 6px solid var(--s-green) !important;
         }
@@ -695,7 +724,8 @@ app-root {
         }
     }
 
-    &.error-snackbar {
+    &.error-snackbar,
+    &.error-toast {
         .mdc-snackbar__surface {
             border-left: 6px solid var(--s-red) !important;
         }
@@ -706,7 +736,8 @@ app-root {
         }
     }
 
-    &.warning-snackbar {
+    &.warning-snackbar,
+    &.warning-toast {
         .mdc-snackbar__surface {
             border-left: 6px solid var(--s-yellow) !important;
         }
@@ -717,7 +748,8 @@ app-root {
         }
     }
 
-    &.info-snackbar {
+    &.info-snackbar,
+    &.info-toast {
         .mdc-snackbar__surface {
             border-left: 6px solid var(--xl-green-mid) !important;
         }
@@ -742,6 +774,7 @@ app-root {
             border-radius: 12px !important;
             min-width: 360px !important;
             max-width: min(92vw, 760px) !important;
+            width: min(92vw, 460px) !important;
             border: 1px solid var(--border) !important;
             overflow: hidden !important;
         }
@@ -778,7 +811,11 @@ app-root {
         &.success-snackbar,
         &.error-snackbar,
         &.warning-snackbar,
-        &.info-snackbar {
+        &.info-snackbar,
+        &.success-toast,
+        &.error-toast,
+        &.warning-toast,
+        &.info-toast {
             --mdc-snackbar-container-color: #161b22 !important;
 
             .mdc-snackbar__surface {
@@ -873,7 +910,7 @@ a, button, [role="button"], label, input, select, textarea {
     }
 
     .glass-filters .filter-grid {
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
         gap: 12px;
     }
 }
@@ -935,6 +972,13 @@ a, button, [role="button"], label, input, select, textarea {
         }
     }
 
+    .glass-filters .filter-item,
+    .glass-filters mat-form-field,
+    .filters-card mat-form-field {
+        width: 100%;
+        min-width: 0;
+    }
+
     /* Tables — scrollable on mobile */
     .word-table {
         display: block;
@@ -988,15 +1032,34 @@ a, button, [role="button"], label, input, select, textarea {
         &.success-snackbar,
         &.error-snackbar,
         &.warning-snackbar,
-        &.info-snackbar {
+        &.info-snackbar,
+        &.success-toast,
+        &.error-toast,
+        &.warning-toast,
+        &.info-toast {
             right: 12px !important;
             top: 12px !important;
             left: 12px !important;
             transform: none !important;
+            width: auto !important;
+            max-width: none !important;
 
             .mdc-snackbar__surface {
                 min-width: auto !important;
+                width: 100% !important;
                 max-width: 100% !important;
+            }
+
+            .mat-mdc-snack-bar-label,
+            .mdc-snackbar__label {
+                min-width: 0 !important;
+                padding: 12px 10px 12px 36px !important;
+            }
+
+            .mat-mdc-snack-bar-actions,
+            .mdc-snackbar__actions {
+                min-width: 0 !important;
+                margin-left: 4px !important;
             }
         }
 
@@ -1005,9 +1068,12 @@ a, button, [role="button"], label, input, select, textarea {
             left: 12px !important;
             right: 12px !important;
             transform: none !important;
+            width: auto !important;
+            max-width: none !important;
 
             .mdc-snackbar__surface {
                 min-width: auto !important;
+                width: 100% !important;
                 max-width: 100% !important;
             }
         }
@@ -1128,8 +1194,10 @@ a, button, [role="button"], label, input, select, textarea {
     left: 50% !important;
     right: auto !important;
     transform: translateX(-50%) !important;
+    width: min(92vw, 460px) !important;
 
     .mdc-snackbar__label {
+        min-width: 0 !important;
         padding: 0 !important;
     }
 
@@ -1137,8 +1205,9 @@ a, button, [role="button"], label, input, select, textarea {
         background: transparent !important;
         box-shadow: none !important;
         padding: 0 !important;
+        width: 100% !important;
         min-width: 0 !important;
-        max-width: min(92vw, 460px) !important;
+        max-width: 100% !important;
     }
 }
 
@@ -1148,9 +1217,12 @@ a, button, [role="button"], label, input, select, textarea {
         left: 12px !important;
         right: 12px !important;
         transform: none !important;
+        width: auto !important;
+        max-width: none !important;
     }
 
     .notification-toast-panel .mdc-snackbar__surface {
+        width: 100% !important;
         max-width: 100% !important;
     }
 }
