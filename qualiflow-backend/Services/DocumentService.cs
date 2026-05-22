@@ -696,6 +696,15 @@ namespace DocApi.Services
             }
         }
 
+        private async Task<byte[]> StampUploadedPdfAsync(byte[] fileContent, PdfHeaderMetadata headerMetadata)
+        {
+            using var sourceStream = new MemoryStream(fileContent, writable: false);
+            await using var stampedStream = await _pdfHeaderStampService.AddHeaderAsync(sourceStream, headerMetadata);
+            using var result = new MemoryStream();
+            await stampedStream.CopyToAsync(result);
+            return result.ToArray();
+        }
+
         private async Task<byte[]> StampUploadedXlsxAsync(byte[] fileContent, PdfHeaderMetadata headerMetadata)
         {
             var tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.xlsx");
@@ -740,7 +749,20 @@ namespace DocApi.Services
             var stored = await ReadDocumentFileForDatabaseAsync(
                 request.File);
 
-            if (string.Equals(stored.FileExtension, ".docx", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(stored.FileExtension, ".pdf", StringComparison.OrdinalIgnoreCase))
+            {
+                var headerMetadata = await BuildPdfHeaderMetadataAsync(
+                    document,
+                    new DocumentVersionData
+                    {
+                        VersionNumber = request.VersionNumber.Trim(),
+                        Status = normalizedStatus,
+                        Signature = request.Signature
+                    });
+                stored.FileContent = await StampUploadedPdfAsync(stored.FileContent, headerMetadata);
+                stored.FileSize = stored.FileContent.LongLength;
+            }
+            else if (string.Equals(stored.FileExtension, ".docx", StringComparison.OrdinalIgnoreCase))
             {
                 var headerMetadata = await BuildPdfHeaderMetadataAsync(
                     document,
@@ -751,6 +773,7 @@ namespace DocApi.Services
                         Signature = request.Signature
                     });
                 stored.FileContent = await StampUploadedDocxAsync(stored.FileContent, headerMetadata);
+                stored.FileSize = stored.FileContent.LongLength;
             }
             else if (string.Equals(stored.FileExtension, ".xlsx", StringComparison.OrdinalIgnoreCase))
             {
@@ -763,6 +786,7 @@ namespace DocApi.Services
                         Signature = request.Signature
                     });
                 stored.FileContent = await StampUploadedXlsxAsync(stored.FileContent, headerMetadata);
+                stored.FileSize = stored.FileContent.LongLength;
             }
 
             var now = DateTime.UtcNow;

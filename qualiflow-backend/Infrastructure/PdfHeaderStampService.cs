@@ -16,6 +16,7 @@ namespace DocApi.Infrastructure
 {
     public sealed class PdfHeaderStampService : IPdfHeaderStampService
     {
+        private const string HeaderStampKeyword = "QualiFlowHeaderStamped";
         private readonly ILogger<PdfHeaderStampService> _logger;
         private readonly bool _enabled;
         private readonly string? _organizationLogosPath;
@@ -43,6 +44,11 @@ namespace DocApi.Infrastructure
             {
                 sourceCopy.Position = 0;
                 using var pdfDocument = PdfReader.Open(sourceCopy, PdfDocumentOpenMode.Modify);
+                if (IsAlreadyStamped(pdfDocument))
+                {
+                    return new MemoryStream(sourceCopy.ToArray());
+                }
+
                 var logoPath = ResolveLogoPath(metadata.OrganizationLogoPath, metadata.OrganizationCode);
                 var logoImage = TryLoadLogoImage(logoPath);
                 var signatureImage = TryLoadSignatureImage(metadata.SignatureBase64);
@@ -66,6 +72,7 @@ namespace DocApi.Infrastructure
 
                 logoImage?.Dispose();
                 signatureImage?.Dispose();
+                pdfDocument.Info.Keywords = AppendStampKeyword(pdfDocument.Info.Keywords);
 
                 var stampedStream = new MemoryStream();
                 pdfDocument.Save(stampedStream, false);
@@ -174,6 +181,8 @@ namespace DocApi.Infrastructure
                             DrawHeader(headerGfx, page.Width, metadata, logoImage, i + 1, pdfDocument.Pages.Count);
                         }
                     }
+
+                    pdfDocument.Info.Keywords = AppendStampKeyword(pdfDocument.Info.Keywords);
                 }
                 logoImage?.Dispose();
                 signatureImage?.Dispose();
@@ -517,6 +526,28 @@ private static void DrawSignature(XGraphics gfx, double pageWidth, double pageHe
 
             var buffer = stream.GetBuffer();
             return buffer[0] == '%' && buffer[1] == 'P' && buffer[2] == 'D' && buffer[3] == 'F';
+        }
+
+        private static bool IsAlreadyStamped(PdfDocument pdfDocument)
+        {
+            var keywords = pdfDocument.Info.Keywords;
+            return !string.IsNullOrWhiteSpace(keywords) &&
+                keywords.Contains(HeaderStampKeyword, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string AppendStampKeyword(string? keywords)
+        {
+            if (string.IsNullOrWhiteSpace(keywords))
+            {
+                return HeaderStampKeyword;
+            }
+
+            if (keywords.Contains(HeaderStampKeyword, StringComparison.OrdinalIgnoreCase))
+            {
+                return keywords;
+            }
+
+            return $"{keywords};{HeaderStampKeyword}";
         }
 
         private static string Truncate(string? value, int maxLength)

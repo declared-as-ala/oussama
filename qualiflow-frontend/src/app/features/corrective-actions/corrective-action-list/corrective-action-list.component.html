@@ -7,6 +7,10 @@
         <p class="subtitle">Planification, suivi et vérification des actions de traitement</p>
       </div>
       <div class="header-actions">
+        <button mat-stroked-button type="button" class="btn-toggle-filters" (click)="toggleFilters()">
+          <mat-icon>{{ showFilters ? 'visibility_off' : 'tune' }}</mat-icon>
+          {{ showFilters ? 'Masquer filtres' : 'Afficher filtres' }}
+        </button>
         <button *ngIf="canWrite" mat-flat-button color="primary" class="btn-create" (click)="create()">
           <mat-icon>add</mat-icon>
           Nouvelle action
@@ -15,8 +19,8 @@
     </div>
 
     <!-- MODERN FILTERS -->
-    <form class="glass-filters" [formGroup]="filtersForm" (ngSubmit)="onSearch()">
-      <div class="filter-grid">
+    <form class="glass-filters" *ngIf="showFilters" [formGroup]="filtersForm" (ngSubmit)="onSearch()">
+      <div class="filter-grid primary-filter-grid">
         <div class="filter-item">
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>Recherche</mat-label>
@@ -70,7 +74,7 @@
       </div>
 
       <!-- Advanced Filters Toggle (Optional/Future) -->
-      <div class="filter-grid" style="margin-top: 12px; grid-template-columns: repeat(4, 1fr);">
+      <div class="filter-grid advanced-filter-grid">
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>Non-conformité</mat-label>
           <mat-select formControlName="nonConformityId">
@@ -92,12 +96,12 @@
 
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>Du</mat-label>
-          <input matInput type="date" formControlName="fromDate" />
+          <input matInput type="date" formControlName="fromDate" title="Date de début" placeholder="Date de début" />
         </mat-form-field>
 
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>Au</mat-label>
-          <input matInput type="date" formControlName="toDate" />
+          <input matInput type="date" formControlName="toDate" title="Date de fin" placeholder="Date de fin" />
         </mat-form-field>
       </div>
     </form>
@@ -126,7 +130,7 @@
     <div class="summary-card shadow-sm">
       <span class="sc-label">En cours</span>
       <div class="sc-value">
-        <mat-icon class="icon-warning" style="color: #217346;">pending_actions</mat-icon>
+        <mat-icon class="icon-warning icon-in-progress">pending_actions</mat-icon>
         {{ statistics.inProgress }}
       </div>
       <span class="sc-subtext">Actions actives</span>
@@ -228,7 +232,7 @@
           </ng-container>
 
           <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef style="width: 180px;"></th>
+            <th mat-header-cell *matHeaderCellDef class="actions-header-cell"></th>
             <td mat-cell *matCellDef="let item">
               <div class="table-actions">
                 <button mat-icon-button class="action-btn view-btn" matTooltip="Voir" (click)="view(item)">

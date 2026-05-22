@@ -32,6 +32,60 @@
   }
 }
 
+.btn-toggle-filters {
+  height: 42px;
+  padding: 0 16px !important;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  color: var(--text-secondary) !important;
+  border-color: var(--border-mid) !important;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    margin-right: 6px;
+  }
+}
+
+.glass-filters {
+  margin-top: 22px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+
+  .filter-grid {
+    display: grid;
+    gap: 14px;
+    align-items: end;
+  }
+
+  .primary-filter-grid {
+    grid-template-columns: minmax(260px, 1.35fr) repeat(3, minmax(180px, 1fr)) auto;
+  }
+
+  .advanced-filter-grid {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    grid-template-columns: repeat(4, minmax(180px, 1fr));
+  }
+
+  mat-form-field {
+    width: 100%;
+  }
+
+  .filter-buttons {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding-bottom: 2px;
+    white-space: nowrap;
+  }
+}
+
 /* SUMMARY CARDS */
 .summary-cards {
   display: grid;
@@ -89,6 +143,10 @@
     color: #dc2626;
   }
 
+  .icon-in-progress {
+    color: #217346;
+  }
+
   &.card-danger.active {
     border-left: 4px solid #dc2626;
     background: #fef2f2;
@@ -123,6 +181,10 @@
     letter-spacing: 0.5px;
     padding: 16px 20px !important;
     border-bottom: 2px solid var(--border) !important;
+
+    &.actions-header-cell {
+      width: 180px;
+    }
   }
 
   td.mat-cell {
@@ -404,6 +466,32 @@ mat-paginator {
       font-size: 20px;
     }
   }
+
+  .btn-toggle-filters {
+    flex: 1;
+    justify-content: center;
+    height: 40px;
+    font-size: 13px;
+  }
+
+  .glass-filters {
+    padding: 14px;
+
+    .primary-filter-grid,
+    .advanced-filter-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .filter-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      white-space: normal;
+
+      button {
+        width: 100%;
+      }
+    }
+  }
 }
 
 @media (max-width: 480px) {
@@ -421,8 +509,16 @@ mat-paginator {
     width: 100%;
   }
 
+  .btn-toggle-filters {
+    width: 100%;
+  }
+
+  .glass-filters .filter-buttons {
+    grid-template-columns: 1fr;
+  }
+
   .summary-cards {
     grid-template-columns: 1fr;
     gap: 10px;
   }
-}
+}

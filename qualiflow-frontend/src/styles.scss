@@ -425,6 +425,10 @@ app-root {
 }
 
 /* Mobile table cards: applied automatically by main.ts from table headers. */
+.mobile-filter-toggle {
+    display: none;
+}
+
 @media (max-width: 768px) {
     .mobile-filter-toggle {
         width: 100%;
