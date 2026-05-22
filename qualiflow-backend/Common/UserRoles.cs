@@ -13,7 +13,6 @@ namespace DocApi.Common
             SUPER_ADMIN,
             ADMIN_ORG,
             RESPONSABLE_QUALITE,
-            CHEF_SERVICE,
             UTILISATEUR
         };
     }

@@ -104,7 +104,6 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     return this.authService.hasRole([
       'ADMIN_ORG',
       'RESPONSABLE_QUALITE',
-      'CHEF_SERVICE',
       'UTILISATEUR',
       'SUPER_ADMIN'
     ]);

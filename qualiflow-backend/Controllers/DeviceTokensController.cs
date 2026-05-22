@@ -10,7 +10,7 @@ namespace DocApi.Controllers
     public class DeviceTokensController : ControllerBase
     {
         [HttpPost("register")]
-        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public ActionResult<object> Register([FromBody] RegisterDeviceTokenRequest request)
         {
             _ = request;
@@ -22,7 +22,7 @@ namespace DocApi.Controllers
         }
 
         [HttpPost("unregister")]
-        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public ActionResult<object> Unregister([FromBody] UnregisterDeviceTokenRequest request)
         {
             _ = request;

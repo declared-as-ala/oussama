@@ -42,7 +42,6 @@ export class UsersFormComponent implements OnInit {
   readonly roleOptions: Array<{ value: UserRole; label: string }> = [
     { value: 'ADMIN_ORG', label: 'Administrateur Organisation' },
     { value: 'RESPONSABLE_QUALITE', label: 'Responsable Qualité' },
-    { value: 'CHEF_SERVICE', label: 'Chef de Service' },
     { value: 'UTILISATEUR', label: 'Utilisateur Standard' }
   ];
 

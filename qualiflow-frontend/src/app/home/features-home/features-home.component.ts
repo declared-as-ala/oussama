@@ -19,7 +19,6 @@ export class FeaturesHomeComponent {
     { icon: 'admin_panel_settings', label: 'Gestion des rôles' },
     { icon: 'shield_person', label: 'Super Admin pour gérer les organisations' },
     { icon: 'workspace_premium', label: 'Responsable qualité' },
-    { icon: 'badge', label: 'Chef de service' },
     { icon: 'person', label: 'Utilisateur simple' },
     { icon: 'upload_file', label: 'Upload, consultation et validation des documents' },
     { icon: 'history', label: 'Historique et traçabilité' },

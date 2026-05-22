@@ -23,7 +23,7 @@ namespace DocApi.Services
             - QualiFlow est une plateforme de management qualite et GED pour piloter les documents, processus, procedures, non-conformites, actions correctives, indicateurs, notifications, utilisateurs et organisations.
             - Le backend utilise ASP.NET Core Web API (.NET 8), PostgreSQL, Dapper/Npgsql, JWT, SignalR, RabbitMQ, Swagger, SMTP, OneSignal et Groq.
             - Le frontend web utilise Angular 17, Angular Material et TypeScript. Le mobile utilise Ionic/Angular et Capacitor.
-            - Roles principaux: SUPER_ADMIN, ADMIN_ORG, RESPONSABLE_QUALITE, CHEF_SERVICE, UTILISATEUR.
+            - Roles principaux: SUPER_ADMIN, ADMIN_ORG, RESPONSABLE_QUALITE, UTILISATEUR.
             - Workflow documentaire typique: creation du document, ajout d'une version, statut EN_REVISION, verification/approbation, publication, consultation, archivage ou gestion de peremption.
             - Les documents peuvent etre lies aux processus, procedures, proprietaires et versions.
             - Les non-conformites servent a enregistrer les ecarts, analyser les causes, suivre les statuts et declencher des actions correctives.
@@ -242,7 +242,7 @@ namespace DocApi.Services
                 "2. Objectif\n" +
                 "- Aider l'organisation a piloter sa conformite ISO 9001/21001, suivre les preuves, mesurer la performance et soutenir l'amelioration continue.\n\n" +
                 "3. Acteurs impliques\n" +
-                "- SUPER_ADMIN, ADMIN_ORG, RESPONSABLE_QUALITE, CHEF_SERVICE et UTILISATEUR selon les droits et responsabilites.\n\n" +
+                "- SUPER_ADMIN, ADMIN_ORG, RESPONSABLE_QUALITE et UTILISATEUR selon les droits et responsabilites.\n\n" +
                 "4. Conditions d'entree\n" +
                 "- Documents, processus, procedures, ecarts, indicateurs ou exigences ISO a analyser.\n\n" +
                 "5. Etapes detaillees\n" +

@@ -90,7 +90,6 @@ namespace DocApi.Common
             UserRoles.SUPER_ADMIN,
             UserRoles.ADMIN_ORG,
             UserRoles.RESPONSABLE_QUALITE,
-            UserRoles.CHEF_SERVICE,
             UserRoles.UTILISATEUR
         };
     }

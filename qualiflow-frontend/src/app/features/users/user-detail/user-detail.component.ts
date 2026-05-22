@@ -47,7 +47,6 @@ export class UserDetailComponent implements OnInit {
   readonly roleOptions: Array<{ value: UserRole; label: string }> = [
     { value: 'ADMIN_ORG', label: 'Admin org' },
     { value: 'RESPONSABLE_QUALITE', label: 'Responsable qualite' },
-    { value: 'CHEF_SERVICE', label: 'Chef service' },
     { value: 'UTILISATEUR', label: 'Utilisateur' }
   ];
 

@@ -131,7 +131,7 @@ export class NonconformityListComponent implements OnInit {
   }
 
   get canCreate(): boolean {
-    return this.authService.hasRole(['ADMIN_ORG', 'RESPONSABLE_QUALITE', 'CHEF_SERVICE', 'UTILISATEUR']);
+    return this.authService.hasRole(['ADMIN_ORG', 'RESPONSABLE_QUALITE', 'UTILISATEUR']);
   }
 
   get canManageValidation(): boolean {

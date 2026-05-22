@@ -115,15 +115,13 @@ namespace DocApi.Services
 
             var users = await _userRepository.GetAllAsync();
             var adminsToNotify = users
-                .Where(u => u.IsActive && (
-                    string.Equals(u.Role, UserRoles.SUPER_ADMIN, StringComparison.OrdinalIgnoreCase) ||
-                    (string.Equals(u.Role, UserRoles.ADMIN_ORG, StringComparison.OrdinalIgnoreCase) && u.OrganizationId == 1)
-                ))
+                .Where(u => u.IsActive &&
+                    string.Equals(u.Role, UserRoles.SUPER_ADMIN, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
             if (adminsToNotify.Count == 0)
             {
-                _logger.LogWarning("Aucun administrateur actif (SUPER_ADMIN ou ADMIN_ORG de l'organisation 1) trouvé pour traiter la demande d'organisation.");
+                _logger.LogWarning("Aucun SUPER_ADMIN actif trouvé pour traiter la demande d'organisation.");
                 return new SubmitOrganizationRequestResponse
                 {
                     Success = false,

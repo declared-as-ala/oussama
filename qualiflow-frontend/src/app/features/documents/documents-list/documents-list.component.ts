@@ -97,7 +97,7 @@ export class DocumentsListComponent implements OnInit {
   }
 
   get canSubmit(): boolean {
-    return this.authService.hasRole(['ADMIN_ORG', 'RESPONSABLE_QUALITE', 'CHEF_SERVICE', 'UTILISATEUR']);
+    return this.authService.hasRole(['ADMIN_ORG', 'RESPONSABLE_QUALITE', 'UTILISATEUR']);
   }
 
   get isQualityManager(): boolean {
@@ -113,7 +113,7 @@ export class DocumentsListComponent implements OnInit {
   }
 
   get canTrackMyUploads(): boolean {
-    return this.authService.hasRole(['UTILISATEUR', 'CHEF_SERVICE']);
+    return this.authService.hasRole(['UTILISATEUR']);
   }
 
   get displayedColumns(): string[] {

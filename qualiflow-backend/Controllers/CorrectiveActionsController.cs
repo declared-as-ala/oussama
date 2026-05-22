@@ -22,7 +22,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<PagedCorrectiveActionResponse>> GetAll([FromQuery] GetCorrectiveActionsQueryRequest query)
         {
             try
@@ -41,7 +41,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("statistics")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<CorrectiveActionStatisticsResponse>> GetStatistics()
         {
             try
@@ -60,7 +60,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("{id:int}")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<CorrectiveActionDetailsResponse>> GetById(int id)
         {
             try
@@ -153,7 +153,7 @@ namespace DocApi.Controllers
         }
 
         [HttpPatch("{id:int}/status")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<CorrectiveActionResponse>> UpdateStatus(int id, [FromBody] UpdateCorrectiveActionStatusRequest request)
         {
             try
@@ -199,7 +199,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("by-nonconformity/{nonConformityId:int}")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<List<CorrectiveActionListItemResponse>>> GetByNonConformity(int nonConformityId)
         {
             try
@@ -223,7 +223,7 @@ namespace DocApi.Controllers
 
         [HttpGet("{id:int}/action-logs")]
         [HttpGet("{id:int}/history")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<List<CorrectiveActionActionLogResponse>>> GetHistory(int id)
         {
             try

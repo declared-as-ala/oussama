@@ -22,7 +22,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<PagedIndicatorResponse>> GetAll([FromQuery] GetIndicatorsQueryRequest query)
         {
             try
@@ -41,7 +41,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("statistics")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<IndicatorStatisticsResponse>> GetStatistics()
         {
             try
@@ -60,7 +60,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("by-process/{processId:int}")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<List<IndicatorListItemResponse>>> GetByProcess(int processId)
         {
             try
@@ -83,7 +83,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("alerts")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<List<IndicatorAlertResponse>>> GetAlerts()
         {
             try
@@ -102,7 +102,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("{id:int}/chart")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<IndicatorChartResponse>> GetChart(int id)
         {
             try
@@ -125,7 +125,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("{id:int}")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<IndicatorDetailsResponse>> GetById(int id)
         {
             try
@@ -241,7 +241,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("{indicatorId:int}/values")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<List<IndicatorValueResponse>>> GetValues(int indicatorId)
         {
             try

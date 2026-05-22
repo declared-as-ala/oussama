@@ -570,11 +570,11 @@ namespace DocApi.Repositories
             if (pendingValidationOnly)
             {
                 conditions.Add("COALESCE(cv.Status, 'BROUILLON') = 'EN_REVISION'");
-                conditions.Add("COALESCE(eu.Role, '') IN ('CHEF_SERVICE', 'UTILISATEUR')");
+                conditions.Add("COALESCE(eu.Role, '') = 'UTILISATEUR'");
             }
             else if (hidePendingValidationFromGlobal)
             {
-                conditions.Add("NOT (COALESCE(cv.Status, 'BROUILLON') = 'EN_REVISION' AND COALESCE(eu.Role, '') IN ('CHEF_SERVICE', 'UTILISATEUR'))");
+                conditions.Add("NOT (COALESCE(cv.Status, 'BROUILLON') = 'EN_REVISION' AND COALESCE(eu.Role, '') = 'UTILISATEUR')");
             }
 
             if (processId.HasValue)

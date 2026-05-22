@@ -50,12 +50,6 @@ export class LoginComponent implements OnInit {
       password: 'Qualite@123'
     },
     {
-      label: 'Chef Service',
-      role: 'CHEF_SERVICE',
-      email: 'chef@demo.local',
-      password: 'Chef@123'
-    },
-    {
       label: 'Utilisateur',
       role: 'UTILISATEUR',
       email: 'user@demo.local',

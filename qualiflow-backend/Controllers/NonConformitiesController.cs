@@ -23,7 +23,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<PagedNonConformityResponse>> GetAll([FromQuery] NonConformityListQueryParameters query)
         {
             try
@@ -61,7 +61,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("statistics")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<NonConformityStatisticsResponse>> GetStatistics()
         {
             try
@@ -80,7 +80,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("{id:int}")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<NonConformityDetailsResponse>> GetById(int id)
         {
             try
@@ -103,7 +103,7 @@ namespace DocApi.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<NonConformityResponse>> Create([FromBody] CreateNonConformityRequest request)
         {
             try
@@ -219,7 +219,7 @@ namespace DocApi.Controllers
         }
 
         [HttpPost("{id:int}/attachments")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<NonConformityAttachmentResponse>> UploadAttachment(int id, IFormFile file)
         {
             try
@@ -257,7 +257,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("attachments/{attachmentId:int}")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<IActionResult> GetAttachment(int attachmentId)
         {
             try
@@ -285,7 +285,7 @@ namespace DocApi.Controllers
         }
 
         [HttpDelete("attachments/{attachmentId:int}")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<IActionResult> DeleteAttachment(int attachmentId)
         {
             try

@@ -11,7 +11,7 @@ namespace DocApi.Controllers
 {
     [ApiController]
     [Route("api/chat")]
-    [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+    [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
     public class ChatController : ControllerBase
     {
         private readonly IChatbotService _chatbotService;

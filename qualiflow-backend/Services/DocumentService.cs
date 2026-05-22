@@ -85,7 +85,7 @@ namespace DocApi.Services
 
             var statusFilter = ResolveReadableStatusFilter(query.Status, userContext);
 
-            int? restrictedUserId = (userContext.Role == UserRoles.CHEF_SERVICE || userContext.Role == UserRoles.UTILISATEUR)
+            int? restrictedUserId = (userContext.Role == UserRoles.UTILISATEUR)
                 ? userContext.UserId
                 : null;
 
@@ -148,7 +148,7 @@ namespace DocApi.Services
 
             var status = currentVersion?.Status ?? DocumentConstants.StatusBrouillon;
 
-            if (userContext.Role == UserRoles.CHEF_SERVICE || userContext.Role == UserRoles.UTILISATEUR)
+            if (userContext.Role == UserRoles.UTILISATEUR)
             {
                 if (document.ProcessId.HasValue)
                 {
@@ -505,7 +505,7 @@ namespace DocApi.Services
             var organizationScope = ResolveOrganizationScopeForRead(userContext, null);
             var statusFilter = ResolveReadableStatusFilter(null, userContext);
 
-            int? restrictedUserId = (userContext.Role == UserRoles.CHEF_SERVICE || userContext.Role == UserRoles.UTILISATEUR)
+            int? restrictedUserId = (userContext.Role == UserRoles.UTILISATEUR)
                 ? userContext.UserId
                 : null;
 
@@ -895,7 +895,7 @@ namespace DocApi.Services
             {
                 await _notificationEventPublisher.PublishToRolesAsync(
                     document.OrganizationId,
-                    new[] { UserRoles.ADMIN_ORG, UserRoles.RESPONSABLE_QUALITE, UserRoles.CHEF_SERVICE },
+                    new[] { UserRoles.ADMIN_ORG, UserRoles.RESPONSABLE_QUALITE },
                     NotificationConstants.TypeDocumentExpired,
                     NotificationConstants.CategoryWarning,
                     $"Document expire {document.Code}",
@@ -924,7 +924,7 @@ namespace DocApi.Services
             {
                 await _notificationEventPublisher.PublishToRolesAsync(
                     document.OrganizationId,
-                    new[] { UserRoles.ADMIN_ORG, UserRoles.RESPONSABLE_QUALITE, UserRoles.CHEF_SERVICE },
+                    new[] { UserRoles.ADMIN_ORG, UserRoles.RESPONSABLE_QUALITE },
                     NotificationConstants.TypeSystemAlert,
                     NotificationConstants.CategorySuccess,
                     $"Document approuve {document.Code}",
@@ -953,7 +953,7 @@ namespace DocApi.Services
             {
                 await _notificationEventPublisher.PublishToRolesAsync(
                     document.OrganizationId,
-                    new[] { UserRoles.ADMIN_ORG, UserRoles.RESPONSABLE_QUALITE, UserRoles.CHEF_SERVICE, UserRoles.UTILISATEUR },
+                    new[] { UserRoles.ADMIN_ORG, UserRoles.RESPONSABLE_QUALITE, UserRoles.UTILISATEUR },
                     NotificationConstants.TypeDocumentNewVersion,
                     NotificationConstants.CategorySuccess,
                     $"Nouvelle version publiee {document.Code}",
@@ -982,7 +982,7 @@ namespace DocApi.Services
             {
                 await _notificationEventPublisher.PublishToRolesAsync(
                     document.OrganizationId,
-                    new[] { UserRoles.ADMIN_ORG, UserRoles.RESPONSABLE_QUALITE, UserRoles.CHEF_SERVICE },
+                    new[] { UserRoles.ADMIN_ORG, UserRoles.RESPONSABLE_QUALITE },
                     NotificationConstants.TypeSystemAlert,
                     NotificationConstants.CategoryWarning,
                     $"Document rejete {document.Code}",
@@ -998,7 +998,7 @@ namespace DocApi.Services
             {
                 await _notificationEventPublisher.PublishToRolesAsync(
                     document.OrganizationId,
-                    new[] { UserRoles.ADMIN_ORG, UserRoles.RESPONSABLE_QUALITE, UserRoles.CHEF_SERVICE, UserRoles.UTILISATEUR },
+                    new[] { UserRoles.ADMIN_ORG, UserRoles.RESPONSABLE_QUALITE, UserRoles.UTILISATEUR },
                     NotificationConstants.TypeSystemAlert,
                     NotificationConstants.CategoryInfo,
                     $"Document archive {document.Code}",
@@ -1626,7 +1626,7 @@ namespace DocApi.Services
                 return;
             }
 
-            if (userContext.Role == UserRoles.CHEF_SERVICE || userContext.Role == UserRoles.UTILISATEUR)
+            if (userContext.Role == UserRoles.UTILISATEUR)
             {
                 if (!processId.HasValue)
                 {

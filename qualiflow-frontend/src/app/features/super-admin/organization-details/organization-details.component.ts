@@ -48,7 +48,7 @@ import { OrganizationService } from '../services/organization.service';
 export class OrganizationDetailsComponent implements OnInit {
   readonly displayedAdminColumns: string[] = ['name', 'email', 'status', 'createdAt'];
   readonly displayedUserColumns: string[] = ['name', 'email', 'role', 'status', 'createdAt', 'actions'];
-  readonly roleOptions: string[] = ['ADMIN_ORG', 'RESPONSABLE_QUALITE', 'CHEF_SERVICE', 'UTILISATEUR'];
+  readonly roleOptions: string[] = ['ADMIN_ORG', 'RESPONSABLE_QUALITE', 'UTILISATEUR'];
 
   loading = false;
   creatingUser = false;

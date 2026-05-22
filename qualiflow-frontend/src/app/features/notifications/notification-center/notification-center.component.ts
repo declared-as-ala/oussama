@@ -230,8 +230,6 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
     switch (this.currentRole) {
       case 'UTILISATEUR':
         return 'Vue Utilisateur: notifications documentaires et actions personnelles';
-      case 'CHEF_SERVICE':
-        return 'Vue Responsable Département: suivi des documents de votre périmètre';
       case 'RESPONSABLE_QUALITE':
         return 'Vue Responsable Qualité: supervision des validations et expirations';
       case 'SUPER_ADMIN':

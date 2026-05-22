@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
 
-export type UserRole = 'ADMIN_ORG' | 'RESPONSABLE_QUALITE' | 'CHEF_SERVICE' | 'UTILISATEUR';
+export type UserRole = 'ADMIN_ORG' | 'RESPONSABLE_QUALITE' | 'UTILISATEUR';
 
 export interface UserResponse {
   id: number;

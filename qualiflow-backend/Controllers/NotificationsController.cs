@@ -48,7 +48,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<PagedNotificationResponse>> GetNotifications([FromQuery] GetNotificationsQueryRequest query)
         {
             try
@@ -67,7 +67,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("unread")]
-        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<PagedNotificationResponse>> GetUnreadNotifications([FromQuery] GetNotificationsQueryRequest query)
         {
             try
@@ -87,7 +87,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("{id:int}")]
-        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<NotificationResponse>> GetById(int id)
         {
             try
@@ -110,7 +110,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("unread-count")]
-        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<object>> GetUnreadCount()
         {
             try
@@ -129,7 +129,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("statistics")]
-        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<NotificationStatisticsResponse>> GetStatistics()
         {
             try
@@ -148,7 +148,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("preferences")]
-        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<IReadOnlyList<NotificationPreferenceResponse>>> GetPreferences()
         {
             try
@@ -192,7 +192,7 @@ namespace DocApi.Controllers
         }
 
         [HttpPut("preferences")]
-        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<IReadOnlyList<NotificationPreferenceResponse>>> UpdatePreferences([FromBody] UpdateNotificationPreferencesRequest request)
         {
             try
@@ -235,7 +235,7 @@ namespace DocApi.Controllers
         }
 
         [HttpPatch("{id:int}/mark-read")]
-        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<NotificationResponse>> MarkRead(int id, [FromBody] MarkNotificationReadRequest? _request = null)
         {
             try
@@ -258,14 +258,14 @@ namespace DocApi.Controllers
         }
 
         [HttpPut("{id:int}/read")]
-        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public Task<ActionResult<NotificationResponse>> MarkReadPut(int id, [FromBody] MarkNotificationReadRequest? request = null)
         {
             return MarkRead(id, request);
         }
 
         [HttpPatch("mark-all-read")]
-        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<object>> MarkAllRead([FromBody] MarkAllNotificationsReadRequest? _request = null)
         {
             try
@@ -303,14 +303,14 @@ namespace DocApi.Controllers
         }
 
         [HttpPut("mark-all-read")]
-        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public Task<ActionResult<object>> MarkAllReadPut([FromBody] MarkAllNotificationsReadRequest? request = null)
         {
             return MarkAllRead(request);
         }
 
         [HttpPatch("{id:int}/archive")]
-        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<NotificationResponse>> Archive(int id, [FromBody] ArchiveNotificationRequest? _request = null)
         {
             try
@@ -333,7 +333,7 @@ namespace DocApi.Controllers
         }
 
         [HttpDelete("{id:int}")]
-        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -361,7 +361,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("recipients")]
-        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE")]
+        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE")]
         public async Task<ActionResult<IReadOnlyList<NotificationRecipientResponse>>> GetRecipients([FromQuery] NotificationRecipientsQueryRequest query)
         {
             try
@@ -380,7 +380,7 @@ namespace DocApi.Controllers
         }
 
         [HttpPost("send-test")]
-        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE")]
+        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE")]
         public async Task<ActionResult<object>> SendTest([FromBody] SendOneSignalNotificationRequest request)
         {
             try

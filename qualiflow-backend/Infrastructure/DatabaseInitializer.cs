@@ -1024,7 +1024,6 @@ namespace DocApi.Infrastructure
                 new("superadmin@demo.local", "SuperAdmin@123", "Super", "Admin", null, "SUPER_ADMIN", "System Administrator"),
                 new("admin@demo.local", "Admin@123", "Admin", "Demo", organizationId, "ADMIN_ORG", "Organization Administrator"),
                 new("qualite@demo.local", "Qualite@123", "Qualite", "Manager", organizationId, "RESPONSABLE_QUALITE", "Quality Manager"),
-                new("chef@demo.local", "Chef@123", "Chef", "Service", organizationId, "CHEF_SERVICE", "Service Head"),
                 new("user@demo.local", "User@123", "User", "Demo", organizationId, "UTILISATEUR", "Standard User"),
                 new("admin.nord@demo.local", "AdminNord@123", "Admin", "Nord", organizationNordId, "ADMIN_ORG", "Organization Administrator"),
                 new("admin.sud@demo.local", "AdminSud@123", "Admin", "Sud", organizationSudId, "ADMIN_ORG", "Organization Administrator")
@@ -1087,9 +1086,7 @@ namespace DocApi.Infrastructure
                 "SELECT Id FROM Users WHERE Email = @Email LIMIT 1",
                 new { Email = "qualite@demo.local" });
 
-            var pilotChefId = await connection.QueryFirstOrDefaultAsync<int?>(
-                "SELECT Id FROM Users WHERE Email = @Email LIMIT 1",
-                new { Email = "chef@demo.local" });
+            var pilotChefId = pilotQualiteId;
 
             var pilotSupportId = await connection.QueryFirstOrDefaultAsync<int?>(
                 "SELECT Id FROM Users WHERE Email = @Email LIMIT 1",

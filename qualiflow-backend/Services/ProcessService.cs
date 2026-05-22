@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -41,7 +41,7 @@ namespace DocApi.Services
             var pageSize = query.PageSize <= 0 ? 10 : Math.Min(query.PageSize, 100);
             var organizationFilter = ResolveOrganizationScopeForRead(userContext, query.OrganizationId);
 
-            int? restrictedUserId = (userContext.Role == UserRoles.CHEF_SERVICE || userContext.Role == UserRoles.UTILISATEUR)
+            int? restrictedUserId = (userContext.Role == UserRoles.UTILISATEUR)
                 ? userContext.UserId
                 : null;
 
@@ -508,7 +508,7 @@ namespace DocApi.Services
                 throw new ForbiddenException("Organisation introuvable dans le token utilisateur.");
             }
 
-            int? restrictedUserId = (userContext.Role == UserRoles.CHEF_SERVICE || userContext.Role == UserRoles.UTILISATEUR)
+            int? restrictedUserId = (userContext.Role == UserRoles.UTILISATEUR)
                 ? userContext.UserId
                 : null;
 
@@ -533,7 +533,7 @@ namespace DocApi.Services
                 throw new ForbiddenException("Organisation introuvable dans le token utilisateur.");
             }
 
-            int? restrictedUserId = (userContext.Role == UserRoles.CHEF_SERVICE || userContext.Role == UserRoles.UTILISATEUR)
+            int? restrictedUserId = (userContext.Role == UserRoles.UTILISATEUR)
                 ? userContext.UserId
                 : null;
 
@@ -717,7 +717,7 @@ namespace DocApi.Services
                 return;
             }
 
-            if (userContext.Role == UserRoles.CHEF_SERVICE || userContext.Role == UserRoles.UTILISATEUR)
+            if (userContext.Role == UserRoles.UTILISATEUR)
             {
                 if (process.PilotUserId == userContext.UserId)
                 {
@@ -746,7 +746,7 @@ namespace DocApi.Services
                 return;
             }
 
-            if (userContext.Role == UserRoles.CHEF_SERVICE || userContext.Role == UserRoles.UTILISATEUR)
+            if (userContext.Role == UserRoles.UTILISATEUR)
             {
                 if (process.PilotUserId == userContext.UserId)
                 {

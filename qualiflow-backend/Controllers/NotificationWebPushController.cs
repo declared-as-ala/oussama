@@ -24,7 +24,7 @@ namespace DocApi.Controllers
         }
 
         [HttpPost("subscribe")]
-        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<object>> Subscribe([FromBody] RegisterWebPushSubscriptionRequest request)
         {
             var userContext = GetUserContext();
@@ -43,7 +43,7 @@ namespace DocApi.Controllers
         }
 
         [HttpPost("unsubscribe")]
-        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<object>> Unsubscribe([FromBody] UnregisterWebPushSubscriptionRequest request)
         {
             var userContext = GetUserContext();
@@ -52,7 +52,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("my-subscriptions")]
-        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<IReadOnlyList<WebPushSubscriptionResponse>>> GetMySubscriptions()
         {
             var userContext = GetUserContext();

@@ -78,7 +78,7 @@ export class ProcessHistoryComponent implements OnInit {
 
     const parsePilotName = (val: string | null | undefined): string => {
       if (!val) return 'Aucun';
-      // Format is: "ID: 3, Nom: Chef Service" or similar
+      // Format is: "ID: 3, Nom: Responsable Qualite" or similar
       const match = val.match(/Nom:\s*(.*)$/i);
       return match ? match[1].trim() : val;
     };

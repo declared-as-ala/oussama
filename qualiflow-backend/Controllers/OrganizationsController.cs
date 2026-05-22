@@ -359,7 +359,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("my/logo")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<IActionResult> GetMyLogo()
         {
             try

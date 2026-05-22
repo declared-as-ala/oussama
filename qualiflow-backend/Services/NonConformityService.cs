@@ -165,7 +165,7 @@ namespace DocApi.Services
                 ? await _nonConformityRepository.GenerateNextCodeAsync(organizationId)
                 : request.Code.Trim();
 
-            // UTILISATEUR and CHEF_SERVICE always create NCs in "awaiting validation" state.
+            // UTILISATEUR always creates NCs in "awaiting validation" state.
             // Only ADMIN_ORG and RESPONSABLE_QUALITE can set a custom status at creation.
             var isPrivilegedCreator = userContext.Role == UserRoles.ADMIN_ORG
                                    || userContext.Role == UserRoles.RESPONSABLE_QUALITE;
@@ -383,7 +383,7 @@ namespace DocApi.Services
 
             await _notificationEventPublisher.PublishToRolesAsync(
                 entity.OrganizationId,
-                new[] { UserRoles.ADMIN_ORG, UserRoles.RESPONSABLE_QUALITE, UserRoles.CHEF_SERVICE, UserRoles.UTILISATEUR },
+                new[] { UserRoles.ADMIN_ORG, UserRoles.RESPONSABLE_QUALITE, UserRoles.UTILISATEUR },
                 NotificationConstants.TypeNonConformityCreated,
                 NotificationConstants.CategoryInfo,
                 $"Nouvelle non-conformite {entity.Code ?? "a valider"}",
@@ -398,7 +398,7 @@ namespace DocApi.Services
             {
                 await _notificationEventPublisher.PublishToRolesAsync(
                     entity.OrganizationId,
-                    new[] { UserRoles.ADMIN_ORG, UserRoles.RESPONSABLE_QUALITE, UserRoles.CHEF_SERVICE, UserRoles.UTILISATEUR },
+                    new[] { UserRoles.ADMIN_ORG, UserRoles.RESPONSABLE_QUALITE, UserRoles.UTILISATEUR },
                     NotificationConstants.TypeNonConformityCritical,
                     NotificationConstants.CategoryError,
                     $"Non-conformite critique {entity.Code ?? "a valider"}",

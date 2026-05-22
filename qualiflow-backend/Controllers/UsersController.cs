@@ -11,7 +11,7 @@ namespace DocApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = UserRoles.ADMIN_ORG + "," + UserRoles.RESPONSABLE_QUALITE + "," + UserRoles.CHEF_SERVICE + "," + UserRoles.UTILISATEUR)]
+    [Authorize(Roles = UserRoles.ADMIN_ORG + "," + UserRoles.RESPONSABLE_QUALITE + "," + UserRoles.UTILISATEUR)]
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;

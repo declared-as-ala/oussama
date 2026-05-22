@@ -32,7 +32,6 @@ export class SidebarComponent {
     return this.authService.hasRole([
       'ADMIN_ORG',
       'RESPONSABLE_QUALITE',
-      'CHEF_SERVICE',
       'UTILISATEUR'
     ]);
   }
@@ -41,7 +40,6 @@ export class SidebarComponent {
     return this.authService.hasRole([
       'ADMIN_ORG',
       'RESPONSABLE_QUALITE',
-      'CHEF_SERVICE',
       'UTILISATEUR',
       'SUPER_ADMIN'
     ]);
@@ -51,7 +49,6 @@ export class SidebarComponent {
     return this.authService.hasRole([
       'ADMIN_ORG',
       'RESPONSABLE_QUALITE',
-      'CHEF_SERVICE',
       'UTILISATEUR'
     ]);
   }
@@ -60,7 +57,6 @@ export class SidebarComponent {
     return this.authService.hasRole([
       'ADMIN_ORG',
       'RESPONSABLE_QUALITE',
-      'CHEF_SERVICE',
       'UTILISATEUR'
     ]);
   }
@@ -76,7 +72,6 @@ export class SidebarComponent {
     return this.authService.hasRole([
       'ADMIN_ORG',
       'RESPONSABLE_QUALITE',
-      'CHEF_SERVICE',
       'UTILISATEUR'
     ]);
   }
@@ -85,7 +80,6 @@ export class SidebarComponent {
     return this.authService.hasRole([
       'ADMIN_ORG',
       'RESPONSABLE_QUALITE',
-      'CHEF_SERVICE',
       'UTILISATEUR'
     ]);
   }
@@ -94,7 +88,6 @@ export class SidebarComponent {
     return this.authService.hasRole([
       'ADMIN_ORG',
       'RESPONSABLE_QUALITE',
-      'CHEF_SERVICE',
       'UTILISATEUR'
     ]);
   }
@@ -103,7 +96,6 @@ export class SidebarComponent {
     return this.authService.hasRole([
       'ADMIN_ORG',
       'RESPONSABLE_QUALITE',
-      'CHEF_SERVICE',
       'UTILISATEUR'
     ]);
   }

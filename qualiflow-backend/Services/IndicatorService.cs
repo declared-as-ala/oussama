@@ -495,7 +495,7 @@ namespace DocApi.Services
 
                 await _notificationEventPublisher.PublishToRolesAsync(
                     organizationId,
-                    new[] { UserRoles.ADMIN_ORG, UserRoles.RESPONSABLE_QUALITE, UserRoles.CHEF_SERVICE, UserRoles.UTILISATEUR },
+                    new[] { UserRoles.ADMIN_ORG, UserRoles.RESPONSABLE_QUALITE, UserRoles.UTILISATEUR },
                     NotificationConstants.TypeIndicatorAlert,
                     NotificationConstants.CategoryWarning,
                     $"Alerte indicateur {indicator.Code}",

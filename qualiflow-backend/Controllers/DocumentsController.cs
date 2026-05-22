@@ -22,7 +22,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<PagedDocumentResponse>> GetDocuments([FromQuery] DocumentListQueryRequest query)
         {
             try
@@ -41,7 +41,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("statistics")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<DocumentStatisticsResponse>> GetStatistics()
         {
             try
@@ -60,7 +60,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("expiring")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<List<DocumentExpiringResponse>>> GetExpiring([FromQuery] int withinDays = 30)
         {
             try
@@ -98,7 +98,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("{id:int}")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<DocumentDetailsResponse>> GetById(int id)
         {
             try
@@ -121,7 +121,7 @@ namespace DocApi.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<DocumentResponse>> Create([FromBody] CreateDocumentRequest request)
         {
             try
@@ -293,7 +293,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("{documentId:int}/versions")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<List<DocumentVersionResponse>>> GetVersions(int documentId)
         {
             try
@@ -316,7 +316,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("{documentId:int}/action-logs")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<List<DocumentActionLogResponse>>> GetActionLogs(int documentId)
         {
             try
@@ -339,7 +339,7 @@ namespace DocApi.Controllers
         }
 
         [HttpPost("{documentId:int}/versions")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<DocumentVersionResponse>> CreateVersion(int documentId, [FromBody] CreateDocumentVersionRequest request)
         {
             try
@@ -362,7 +362,7 @@ namespace DocApi.Controllers
         }
 
         [HttpPost("{documentId:int}/upload")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         [RequestSizeLimit(100_000_000)]
         public async Task<ActionResult<DocumentVersionResponse>> UploadVersion(int documentId, [FromForm] UploadDocumentVersionRequest request)
         {
@@ -386,7 +386,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("{documentId:int}/versions/{versionId:int}")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<DocumentVersionResponse>> GetVersionById(int documentId, int versionId)
         {
             try
@@ -432,7 +432,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("{documentId:int}/download-current")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<IActionResult> DownloadCurrent(int documentId)
         {
             try
@@ -455,7 +455,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("{documentId:int}/versions/{versionId:int}/download")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<IActionResult> DownloadVersion(int documentId, int versionId)
         {
             try
@@ -478,7 +478,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("{documentId:int}/preview-current")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<IActionResult> PreviewCurrent(int documentId)
         {
             try

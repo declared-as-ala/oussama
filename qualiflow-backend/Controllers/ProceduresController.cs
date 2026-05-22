@@ -22,7 +22,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<PagedProcedureResponse>> GetProcedures([FromQuery] ProcedureListQueryParameters query)
         {
             try
@@ -41,7 +41,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("statistics")]
-        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<ProcedureStatisticsResponse>> GetStatistics()
         {
             try
@@ -60,7 +60,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("by-process/{processId:int}")]
-        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<List<ProcedureListItemResponse>>> GetByProcess(int processId)
         {
             try
@@ -137,7 +137,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("{id:int}")]
-        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<ProcedureDetailsResponse>> GetById(int id)
         {
             try
@@ -179,7 +179,7 @@ namespace DocApi.Controllers
         }
 
         [HttpPut("{id:int}")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<ProcedureResponse>> Update(int id, [FromBody] UpdateProcedureRequest request)
         {
             try
@@ -253,7 +253,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("{procedureId:int}/instructions")]
-        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<List<InstructionResponse>>> GetInstructions(int procedureId)
         {
             try
@@ -350,7 +350,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("{procedureId:int}/action-logs")]
-        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
+        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<List<ProcedureActionLogResponse>>> GetActionLogs(int procedureId)
         {
             try
