@@ -21,6 +21,10 @@
       <mat-icon>person_search</mat-icon>
       <span>2. Pilotage & Échéances</span>
     </button>
+    <button type="button" class="tab-button" [class.active]="activeTab === 2" (click)="setActiveTab(2)">
+      <mat-icon>attach_file</mat-icon>
+      <span>3. Images & Documents</span>
+    </button>
   </div>
 
   <div class="loading-box" *ngIf="loading">
@@ -123,6 +127,55 @@
           </mat-form-field>
         </div>
       </mat-card>
+
+      <!-- ATTACHMENTS CARD -->
+      <mat-card class="form-card shadow-sm" *ngIf="activeTab === 2">
+        <div class="card-header">
+          <mat-icon>attach_file</mat-icon>
+          <h2>Images & Documents</h2>
+        </div>
+
+        <div class="card-body">
+          <div class="upload-zone">
+            <input type="file" hidden multiple #attachmentInput [accept]="acceptedAttachmentTypes"
+              (change)="onFilesSelected($event)" />
+            <button mat-stroked-button type="button" (click)="attachmentInput.click()">
+              <mat-icon>upload_file</mat-icon>
+              Ajouter des fichiers
+            </button>
+            <span>{{ allowedAttachmentFormatsLabel }}</span>
+          </div>
+
+          <div class="attachment-list" *ngIf="selectedFiles.length > 0">
+            <div class="attachment-row" *ngFor="let file of selectedFiles; let i = index">
+              <mat-icon>{{ isImageFile(file) ? 'image' : 'description' }}</mat-icon>
+              <div>
+                <strong>{{ file.name }}</strong>
+                <span>{{ formatFileSize(file.size) }}</span>
+              </div>
+              <button mat-icon-button type="button" (click)="removeSelectedFile(i)" title="Retirer">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          <div class="attachment-list" *ngIf="existingAttachments.length > 0">
+            <div class="section-label">Fichiers déjà liés</div>
+            <div class="attachment-row" *ngFor="let attachment of existingAttachments">
+              <mat-icon>{{ isImageAttachment(attachment) ? 'image' : 'description' }}</mat-icon>
+              <div>
+                <strong>{{ attachment.originalFileName }}</strong>
+                <span>{{ formatFileSize(attachment.fileSize) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="empty-attachments" *ngIf="selectedFiles.length === 0 && existingAttachments.length === 0">
+            <mat-icon>perm_media</mat-icon>
+            <p>Aucune image ou document ajouté pour cette action.</p>
+          </div>
+        </div>
+      </mat-card>
     </div>
 
     <!-- FORM ACTIONS -->
@@ -138,12 +191,12 @@
         </button>
         <div style="flex: 1 1 auto;"></div>
         <button mat-flat-button color="primary" type="button" class="btn-submit" (click)="nextTab()"
-          *ngIf="activeTab < 1" style="background-color: var(--xl-green-mid) !important; color: white !important;">
+          *ngIf="activeTab < 2" style="background-color: var(--xl-green-mid) !important; color: white !important;">
           <span>Suivant</span>
           <mat-icon>navigate_next</mat-icon>
         </button>
         <button mat-flat-button color="primary" type="submit" class="btn-submit" [disabled]="saving || form.invalid"
-          *ngIf="activeTab === 1" style="background-color: var(--xl-green-mid) !important; color: white !important;">
+          *ngIf="activeTab === 2" style="background-color: var(--xl-green-mid) !important; color: white !important;">
           <mat-spinner *ngIf="saving" diameter="18"></mat-spinner>
           <mat-icon *ngIf="!saving">{{ isEdit ? 'save' : 'add_task' }}</mat-icon>
           <span>{{ isEdit ? 'Mettre à jour l\'action' : 'Créer l\'action corrective' }}</span>

@@ -48,6 +48,19 @@ CREATE TABLE IF NOT EXISTS CorrectiveActionHistories (
     ChangedAt TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS CorrectiveActionAttachments (
+    Id SERIAL PRIMARY KEY,
+    CorrectiveActionId INTEGER NOT NULL REFERENCES CorrectiveActions(Id) ON DELETE CASCADE,
+    OrganizationId INTEGER NOT NULL REFERENCES Organizations(Id) ON DELETE CASCADE,
+    FileName VARCHAR(260) NOT NULL,
+    OriginalFileName VARCHAR(260) NOT NULL,
+    FileExtension VARCHAR(20) NULL,
+    MimeType VARCHAR(150) NULL,
+    FileSize BIGINT NULL,
+    FileContent BYTEA NOT NULL,
+    CreatedAt TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
 CREATE INDEX IF NOT EXISTS idx_nonconformities_org ON NonConformities(OrganizationId);
 CREATE INDEX IF NOT EXISTS idx_nonconformities_code ON NonConformities(Code);
 CREATE INDEX IF NOT EXISTS idx_nonconformities_title ON NonConformities(Title);
@@ -66,6 +79,8 @@ CREATE INDEX IF NOT EXISTS idx_correctiveactions_status ON CorrectiveActions(Sta
 CREATE INDEX IF NOT EXISTS idx_correctiveactions_due ON CorrectiveActions(DueDate);
 CREATE INDEX IF NOT EXISTS idx_correctiveactions_type ON CorrectiveActions(Type);
 CREATE INDEX IF NOT EXISTS idx_correctiveactions_proof ON CorrectiveActions(ProofRecordId);
+CREATE INDEX IF NOT EXISTS idx_correctiveactionattachments_action ON CorrectiveActionAttachments(CorrectiveActionId);
+CREATE INDEX IF NOT EXISTS idx_correctiveactionattachments_org ON CorrectiveActionAttachments(OrganizationId);
 CREATE INDEX IF NOT EXISTS idx_correctiveactionhistories_action ON CorrectiveActionHistories(CorrectiveActionId);
 CREATE INDEX IF NOT EXISTS idx_correctiveactionhistories_org ON CorrectiveActionHistories(OrganizationId);
 CREATE INDEX IF NOT EXISTS idx_correctiveactionhistories_changedat ON CorrectiveActionHistories(ChangedAt);

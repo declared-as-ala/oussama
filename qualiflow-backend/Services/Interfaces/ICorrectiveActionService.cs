@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using DocApi.Common;
+using DocApi.Domain.Entities;
 using DocApi.DTOs.CorrectiveActions;
 
 namespace DocApi.Services.Interfaces
@@ -18,5 +19,8 @@ namespace DocApi.Services.Interfaces
         Task<List<CorrectiveActionListItemResponse>> GetByNonConformityIdAsync(int nonConformityId, UserContext userContext);
         Task<List<CorrectiveActionActionLogResponse>> GetHistoryAsync(int id, UserContext userContext);
         Task<bool> DeleteActionLogAsync(int logId, UserContext userContext);
+        Task<CorrectiveActionAttachmentResponse> AddAttachmentAsync(int correctiveActionId, string originalFileName, string mimeType, byte[] content, UserContext userContext);
+        Task<CorrectiveActionAttachment?> GetAttachmentContentAsync(int attachmentId, UserContext userContext);
+        Task<bool> DeleteAttachmentAsync(int attachmentId, UserContext userContext);
     }
 }

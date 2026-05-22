@@ -45,8 +45,12 @@
         <span>3. Responsable</span>
       </button>
       <button type="button" class="tab-button" [class.active]="activeTab === 3" (click)="setActiveTab(3)">
+        <mat-icon>perm_media</mat-icon>
+        <span>4. Documents <span class="tab-badge">{{ details.attachments.length }}</span></span>
+      </button>
+      <button type="button" class="tab-button" [class.active]="activeTab === 4" (click)="setActiveTab(4)">
         <mat-icon>history</mat-icon>
-        <span>4. Historique</span>
+        <span>5. Historique</span>
       </button>
     </div>
 
@@ -253,6 +257,79 @@
     </div>
 
     <div class="tab-content-container" *ngIf="activeTab === 3">
+      <mat-card class="info-card attachments-card">
+        <div class="card-header-clean plan-header">
+          <div>
+            <mat-icon>perm_media</mat-icon>
+            <h2>Images & documents de l'action</h2>
+          </div>
+          <span class="progress-pill">{{ details.attachments.length }} fichier(s)</span>
+        </div>
+
+        <div class="attachments-body">
+          <div class="upload-zone" *ngIf="canManageAttachments">
+            <input type="file" hidden multiple #attachmentInput [accept]="acceptedAttachmentTypes"
+              (change)="onAttachmentFilesSelected($event)" />
+            <button mat-stroked-button type="button" (click)="attachmentInput.click()">
+              <mat-icon>upload_file</mat-icon>
+              Ajouter
+            </button>
+            <span>{{ allowedAttachmentFormatsLabel }}</span>
+          </div>
+
+          <div class="attachment-list" *ngIf="selectedAttachmentFiles.length > 0">
+            <div class="attachment-row pending" *ngFor="let file of selectedAttachmentFiles; let i = index">
+              <mat-icon>{{ isImageFile(file) ? 'image' : 'description' }}</mat-icon>
+              <div>
+                <strong>{{ file.name }}</strong>
+                <span>{{ formatFileSize(file.size) }}</span>
+              </div>
+              <button mat-icon-button type="button" (click)="removeSelectedAttachmentFile(i)">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+            <button mat-flat-button color="primary" type="button" class="upload-confirm-btn"
+              [disabled]="uploadingAttachments" (click)="uploadAttachments()">
+              <mat-spinner *ngIf="uploadingAttachments" diameter="18"></mat-spinner>
+              <mat-icon *ngIf="!uploadingAttachments">cloud_upload</mat-icon>
+              Enregistrer les fichiers
+            </button>
+          </div>
+
+          <div class="empty-state" *ngIf="details.attachments.length === 0">
+            <mat-icon>perm_media</mat-icon>
+            <p>Aucune image ou document n'est lié à cette action.</p>
+          </div>
+
+          <div class="attachment-grid" *ngIf="details.attachments.length > 0">
+            <div class="attachment-card" *ngFor="let attachment of details.attachments">
+              <div class="attachment-preview" [class.image]="isImageAttachment(attachment)">
+                <img *ngIf="isImageAttachment(attachment) && imagePreviewUrls[attachment.id]"
+                  [src]="imagePreviewUrls[attachment.id]" [alt]="attachment.originalFileName" />
+                <mat-icon *ngIf="!isImageAttachment(attachment) || !imagePreviewUrls[attachment.id]">
+                  {{ isImageAttachment(attachment) ? 'image' : 'description' }}
+                </mat-icon>
+              </div>
+              <div class="attachment-meta">
+                <strong>{{ attachment.originalFileName }}</strong>
+                <span>{{ formatFileSize(attachment.fileSize) }} · {{ attachment.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              <div class="attachment-actions">
+                <button mat-icon-button type="button" title="Télécharger" (click)="downloadAttachment(attachment)">
+                  <mat-icon>download</mat-icon>
+                </button>
+                <button mat-icon-button color="warn" *ngIf="canManageAttachments" type="button" title="Supprimer"
+                  (click)="deleteAttachment(attachment)">
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-card>
+    </div>
+
+    <div class="tab-content-container" *ngIf="activeTab === 4">
       <mat-card class="info-card history-card">
         <div class="card-header-clean">
           <mat-icon>history</mat-icon>

@@ -85,6 +85,7 @@ export class NonconformityDetailsComponent implements OnInit {
   editingActionId: number | null = null;
   showActionForm = false;
 
+  activeTab = 0;
   activeActionFilter = 'TOUTES';
 
   constructor(
@@ -140,6 +141,10 @@ export class NonconformityDetailsComponent implements OnInit {
       return this.details.actions.filter(a => a.isOverdue && a.status !== 'TERMINEE');
     }
     return this.details.actions.filter(a => a.status === filter);
+  }
+
+  setActiveTab(index: number): void {
+    this.activeTab = index;
   }
 
   getCompletionPercentage(): number {

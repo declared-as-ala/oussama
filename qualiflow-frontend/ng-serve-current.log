@@ -1,0 +1,93 @@
+
+> angular-professional-template@1.0.0 start
+> ng serve --configuration development --host localhost --port 4200
+
+
+Initial chunk files                                                                                     | Names                                                                                     |  Raw size
+vendor.js                                                                                               | vendor                                                                                    |   4.63 MB | 
+scripts.js                                                                                              | scripts                                                                                   | 516.34 kB | 
+styles.css, styles.js                                                                                   | styles                                                                                    | 360.04 kB | 
+polyfills.js                                                                                            | polyfills                                                                                 | 262.60 kB | 
+main.js                                                                                                 | main                                                                                      | 120.04 kB | 
+runtime.js                                                                                              | runtime                                                                                   |  12.67 kB | 
+
+                                                                                                        | Initial total                                                                             |   5.87 MB
+
+Lazy chunk files                                                                                        | Names                                                                                     |  Raw size
+src_app_core_services_api_service_ts-src_app_features_super-admin_super-admin-dashboard_super-ba3928.js | features-super-admin-super-admin-dashboard-super-admin-dashboard-component                | 548.62 kB | 
+src_app_features_documents_document-form_document-form_component_ts.js                                  | features-documents-document-form-document-form-component                                  | 474.97 kB | 
+src_app_home_home_component_ts.js                                                                       | home-home-component                                                                       | 349.65 kB | 
+default-node_modules_angular_forms_fesm2022_forms_mjs.js                                                | home-home-component                                                                       | 291.76 kB | 
+default-node_modules_angular_material_fesm2022_chips_mjs.js                                             | features-super-admin-super-admin-dashboard-super-admin-dashboard-component                | 260.87 kB | 
+src_app_features_corrective-actions_corrective-action-details_corrective-action-details_compo-46cf84.js | features-corrective-actions-corrective-action-details-corrective-action-details-component | 235.70 kB | 
+default-src_app_core_services_api_service_ts-node_modules_angular_material_fesm2022_table_mjs.js        | features-super-admin-requests-list-requests-list-component                                | 202.13 kB | 
+default-node_modules_angular_material_fesm2022_tabs_mjs.js                                              | features-super-admin-super-admin-dashboard-super-admin-dashboard-component                | 199.71 kB | 
+default-node_modules_angular_material_fesm2022_form-field_mjs.js                                        | home-home-component                                                                       | 196.22 kB | 
+default-src_app_features_notifications_services_notification-signalr_service_ts-src_app_featu-853094.js | layout-main-layout-main-layout-component                                                  | 191.85 kB | 
+src_app_layout_main-layout_main-layout_component_ts.js                                                  | layout-main-layout-main-layout-component                                                  | 178.90 kB | 
+src_app_features_documents_documents-list_documents-list_component_ts.js                                | features-documents-documents-list-documents-list-component                                | 157.75 kB | 
+src_app_features_non-conformities_nonconformity-details_nonconformity-details_component_ts.js           | features-non-conformities-nonconformity-details-nonconformity-details-component           | 152.68 kB | 
+src_app_features_procedures_procedure-details_procedure-details_component_ts.js                         | features-procedures-procedure-details-procedure-details-component                         | 133.07 kB | 
+src_app_features_indicators_indicator-list_indicator-list_component_ts.js                               | features-indicators-indicator-list-indicator-list-component                               | 126.38 kB | 
+src_app_features_processes_process-details_process-details_component_ts.js                              | features-processes-process-details-process-details-component                              | 125.82 kB | 
+src_app_features_processes_process-history_process-history_component_ts.js                              | features-processes-process-history-process-history-component                              | 122.74 kB | 
+src_app_features_profile_profile_component_ts.js                                                        | features-profile-profile-component                                                        | 122.00 kB | 
+src_app_features_documents_document-details_document-details_component_ts.js                            | features-documents-document-details-document-details-component                            | 121.69 kB | 
+default-node_modules_angular_material_fesm2022_dialog_mjs.js                                            | home-home-component                                                                       | 116.71 kB | 
+src_app_features_indicators_indicator-details_indicator-details_component_ts.js                         | features-indicators-indicator-details-indicator-details-component                         | 116.10 kB | 
+src_app_features_processes_process-list_process-list_component_ts.js                                    | features-processes-process-list-process-list-component                                    | 113.61 kB | 
+src_app_features_non-conformities_nonconformity-form_nonconformity-form_component_ts.js                 | features-non-conformities-nonconformity-form-nonconformity-form-component                 | 110.53 kB | 
+src_app_features_non-conformities_nonconformity-list_nonconformity-list_component_ts.js                 | features-non-conformities-nonconformity-list-nonconformity-list-component                 | 110.28 kB | 
+src_app_features_procedures_procedure-list_procedure-list_component_ts.js                               | features-procedures-procedure-list-procedure-list-component                               | 108.66 kB | 
+src_app_features_procedures_procedure-history_procedure-history_component_ts.js                         | features-procedures-procedure-history-procedure-history-component                         | 108.29 kB | 
+src_app_features_organizations_organization-detail_organization-detail_component_ts.js                  | features-organizations-organization-detail-organization-detail-component                  | 102.84 kB | 
+src_app_features_documents_document-versions_document-versions_component_ts.js                          | features-documents-document-versions-document-versions-component                          |  98.41 kB | 
+src_app_features_corrective-actions_corrective-action-list_corrective-action-list_component_ts.js       | features-corrective-actions-corrective-action-list-corrective-action-list-component       |  98.01 kB | 
+src_app_features_super-admin_organization-details_organization-details_component_ts.js                  | features-super-admin-organization-details-organization-details-component                  |  97.09 kB | 
+src_app_features_processes_process-form_process-form_component_ts.js                                    | features-processes-process-form-process-form-component                                    |  96.20 kB | 
+src_app_features_notifications_notification-center_notification-center_component_ts.js                  | features-notifications-notification-center-notification-center-component                  |  95.38 kB | 
+src_app_features_chatbot_chatbot-page_chatbot-page_component_ts.js                                      | features-chatbot-chatbot-page-chatbot-page-component                                      |  93.38 kB | 
+src_app_features_super-admin_requests-list_requests-list_component_ts.js                                | features-super-admin-requests-list-requests-list-component                                |  90.57 kB | 
+src_app_features_corrective-actions_corrective-action-form_corrective-action-form_component_ts.js       | features-corrective-actions-corrective-action-form-corrective-action-form-component       |  89.44 kB | 
+default-node_modules_angular_material_fesm2022_menu_mjs.js                                              | layout-main-layout-main-layout-component                                                  |  86.14 kB | 
+src_app_features_procedures_procedure-form_procedure-form_component_ts.js                               | features-procedures-procedure-form-procedure-form-component                               |  85.81 kB | 
+default-node_modules_angular_material_fesm2022_select_mjs.js                                            | home-home-component                                                                       |  84.53 kB | 
+src_app_features_auth_register_register_component_ts-node_modules_rxjs_dist_esm_internal_obse-45f057.js | features-auth-register-register-component                                                 |  82.89 kB | 
+src_app_features_settings_settings_component_ts.js                                                      | features-settings-settings-component                                                      |  78.57 kB | 
+src_app_features_organizations_organization-audit-log_organization-audit-log_component_ts.js            | features-organizations-organization-audit-log-organization-audit-log-component            |  77.25 kB | 
+src_app_features_dashboard_dashboard_component_ts.js                                                    | features-dashboard-dashboard-component                                                    |  72.93 kB | 
+src_app_features_super-admin_organizations-list_organizations-list_component_ts.js                      | features-super-admin-organizations-list-organizations-list-component                      |  72.24 kB | 
+default-src_app_features_processes_process-documents_process-documents_component_ts.js                  | features-processes-process-documents-process-documents-component                          |  71.93 kB | 
+src_app_features_auth_login_login_component_ts-node_modules_rxjs_dist_esm_internal_observable-557fe9.js | features-auth-login-login-component                                                       |  69.97 kB | 
+src_app_core_services_api_service_ts-src_app_features_users_user-detail_user-detail_component_ts.js     | features-users-user-detail-user-detail-component                                          |  65.86 kB | 
+src_app_features_users_users-list_users-list_component_ts.js                                            | features-users-users-list-users-list-component                                            |  65.12 kB | 
+src_app_features_auth_reset-password_reset-password_component_ts-node_modules_rxjs_dist_esm_i-b2e254.js | features-auth-reset-password-reset-password-component                                     |  63.24 kB | 
+default-node_modules_angular_material_fesm2022_slide-toggle_mjs.js                                      | features-super-admin-organization-form-organization-form-component                        |  61.33 kB | 
+src_app_features_procedures_procedure-map_procedure-map_component_ts.js                                 | features-procedures-procedure-map-procedure-map-component                                 |  59.93 kB | 
+src_app_features_indicators_indicator-form_indicator-form_component_ts.js                               | features-indicators-indicator-form-indicator-form-component                               |  57.83 kB | 
+default-node_modules_angular_material_fesm2022_tooltip_mjs.js                                           | home-home-component                                                                       |  57.60 kB | 
+src_app_core_services_api_service_ts-src_app_features_super-admin_organization-form_organizat-ad6b7a.js | features-super-admin-organization-form-organization-form-component                        |  57.51 kB | 
+src_app_core_services_api_service_ts-src_app_features_indicators_indicator-dashboard_indicato-8f23ab.js | features-indicators-indicator-dashboard-indicator-dashboard-component                     |  57.24 kB | 
+default-src_app_features_processes_process-actors_process-actors_component_ts.js                        | features-processes-process-actors-process-actors-component                                |  56.46 kB | 
+default-node_modules_angular_material_fesm2022_icon_mjs.js                                              | home-home-component                                                                       |  53.51 kB | 
+src_app_features_auth_verify-email_verify-email_component_ts-node_modules_rxjs_dist_esm_inter-062e06.js | features-auth-verify-email-verify-email-component                                         |  52.94 kB | 
+default-src_app_shared_pipes_translate_pipe_ts.js                                                       | home-home-component                                                                       |  50.69 kB | 
+default-node_modules_angular_material_fesm2022_input_mjs.js                                             | home-home-component                                                                       |  48.40 kB | 
+common.js                                                                                               | common                                                                                    |  47.21 kB | 
+src_app_features_processes_process-map_process-map_component_ts.js                                      | features-processes-process-map-process-map-component                                      |  47.13 kB | 
+src_app_features_auth_forgot-password_forgot-password_component_ts-node_modules_rxjs_dist_esm-45394f.js | features-auth-forgot-password-forgot-password-component                                   |  42.54 kB | 
+src_app_core_services_api_service_ts-src_app_features_users_users-form_users-form_component_ts.js       | features-users-users-form-users-form-component                                            |  41.68 kB | 
+default-node_modules_angular_material_fesm2022_paginator_mjs.js                                         | features-super-admin-organizations-list-organizations-list-component                      |  40.32 kB | 
+default-node_modules_angular_material_fesm2022_card_mjs.js                                              | features-dashboard-dashboard-component                                                    |  36.83 kB | 
+default-node_modules_angular_material_fesm2022_progress-spinner_mjs.js                                  | home-home-component                                                                       |  32.37 kB | 
+src_app_shared_forbidden_forbidden_component_ts.js                                                      | shared-forbidden-forbidden-component                                                      |  21.58 kB | 
+default-src_app_shared_components_confirm-dialog_confirm-dialog_component_ts.js                         | features-super-admin-requests-list-requests-list-component                                |  14.80 kB | 
+src_app_features_processes_services_process_service_ts.js                                               | features-processes-process-actors-process-actors-component                                |   3.09 kB | 
+src_app_shared_not-found_not-found_component_ts.js                                                      | shared-not-found-not-found-component                                                      |   2.59 kB | 
+
+Build at: 2026-05-22T17:13:52.980Z - Hash: a00602f3d03350bd - Time: 28339ms
+
+** Angular Live Development Server is listening on localhost:4200, open your browser on http://localhost:4200/ **
+
+
+√ Compiled successfully.

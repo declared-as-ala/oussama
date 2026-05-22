@@ -1,7 +1,10 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
+import { environment } from '../../../../environments/environment';
 import {
+  CorrectiveActionAttachmentResponse,
   CorrectiveActionDetailsResponse,
   CorrectiveActionActionLogResponse,
   CorrectiveActionListItemResponse,
@@ -20,8 +23,12 @@ import {
 })
 export class CorrectiveActionService {
   private readonly endpoint = 'corrective-actions';
+  private readonly apiBase = `${environment.apiUrl}/api`;
 
-  constructor(private readonly apiService: ApiService) {}
+  constructor(
+    private readonly apiService: ApiService,
+    private readonly http: HttpClient
+  ) {}
 
   getCorrectiveActions(params: GetCorrectiveActionsQueryRequest = {}): Observable<PagedCorrectiveActionResponse> {
     return this.apiService.get<PagedCorrectiveActionResponse>(this.endpoint, params);
@@ -65,5 +72,24 @@ export class CorrectiveActionService {
 
   deleteCorrectiveActionActionLog(actionId: number, logId: number): Observable<void> {
     return this.apiService.delete<void>(`${this.endpoint}/${actionId}/action-logs/${logId}`);
+  }
+
+  uploadAttachment(actionId: number, file: File): Observable<CorrectiveActionAttachmentResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<CorrectiveActionAttachmentResponse>(
+      `${this.apiBase}/${this.endpoint}/${actionId}/attachments`,
+      formData
+    );
+  }
+
+  downloadAttachment(attachmentId: number): Observable<Blob> {
+    return this.http.get(`${this.apiBase}/${this.endpoint}/attachments/${attachmentId}`, {
+      responseType: 'blob'
+    });
+  }
+
+  deleteAttachment(attachmentId: number): Observable<void> {
+    return this.apiService.delete<void>(`${this.endpoint}/attachments/${attachmentId}`);
   }
 }

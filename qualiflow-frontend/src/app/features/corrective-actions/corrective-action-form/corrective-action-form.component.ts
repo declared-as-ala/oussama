@@ -9,7 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { forkJoin } from 'rxjs';
+import { forkJoin, map, of, switchMap } from 'rxjs';
 import { NotificationService } from '../../../core/services/notification.service';
 import { UserResponse, UserService as CoreUserService } from '../../../core/services/user.service';
 import { DocumentListItemResponse } from '../../documents/models/document.models';
@@ -21,6 +21,7 @@ import {
   CORRECTIVE_ACTION_TYPE_OPTIONS,
   CorrectiveActionStatus,
   CorrectiveActionType,
+  CorrectiveActionAttachmentResponse,
   CreateCorrectiveActionRequest,
   UpdateCorrectiveActionRequest
 } from '../models/corrective-action.models';
@@ -69,6 +70,10 @@ export class CorrectiveActionFormComponent implements OnInit {
   users: UserResponse[] = [];
   nonConformities: NonConformityListItemResponse[] = [];
   proofRecords: DocumentListItemResponse[] = [];
+  existingAttachments: CorrectiveActionAttachmentResponse[] = [];
+  selectedFiles: File[] = [];
+  readonly acceptedAttachmentTypes = '.png,.jpg,.jpeg,.webp,.gif,.pdf,.doc,.docx,.xls,.xlsx';
+  readonly allowedAttachmentFormatsLabel = 'images, PDF, Word ou Excel';
 
   constructor(
     private readonly fb: FormBuilder,
@@ -117,33 +122,37 @@ export class CorrectiveActionFormComponent implements OnInit {
 
     if (this.isEdit && this.correctiveActionId) {
       const payload = this.buildUpdatePayload();
-      this.correctiveActionService.updateCorrectiveAction(this.correctiveActionId, payload).subscribe({
-        next: (response) => {
-          this.saving = false;
-          this.notificationService.showSuccess('Action corrective mise a jour.');
-          this.router.navigate(['/corrective-actions', response.id]);
-        },
-        error: () => {
-          this.saving = false;
-          this.notificationService.showError('Mise a jour impossible.');
-        }
-      });
+      this.correctiveActionService.updateCorrectiveAction(this.correctiveActionId, payload)
+        .pipe(switchMap(response => this.uploadSelectedFiles(response.id).pipe(map(() => response))))
+        .subscribe({
+          next: (response) => {
+            this.saving = false;
+            this.notificationService.showSuccess('Action corrective mise a jour.');
+            this.router.navigate(['/corrective-actions', response.id]);
+          },
+          error: () => {
+            this.saving = false;
+            this.notificationService.showError('Mise a jour impossible.');
+          }
+        });
 
       return;
     }
 
     const payload = this.buildCreatePayload();
-    this.correctiveActionService.createCorrectiveAction(payload).subscribe({
-      next: (response) => {
-        this.saving = false;
-        this.notificationService.showSuccess('Action corrective creee.');
-        this.router.navigate(['/corrective-actions', response.id]);
-      },
-      error: () => {
-        this.saving = false;
-        this.notificationService.showError('Creation impossible.');
-      }
-    });
+    this.correctiveActionService.createCorrectiveAction(payload)
+      .pipe(switchMap(response => this.uploadSelectedFiles(response.id).pipe(map(() => response))))
+      .subscribe({
+        next: (response) => {
+          this.saving = false;
+          this.notificationService.showSuccess('Action corrective creee.');
+          this.router.navigate(['/corrective-actions', response.id]);
+        },
+        error: () => {
+          this.saving = false;
+          this.notificationService.showError('Creation impossible.');
+        }
+      });
   }
 
   private loadData(): void {
@@ -164,6 +173,7 @@ export class CorrectiveActionFormComponent implements OnInit {
           this.users = refs.users.items.filter(user => user.isActive);
           this.nonConformities = refs.nonConformities.items;
           this.proofRecords = refs.records.items;
+          this.existingAttachments = details.attachments ?? [];
           this.patchForm(details.action);
           this.loading = false;
         },
@@ -189,6 +199,43 @@ export class CorrectiveActionFormComponent implements OnInit {
         this.notificationService.showError('Chargement des references impossible.');
       }
     });
+  }
+
+  onFilesSelected(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    const files = Array.from(target.files ?? []);
+    const validFiles = files.filter(file => this.isAllowedAttachmentFile(file));
+
+    if (validFiles.length !== files.length) {
+      this.notificationService.showWarning(`Format non autorise. Ajoutez uniquement: ${this.allowedAttachmentFormatsLabel}.`);
+    }
+
+    this.selectedFiles = [...this.selectedFiles, ...validFiles];
+    target.value = '';
+  }
+
+  removeSelectedFile(index: number): void {
+    this.selectedFiles = this.selectedFiles.filter((_, itemIndex) => itemIndex !== index);
+  }
+
+  isImageFile(file: File): boolean {
+    return file.type.startsWith('image/');
+  }
+
+  isImageAttachment(attachment: CorrectiveActionAttachmentResponse): boolean {
+    return (attachment.mimeType ?? '').startsWith('image/');
+  }
+
+  formatFileSize(size?: number | null): string {
+    if (!size) {
+      return '-';
+    }
+
+    if (size < 1024 * 1024) {
+      return `${Math.max(1, Math.round(size / 1024))} Ko`;
+    }
+
+    return `${(size / 1024 / 1024).toFixed(1)} Mo`;
   }
 
   private patchForm(action: any): void {
@@ -230,6 +277,28 @@ export class CorrectiveActionFormComponent implements OnInit {
     };
   }
 
+  private uploadSelectedFiles(actionId: number) {
+    if (this.selectedFiles.length === 0) {
+      return of([]);
+    }
+
+    return forkJoin(this.selectedFiles.map(file => this.correctiveActionService.uploadAttachment(actionId, file)));
+  }
+
+  private isAllowedAttachmentFile(file: File): boolean {
+    const name = file.name.toLowerCase();
+    return name.endsWith('.png')
+      || name.endsWith('.jpg')
+      || name.endsWith('.jpeg')
+      || name.endsWith('.webp')
+      || name.endsWith('.gif')
+      || name.endsWith('.pdf')
+      || name.endsWith('.doc')
+      || name.endsWith('.docx')
+      || name.endsWith('.xls')
+      || name.endsWith('.xlsx');
+  }
+
   private toDateInputValue(value?: string | null): string {
     if (!value) {
       return '';
@@ -251,7 +320,7 @@ export class CorrectiveActionFormComponent implements OnInit {
   }
 
   nextTab(): void {
-    if (this.activeTab < 1) {
+    if (this.activeTab < 2) {
       this.activeTab++;
     }
   }

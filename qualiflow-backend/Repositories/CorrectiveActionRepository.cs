@@ -543,6 +543,46 @@ namespace DocApi.Repositories
             return await connection.QuerySingleAsync<int>(sql, parameters);
         }
 
+        public async Task<int> AddAttachmentAsync(CorrectiveActionAttachment attachment)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = @"
+                INSERT INTO CorrectiveActionAttachments
+                    (CorrectiveActionId, OrganizationId, FileName, OriginalFileName, FileExtension, MimeType, FileSize, FileContent, CreatedAt)
+                VALUES
+                    (@CorrectiveActionId, @OrganizationId, @FileName, @OriginalFileName, @FileExtension, @MimeType, @FileSize, @FileContent, @CreatedAt)
+                RETURNING Id;";
+
+            return await connection.QuerySingleAsync<int>(sql, attachment);
+        }
+
+        public async Task<CorrectiveActionAttachment?> GetAttachmentByIdAsync(int attachmentId)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = "SELECT * FROM CorrectiveActionAttachments WHERE Id = @Id;";
+            return await connection.QueryFirstOrDefaultAsync<CorrectiveActionAttachment>(sql, new { Id = attachmentId });
+        }
+
+        public async Task<IEnumerable<CorrectiveActionAttachment>> GetAttachmentsByCorrectiveActionIdAsync(int correctiveActionId)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = @"
+                SELECT *
+                FROM CorrectiveActionAttachments
+                WHERE CorrectiveActionId = @CorrectiveActionId
+                ORDER BY CreatedAt DESC, Id DESC;";
+
+            return await connection.QueryAsync<CorrectiveActionAttachment>(sql, new { CorrectiveActionId = correctiveActionId });
+        }
+
+        public async Task<bool> DeleteAttachmentAsync(int attachmentId)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = "DELETE FROM CorrectiveActionAttachments WHERE Id = @Id;";
+            var rows = await connection.ExecuteAsync(sql, new { Id = attachmentId });
+            return rows > 0;
+        }
+
         private static string BuildWhereClause(
             DynamicParameters parameters,
             string? search,

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -13,11 +13,13 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
+import { forkJoin } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import {
   CORRECTIVE_ACTION_STATUS_OPTIONS,
+  CorrectiveActionAttachmentResponse,
   CorrectiveActionDetailsResponse,
   CorrectiveActionStatus
 } from '../models/corrective-action.models';
@@ -51,7 +53,7 @@ interface CorrectiveActionPlanStep {
   templateUrl: './corrective-action-details.component.html',
   styleUrls: ['./corrective-action-details.component.scss']
 })
-export class CorrectiveActionDetailsComponent implements OnInit {
+export class CorrectiveActionDetailsComponent implements OnInit, OnDestroy {
   readonly statusOptions = CORRECTIVE_ACTION_STATUS_OPTIONS;
   readonly historyColumns = ['action', 'comment', 'user', 'date', 'actions'];
   activeTab = 0;
@@ -74,8 +76,13 @@ export class CorrectiveActionDetailsComponent implements OnInit {
   loading = false;
   savingVerification = false;
   savingCompletion = false;
+  uploadingAttachments = false;
   actionId!: number;
   details: CorrectiveActionDetailsResponse | null = null;
+  selectedAttachmentFiles: File[] = [];
+  readonly acceptedAttachmentTypes = '.png,.jpg,.jpeg,.webp,.gif,.pdf,.doc,.docx,.xls,.xlsx';
+  readonly allowedAttachmentFormatsLabel = 'images, PDF, Word ou Excel';
+  imagePreviewUrls: Record<number, string> = {};
 
   constructor(
     private readonly fb: FormBuilder,
@@ -86,6 +93,10 @@ export class CorrectiveActionDetailsComponent implements OnInit {
     private readonly notificationService: NotificationService,
     private readonly correctiveActionService: CorrectiveActionService
   ) {}
+
+  ngOnDestroy(): void {
+    this.revokeImagePreviews();
+  }
 
   ngOnInit(): void {
     const idParam = this.route.snapshot.paramMap.get('id');
@@ -131,6 +142,10 @@ export class CorrectiveActionDetailsComponent implements OnInit {
 
   get canChangeStatus(): boolean {
     return this.canWrite || this.isAssignee;
+  }
+
+  get canManageAttachments(): boolean {
+    return this.canChangeStatus;
   }
 
   get completedStepsCount(): number {
@@ -385,6 +400,10 @@ export class CorrectiveActionDetailsComponent implements OnInit {
         return 'Changement de statut';
       case 'EFFECTIVENESS_VERIFIED':
         return 'Efficacité vérifiée';
+      case 'ATTACHMENT_ADDED':
+        return 'Ajout de fichier';
+      case 'ATTACHMENT_DELETED':
+        return 'Suppression de fichier';
       default:
         return actionType.replace(/_/g, ' ').toLowerCase();
     }
@@ -403,7 +422,111 @@ export class CorrectiveActionDetailsComponent implements OnInit {
     if (actionType.includes('VERIFIED')) {
       return 'verified';
     }
+    if (actionType.includes('ATTACHMENT')) {
+      return 'attach_file';
+    }
     return 'history';
+  }
+
+  onAttachmentFilesSelected(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    const files = Array.from(target.files ?? []);
+    const validFiles = files.filter(file => this.isAllowedAttachmentFile(file));
+
+    if (validFiles.length !== files.length) {
+      this.notificationService.showWarning(`Format non autorise. Ajoutez uniquement: ${this.allowedAttachmentFormatsLabel}.`);
+    }
+
+    this.selectedAttachmentFiles = [...this.selectedAttachmentFiles, ...validFiles];
+    target.value = '';
+  }
+
+  removeSelectedAttachmentFile(index: number): void {
+    this.selectedAttachmentFiles = this.selectedAttachmentFiles.filter((_, itemIndex) => itemIndex !== index);
+  }
+
+  uploadAttachments(): void {
+    if (!this.canManageAttachments || this.selectedAttachmentFiles.length === 0) {
+      return;
+    }
+
+    this.uploadingAttachments = true;
+
+    forkJoin(this.selectedAttachmentFiles.map(file => this.correctiveActionService.uploadAttachment(this.actionId, file))).subscribe({
+      next: () => {
+        this.uploadingAttachments = false;
+        this.selectedAttachmentFiles = [];
+        this.notificationService.showSuccess('Pieces jointes ajoutees.');
+        this.load();
+      },
+      error: () => {
+        this.uploadingAttachments = false;
+        this.notificationService.showError('Upload impossible.');
+      }
+    });
+  }
+
+  downloadAttachment(attachment: CorrectiveActionAttachmentResponse): void {
+    this.correctiveActionService.downloadAttachment(attachment.id).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = attachment.originalFileName;
+        anchor.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => this.notificationService.showError('Telechargement impossible.')
+    });
+  }
+
+  deleteAttachment(attachment: CorrectiveActionAttachmentResponse): void {
+    if (!this.canManageAttachments) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Supprimer la piece jointe',
+        message: `Supprimer ${attachment.originalFileName} ?`,
+        confirmText: 'Supprimer',
+        cancelText: 'Annuler'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (!confirmed) {
+        return;
+      }
+
+      this.correctiveActionService.deleteAttachment(attachment.id).subscribe({
+        next: () => {
+          this.notificationService.showSuccess('Piece jointe supprimee.');
+          this.load();
+        },
+        error: () => this.notificationService.showError('Suppression impossible.')
+      });
+    });
+  }
+
+  isImageAttachment(attachment: CorrectiveActionAttachmentResponse): boolean {
+    return (attachment.mimeType ?? '').startsWith('image/');
+  }
+
+  isImageFile(file: File): boolean {
+    return file.type.startsWith('image/');
+  }
+
+  formatFileSize(size?: number | null): string {
+    if (!size) {
+      return '-';
+    }
+
+    if (size < 1024 * 1024) {
+      return `${Math.max(1, Math.round(size / 1024))} Ko`;
+    }
+
+    return `${(size / 1024 / 1024).toFixed(1)} Mo`;
   }
 
   parseChanges(comment: string | null | undefined): string[] {
@@ -454,6 +577,7 @@ export class CorrectiveActionDetailsComponent implements OnInit {
       next: details => {
         this.details = details;
         this.loadPlanSteps(details);
+        this.hydrateImagePreviews(details.attachments ?? []);
         this.verificationForm.patchValue({
           effectivenessVerified: details.action.effectivenessVerified ?? true,
           effectivenessComment: details.action.effectivenessComment || ''
@@ -521,5 +645,41 @@ export class CorrectiveActionDetailsComponent implements OnInit {
 
   private planStorageKey(actionId: number): string {
     return `corrective-action-plan:${actionId}`;
+  }
+
+  private hydrateImagePreviews(attachments: CorrectiveActionAttachmentResponse[]): void {
+    this.revokeImagePreviews();
+
+    attachments
+      .filter(attachment => this.isImageAttachment(attachment))
+      .forEach(attachment => {
+        this.correctiveActionService.downloadAttachment(attachment.id).subscribe({
+          next: blob => {
+            this.imagePreviewUrls = {
+              ...this.imagePreviewUrls,
+              [attachment.id]: URL.createObjectURL(blob)
+            };
+          }
+        });
+      });
+  }
+
+  private revokeImagePreviews(): void {
+    Object.values(this.imagePreviewUrls).forEach(url => URL.revokeObjectURL(url));
+    this.imagePreviewUrls = {};
+  }
+
+  private isAllowedAttachmentFile(file: File): boolean {
+    const name = file.name.toLowerCase();
+    return name.endsWith('.png')
+      || name.endsWith('.jpg')
+      || name.endsWith('.jpeg')
+      || name.endsWith('.webp')
+      || name.endsWith('.gif')
+      || name.endsWith('.pdf')
+      || name.endsWith('.doc')
+      || name.endsWith('.docx')
+      || name.endsWith('.xls')
+      || name.endsWith('.xlsx');
   }
 }

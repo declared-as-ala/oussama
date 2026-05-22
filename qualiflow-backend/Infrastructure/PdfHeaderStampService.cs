@@ -16,7 +16,7 @@ namespace DocApi.Infrastructure
 {
     public sealed class PdfHeaderStampService : IPdfHeaderStampService
     {
-        private const string HeaderStampKeyword = "QualiFlowHeaderStamped";
+        private const string HeaderStampKeyword = "QualiFlowHeaderStampedV2";
         private readonly ILogger<PdfHeaderStampService> _logger;
         private readonly bool _enabled;
         private readonly string? _organizationLogosPath;
@@ -43,49 +43,36 @@ namespace DocApi.Infrastructure
             try
             {
                 sourceCopy.Position = 0;
-                using var pdfDocument = PdfReader.Open(sourceCopy, PdfDocumentOpenMode.Modify);
-                if (IsAlreadyStamped(pdfDocument))
+                string? sourceKeywords;
+                using (var pdfDocument = PdfReader.Open(sourceCopy, PdfDocumentOpenMode.Modify))
                 {
-                    return new MemoryStream(sourceCopy.ToArray());
-                }
-
-                var logoPath = ResolveLogoPath(metadata.OrganizationLogoPath, metadata.OrganizationCode);
-                var logoImage = TryLoadLogoImage(logoPath);
-                var signatureImage = TryLoadSignatureImage(metadata.SignatureBase64);
-
-                for (int i = 0; i < pdfDocument.Pages.Count; i++)
-                {
-                    var page = pdfDocument.Pages[i];
-                    cancellationToken.ThrowIfCancellationRequested();
-                    using var gfx = XGraphics.FromPdfPage(page, XGraphicsPdfPageOptions.Append);
-                    if (i == 0) // Draw header on the first page only!
+                    if (IsAlreadyStamped(pdfDocument))
                     {
-                        DrawHeader(gfx, page.Width, metadata, logoImage, i + 1, pdfDocument.Pages.Count);
+                        return new MemoryStream(sourceCopy.ToArray());
                     }
 
-                    // Draw signature on the last page bottom
-                    if (i == pdfDocument.Pages.Count - 1 && signatureImage != null)
-                    {
-                        DrawSignature(gfx, page.Width, page.Height, signatureImage, metadata);
-                    }
+                    sourceKeywords = pdfDocument.Info.Keywords;
                 }
 
-                logoImage?.Dispose();
-                signatureImage?.Dispose();
-                pdfDocument.Info.Keywords = AppendStampKeyword(pdfDocument.Info.Keywords);
-
-                var stampedStream = new MemoryStream();
-                pdfDocument.Save(stampedStream, false);
-                stampedStream.Position = 0;
-
+                var stampedStream = RebuildPdfWithHeader(sourceCopy, metadata, sourceKeywords, cancellationToken);
                 sourceCopy.Dispose();
                 return stampedStream;
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "PDF header stamping failed. Returning original stream.");
-                sourceCopy.Position = 0;
-                return sourceCopy;
+                _logger.LogWarning(ex, "PDF header stamping failed with the standard reader. Trying fallback rebuild.");
+                try
+                {
+                    var stampedStream = RebuildPdfWithHeader(sourceCopy, metadata, null, cancellationToken);
+                    sourceCopy.Dispose();
+                    return stampedStream;
+                }
+                catch (Exception fallbackEx)
+                {
+                    _logger.LogWarning(fallbackEx, "PDF header fallback rebuild failed. Returning original stream.");
+                    sourceCopy.Position = 0;
+                    return sourceCopy;
+                }
             }
         }
 
@@ -296,7 +283,14 @@ namespace DocApi.Infrastructure
                 return null;
             }
 
-            return XImage.FromFile(logoPath);
+            try
+            {
+                return XImage.FromFile(logoPath);
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private static string NormalizeLineEndings(string value)
@@ -526,6 +520,75 @@ private static void DrawSignature(XGraphics gfx, double pageWidth, double pageHe
 
             var buffer = stream.GetBuffer();
             return buffer[0] == '%' && buffer[1] == 'P' && buffer[2] == 'D' && buffer[3] == 'F';
+        }
+
+        private MemoryStream RebuildPdfWithHeader(
+            MemoryStream sourcePdf,
+            PdfHeaderMetadata metadata,
+            string? sourceKeywords,
+            CancellationToken cancellationToken)
+        {
+            sourcePdf.Position = 0;
+            using var form = XPdfForm.FromStream(sourcePdf);
+            using var outputDocument = new PdfDocument();
+            var logoPath = ResolveLogoPath(metadata.OrganizationLogoPath, metadata.OrganizationCode);
+            var logoImage = TryLoadLogoImage(logoPath);
+            var signatureImage = TryLoadSignatureImage(metadata.SignatureBase64);
+
+            for (var index = 0; index < form.PageCount; index++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                form.PageNumber = index + 1;
+                var page = outputDocument.AddPage();
+                page.Width = form.PointWidth;
+                page.Height = form.PointHeight;
+
+                using var gfx = XGraphics.FromPdfPage(page);
+                if (index == 0)
+                {
+                    DrawFirstPageWithHeader(gfx, page.Width, page.Height, form, metadata, logoImage, form.PageCount);
+                }
+                else
+                {
+                    gfx.DrawImage(form, 0, 0, page.Width, page.Height);
+                }
+
+                if (index == form.PageCount - 1 && signatureImage != null)
+                {
+                    DrawSignature(gfx, page.Width, page.Height, signatureImage, metadata);
+                }
+            }
+
+            logoImage?.Dispose();
+            signatureImage?.Dispose();
+            outputDocument.Info.Keywords = AppendStampKeyword(sourceKeywords);
+
+            var stampedStream = new MemoryStream();
+            outputDocument.Save(stampedStream, false);
+            stampedStream.Position = 0;
+            return stampedStream;
+        }
+
+        private static void DrawFirstPageWithHeader(
+            XGraphics gfx,
+            double pageWidth,
+            double pageHeight,
+            XPdfForm sourcePage,
+            PdfHeaderMetadata metadata,
+            XImage? logoImage,
+            int totalPages)
+        {
+            const double contentGap = 8d;
+            var contentTop = HeaderHeight + 12d + contentGap;
+            var availableHeight = Math.Max(1d, pageHeight - contentTop);
+            var scale = Math.Min(1d, availableHeight / pageHeight);
+            var drawWidth = pageWidth * scale;
+            var drawHeight = pageHeight * scale;
+            var drawX = (pageWidth - drawWidth) / 2d;
+
+            DrawHeader(gfx, pageWidth, metadata, logoImage, 1, totalPages);
+            gfx.DrawImage(sourcePage, drawX, contentTop, drawWidth, drawHeight);
         }
 
         private static bool IsAlreadyStamped(PdfDocument pdfDocument)

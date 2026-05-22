@@ -87,6 +87,17 @@ export interface CorrectiveActionActionLogResponse {
   performedAt: string;
 }
 
+export interface CorrectiveActionAttachmentResponse {
+  id: number;
+  correctiveActionId: number;
+  organizationId: number;
+  originalFileName: string;
+  fileExtension?: string | null;
+  mimeType?: string | null;
+  fileSize?: number | null;
+  createdAt: string;
+}
+
 export interface CorrectiveActionDetailsResponse {
   action: CorrectiveActionResponse;
   nonConformity: {
@@ -106,6 +117,7 @@ export interface CorrectiveActionDetailsResponse {
     title?: string | null;
     type?: string | null;
   } | null;
+  attachments: CorrectiveActionAttachmentResponse[];
   history: CorrectiveActionActionLogResponse[];
 }
 

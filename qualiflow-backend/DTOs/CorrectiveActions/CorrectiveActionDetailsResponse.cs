@@ -8,6 +8,7 @@ namespace DocApi.DTOs.CorrectiveActions
         public required CorrectiveActionLinkedNonConformityResponse NonConformity { get; set; }
         public required CorrectiveActionResponsibleResponse Responsible { get; set; }
         public CorrectiveActionProofRecordResponse? Proof { get; set; }
+        public List<CorrectiveActionAttachmentResponse> Attachments { get; set; } = new();
         public List<CorrectiveActionActionLogResponse> History { get; set; } = new();
     }
 

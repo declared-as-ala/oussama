@@ -5,6 +5,7 @@ using DocApi.Common;
 using DocApi.DTOs.CorrectiveActions;
 using DocApi.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DocApi.Controllers
@@ -255,6 +256,100 @@ namespace DocApi.Controllers
                 if (!deleted)
                 {
                     return BadRequest(new { message = "Echec de suppression du log d'actions." });
+                }
+
+                return NoContent();
+            }
+            catch (ForbiddenException)
+            {
+                return Forbid();
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ServiceException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("{id:int}/attachments")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
+        [RequestSizeLimit(25_000_000)]
+        public async Task<ActionResult<CorrectiveActionAttachmentResponse>> UploadAttachment(int id, IFormFile file)
+        {
+            try
+            {
+                if (file == null || file.Length == 0)
+                {
+                    return BadRequest(new { message = "Aucun fichier fourni." });
+                }
+
+                using var memoryStream = new System.IO.MemoryStream();
+                await file.CopyToAsync(memoryStream);
+
+                var result = await _correctiveActionService.AddAttachmentAsync(
+                    id,
+                    file.FileName,
+                    file.ContentType,
+                    memoryStream.ToArray(),
+                    GetUserContext());
+
+                return Ok(result);
+            }
+            catch (ForbiddenException)
+            {
+                return Forbid();
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ServiceException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("attachments/{attachmentId:int}")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
+        public async Task<IActionResult> GetAttachment(int attachmentId)
+        {
+            try
+            {
+                var attachment = await _correctiveActionService.GetAttachmentContentAsync(attachmentId, GetUserContext());
+                if (attachment == null)
+                {
+                    return NotFound(new { message = "Piece jointe introuvable." });
+                }
+
+                return File(attachment.FileContent, attachment.MimeType ?? "application/octet-stream", attachment.OriginalFileName);
+            }
+            catch (ForbiddenException)
+            {
+                return Forbid();
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ServiceException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpDelete("attachments/{attachmentId:int}")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
+        public async Task<IActionResult> DeleteAttachment(int attachmentId)
+        {
+            try
+            {
+                var deleted = await _correctiveActionService.DeleteAttachmentAsync(attachmentId, GetUserContext());
+                if (!deleted)
+                {
+                    return BadRequest(new { message = "Echec de suppression de la piece jointe." });
                 }
 
                 return NoContent();

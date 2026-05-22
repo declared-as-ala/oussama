@@ -1,432 +1,400 @@
 <section class="nonconformity-details-page">
-  <div class="loading-overlay" *ngIf="loading">
-    <mat-spinner diameter="40"></mat-spinner>
+  <div class="loading-container" *ngIf="loading">
+    <mat-spinner diameter="38"></mat-spinner>
     <span>{{ 'detail.nc.loading' | t }}</span>
   </div>
 
   <ng-container *ngIf="!loading && details">
-    <!-- PAGE HEADER BAR -->
     <div class="page-header-bar">
       <div class="page-header-left">
         <div class="page-subtitle">
-          <button type="button" class="btn-back" (click)="goBack()">
-            <mat-icon>arrow_back</mat-icon> Retour
+          <button type="button" class="back-link-btn" (click)="goBack()">
+            <mat-icon>arrow_back</mat-icon>
+            <span>Retour à la liste</span>
           </button>
         </div>
         <h1 class="page-title">{{ details.nonConformity.code }} — {{ details.nonConformity.title }}</h1>
+        <p class="page-intro">
+          Suivi de l'écart, des actions correctives, des pièces jointes et de la validation qualité.
+        </p>
       </div>
 
-      <div class="page-header-right" style="display: flex; gap: 12px; align-items: center;">
-        <!-- ACTION PLAN TRIGGER POPUP (POPPER) -->
-        <button mat-flat-button [matMenuTriggerFor]="actionPlanMenu" class="action-plan-trigger-btn">
+      <div class="page-header-right">
+        <button mat-stroked-button type="button" (click)="setActiveTab(1)">
           <mat-icon>assignment</mat-icon>
-          <span>Plan d'actions</span>
-          <span class="action-badge-count" *ngIf="details.actions.length > 0">{{ details.actions.length }}</span>
+          Plan d'actions
+          <span class="button-badge" *ngIf="details.actions.length > 0">{{ details.actions.length }}</span>
         </button>
-
-        <button *ngIf="canWrite" mat-flat-button color="primary" class="edit-btn" (click)="editNonConformity()">
-          <mat-icon>edit</mat-icon> {{ 'common.edit' | t }}
+        <button *ngIf="canWrite" mat-flat-button color="primary" class="primary-action-btn" (click)="editNonConformity()">
+          <mat-icon>edit</mat-icon>
+          Modifier
         </button>
       </div>
     </div>
 
-    <!-- ACTION PLAN MAT-MENU POPOVER -->
-    <mat-menu #actionPlanMenu="matMenu" xPosition="before" class="action-plan-popover-menu-wrapper">
-      <div class="action-plan-popper-content" (click)="$event.stopPropagation()">
-        
-        <!-- POPPER HEADER -->
-        <div class="popper-header">
-          <div class="header-title-area">
-            <mat-icon class="popper-main-icon">playlist_add_check</mat-icon>
-            <div class="title-details">
-              <h2>{{ 'detail.nc.actionPlan' | t }}</h2>
-              <span class="actions-pill-count">{{ details.actions.length }} actions</span>
-            </div>
-          </div>
-          <button mat-button class="btn-add-action-clean" *ngIf="canWrite && !showActionForm" (click)="toggleActionForm()">
-            <mat-icon>add</mat-icon> {{ 'detail.nc.addAction' | t }}
-          </button>
-        </div>
+    <div class="form-tabs-container">
+      <button type="button" class="tab-button" [class.active]="activeTab === 0" (click)="setActiveTab(0)">
+        <mat-icon>info_outline</mat-icon>
+        <span>1. Informations</span>
+      </button>
+      <button type="button" class="tab-button" [class.active]="activeTab === 1" (click)="setActiveTab(1)">
+        <mat-icon>playlist_add_check</mat-icon>
+        <span>2. Actions <span class="tab-badge">{{ details.actions.length }}</span></span>
+      </button>
+      <button type="button" class="tab-button" [class.active]="activeTab === 2" (click)="setActiveTab(2)">
+        <mat-icon>attach_file</mat-icon>
+        <span>3. Pièces jointes <span class="tab-badge">{{ details.attachments.length }}</span></span>
+      </button>
+      <button type="button" class="tab-button" [class.active]="activeTab === 3" (click)="setActiveTab(3)">
+        <mat-icon>fact_check</mat-icon>
+        <span>4. Validation</span>
+      </button>
+    </div>
 
-        <!-- SaaS PROGRESS CARD / AVANCEMENT -->
-        <div class="popper-avancement-card" *ngIf="details.actions.length > 0">
-          <div class="avancement-metrics">
-            <span class="avancement-label">Avancement global</span>
-            <span class="avancement-percentage">{{ getCompletionPercentage() }}% Terminé</span>
-          </div>
-          <div class="modern-progress-bar-wrapper">
-            <div class="modern-progress-bar" [style.width.%]="getCompletionPercentage()"></div>
-          </div>
-          <div class="avancement-stats-row">
-            <span><strong>{{ getCompletedActionsCount() }}</strong> terminées</span>
-            <span>•</span>
-            <span><strong>{{ details.actions.length }}</strong> au total</span>
-          </div>
-        </div>
-
-        <!-- SaaS ACTIVE STATUS TABS / FILTER PILLS -->
-        <div class="popper-filter-tabs-wrapper" *ngIf="details.actions.length > 0">
-          <button type="button" class="filter-pill-btn" [class.active]="activeActionFilter === 'ALL'" (click)="activeActionFilter = 'ALL'">
-            <span>Toutes</span>
-            <span class="filter-pill-badge all">{{ details.actions.length }}</span>
-          </button>
-          <button type="button" class="filter-pill-btn" [class.active]="activeActionFilter === 'A_FAIRE'" (click)="activeActionFilter = 'A_FAIRE'">
-            <span>À faire</span>
-            <span class="filter-pill-badge todo">{{ getActionCountByStatus('A_FAIRE') }}</span>
-          </button>
-          <button type="button" class="filter-pill-btn" [class.active]="activeActionFilter === 'EN_COURS'" (click)="activeActionFilter = 'EN_COURS'">
-            <span>En cours</span>
-            <span class="filter-pill-badge progress">{{ getActionCountByStatus('EN_COURS') }}</span>
-          </button>
-          <button type="button" class="filter-pill-btn" [class.active]="activeActionFilter === 'TERMINEE'" (click)="activeActionFilter = 'TERMINEE'">
-            <span>Terminées</span>
-            <span class="filter-pill-badge done">{{ getActionCountByStatus('TERMINEE') }}</span>
-          </button>
-          <button type="button" class="filter-pill-btn btn-overdue" [class.active]="activeActionFilter === 'OVERDUE'" (click)="activeActionFilter = 'OVERDUE'">
-            <span>En retard</span>
-            <span class="filter-pill-badge overdue">{{ getActionCountByStatus('OVERDUE') }}</span>
-          </button>
-        </div>
-
-        <!-- QUICK ACTION FORM (INLINE CREATOR/EDITOR) -->
-        <div class="popper-quick-action-form" *ngIf="showActionForm">
-          <h3 class="form-title-clean">
-            <mat-icon>{{ editingActionId ? 'edit_note' : 'add_task' }}</mat-icon>
-            <span>{{ editingActionId ? 'Modifier l\'action corrective' : 'Nouvelle action corrective' }}</span>
-          </h3>
-
-          <form [formGroup]="actionForm" (ngSubmit)="saveAction()">
-            <div class="form-row-grid">
-              <mat-form-field appearance="outline" class="form-field-clean full-width">
-                <mat-label>Désignation / Titre</mat-label>
-                <input matInput formControlName="title" placeholder="Ex: Mettre à jour la procédure..." />
-                <mat-error *ngIf="actionForm.controls.title.hasError('required')">
-                  Le titre est requis.
-                </mat-error>
-              </mat-form-field>
-            </div>
-
-            <div class="form-row-grid">
-              <mat-form-field appearance="outline" class="form-field-clean full-width">
-                <mat-label>Description</mat-label>
-                <textarea matInput formControlName="description" rows="2" placeholder="Détaillez l'action corrective..."></textarea>
-              </mat-form-field>
-            </div>
-
-            <div class="form-row-grid two-cols">
-              <mat-form-field appearance="outline" class="form-field-clean">
-                <mat-label>Responsable</mat-label>
-                <mat-select formControlName="responsibleUserId">
-                  <mat-option [value]="0">Non assigné</mat-option>
-                  <mat-option *ngFor="let user of users" [value]="user.id">
-                    {{ user.firstName }} {{ user.lastName }}
-                  </mat-option>
-                </mat-select>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline" class="form-field-clean">
-                <mat-label>Échéance</mat-label>
-                <input matInput type="date" formControlName="dueDate" />
-                <mat-error *ngIf="actionForm.controls.dueDate.hasError('required')">
-                  La date d'échéance est requise.
-                </mat-error>
-              </mat-form-field>
-            </div>
-
-            <div class="form-actions-clean">
-              <button mat-button type="button" class="btn-cancel" (click)="cancelActionForm()">
-                Annuler
-              </button>
-              <button mat-flat-button color="primary" class="btn-submit" type="submit" [disabled]="actionForm.invalid || savingAction">
-                <mat-icon>{{ savingAction ? 'hourglass_top' : 'check' }}</mat-icon>
-                <span>{{ savingAction ? 'Enregistrement...' : 'Enregistrer' }}</span>
-              </button>
-            </div>
-          </form>
-        </div>
-
-        <!-- POPPER BODY CONTENT -->
-        <div class="popper-body">
-          <!-- EMPTY STATE -->
-          <div class="empty-box" *ngIf="details.actions.length === 0">
-            <mat-icon class="animated-empty-icon">playlist_add_check</mat-icon>
-            <h3>{{ 'detail.nc.noCorrectiveAction' | t }}</h3>
-            <p>Créez la première action pour démarrer la résolution de l'écart.</p>
-          </div>
-
-          <!-- EMPTY STATE FOR FILTERS -->
-          <div class="empty-box" *ngIf="details.actions.length > 0 && filteredActions.length === 0">
-            <mat-icon>filter_alt_off</mat-icon>
-            <h3>Aucune action correspondante</h3>
-            <p>Aucune action corrective ne correspond à ce filtre.</p>
-          </div>
-
-          <!-- PREMIUM TIMELINE ACTIONS LIST -->
-          <div class="timeline-actions-list" *ngIf="filteredActions.length > 0">
-            <div class="action-item-card shadow-sm" *ngFor="let action of filteredActions">
-              
-              <!-- LEFT: Title & Description -->
-              <div class="action-card-left">
-                <div class="action-status-indicator" [ngClass]="action.status.toLowerCase()" [class.is-overdue]="action.isOverdue && action.status !== 'TERMINEE'">
-                  <mat-icon *ngIf="action.status === 'TERMINEE'">check_circle</mat-icon>
-                  <mat-icon *ngIf="action.status === 'EN_COURS'">sync</mat-icon>
-                  <mat-icon *ngIf="action.status === 'A_FAIRE'">schedule</mat-icon>
-                </div>
-                <div class="action-info">
-                  <h4 class="action-title">{{ action.title }}</h4>
-                  <p class="action-desc" *ngIf="action.description">{{ action.description }}</p>
-                  <p class="action-desc empty-desc" *ngIf="!action.description">Pas de description ajoutée.</p>
-                </div>
-              </div>
-
-              <!-- RIGHT: Responsibility, DueDate, Quick Status & Controls -->
-              <div class="action-card-right">
-                
-                <!-- Responsible Person -->
-                <div class="action-responsible" *ngIf="action.responsibleFullName">
-                  <div class="resp-avatar-small">{{ action.responsibleFullName.charAt(0) }}</div>
-                  <div class="resp-text-group">
-                    <span class="resp-label">Responsable</span>
-                    <span class="resp-name" [title]="action.responsibleFullName">{{ action.responsibleFullName }}</span>
-                  </div>
-                </div>
-
-                <!-- Due Date -->
-                <div class="action-due-date" [class.is-overdue]="action.isOverdue && action.status !== 'TERMINEE'">
-                  <mat-icon>event</mat-icon>
-                  <div class="due-text-group">
-                    <span class="due-label">Échéance</span>
-                    <span class="due-date-value">{{ action.dueDate | date: 'dd/MM/yyyy' }}</span>
-                  </div>
-                  <span class="overdue-tag" *ngIf="action.isOverdue && action.status !== 'TERMINEE'">En retard</span>
-                </div>
-
-                <!-- Interactive Dropdown Status Badge -->
-                <button mat-flat-button [matMenuTriggerFor]="itemStatusMenu" class="status-dropdown-trigger" [ngClass]="action.status.toLowerCase()" [disabled]="!canWrite">
-                  <span>{{ getActionStatusLabel(action.status) }}</span>
-                  <mat-icon *ngIf="canWrite">expand_more</mat-icon>
-                </button>
-                <mat-menu #itemStatusMenu="matMenu" class="modern-status-dropdown">
-                  <button mat-menu-item (click)="updateActionStatus(action, 'A_FAIRE')">
-                    <mat-icon class="menu-icon-todo">circle</mat-icon>
-                    <span>À faire</span>
-                  </button>
-                  <button mat-menu-item (click)="updateActionStatus(action, 'EN_COURS')">
-                    <mat-icon class="menu-icon-progress">play_circle</mat-icon>
-                    <span>En cours</span>
-                  </button>
-                  <button mat-menu-item (click)="updateActionStatus(action, 'TERMINEE')">
-                    <mat-icon class="menu-icon-done">check_circle</mat-icon>
-                    <span>Terminée</span>
-                  </button>
-                </mat-menu>
-
-                <!-- Actions (Edit / Delete) -->
-                <div class="action-operations" *ngIf="canWrite">
-                  <button mat-icon-button class="op-btn edit-btn" (click)="editAction(action)" matTooltip="Modifier">
-                    <mat-icon>edit</mat-icon>
-                  </button>
-                  <button mat-icon-button class="op-btn delete-btn" (click)="deleteAction(action)" matTooltip="Supprimer">
-                    <mat-icon>delete_outline</mat-icon>
-                  </button>
-                </div>
-
-              </div>
-
-            </div>
-          </div>
-        </div>
-      </div>
-    </mat-menu>
-
-    <div class="details-body">
-      <!-- QUICK STATUS CARDS -->
+    <div class="details-body" *ngIf="activeTab === 0">
       <div class="summary-cards">
         <div class="summary-card">
-          <div class="sc-header">
-            <span class="sc-label">{{ 'detail.nc.currentStatus' | t }}</span>
-            <mat-icon class="sc-icon">info_outline</mat-icon>
-          </div>
+          <div class="sc-label">Statut actuel</div>
           <div class="sc-value">
-            <span class="tag-status" [ngClass]="details.nonConformity.status.toLowerCase()">
+            <span class="tag" [ngClass]="details.nonConformity.status.toLowerCase()">
               {{ getStatusLabel(details.nonConformity.status) }}
             </span>
           </div>
-          <div *ngIf="canWrite" class="status-quick-actions">
-            <button mat-icon-button [matMenuTriggerFor]="stMenu" [matTooltip]="'detail.nc.changeStatus' | t">
-              <mat-icon>swap_vert</mat-icon>
-            </button>
-            <mat-menu #stMenu="matMenu" class="modern-menu">
-              <button mat-menu-item (click)="changeStatus('OUVERTE')">{{ 'detail.nc.open' | t }}</button>
-              <button mat-menu-item (click)="changeStatus('EN_COURS')">{{ 'detail.nc.inProgress' | t }}</button>
-              <button mat-menu-item (click)="changeStatus('CLOTUREE')">{{ 'detail.nc.closed' | t }}</button>
-            </mat-menu>
-          </div>
         </div>
-
         <div class="summary-card">
-          <div class="sc-header">
-            <span class="sc-label">{{ 'common.severity' | t }}</span>
-            <mat-icon class="sc-icon">priority_high</mat-icon>
-          </div>
+          <div class="sc-label">Gravité</div>
           <div class="sc-value">
-            <span class="tag-badge sev-badge" [ngClass]="details.nonConformity.severity.toLowerCase()">
+            <span class="tag" [ngClass]="details.nonConformity.severity.toLowerCase()">
               {{ getSeverityLabel(details.nonConformity.severity) }}
             </span>
           </div>
         </div>
-
         <div class="summary-card">
-          <div class="sc-header">
-            <span class="sc-label">{{ 'common.responsible' | t }}</span>
-            <mat-icon class="sc-icon">person_outline</mat-icon>
-          </div>
-          <div class="sc-value">
+          <div class="sc-label">Responsable</div>
+          <div class="sc-value pilote-cell">
             <div class="pilote-avatar" *ngIf="details.nonConformity.responsibleFullName">
               {{ details.nonConformity.responsibleFullName.charAt(0) }}
             </div>
-            <span class="resp-name">{{ details.nonConformity.responsibleFullName || ('common.toDefine' | t) }}</span>
+            <span>{{ details.nonConformity.responsibleFullName || ('common.toDefine' | t) }}</span>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="sc-label">Avancement actions</div>
+          <div class="sc-value">
+            <mat-icon>task_alt</mat-icon>
+            <span>{{ getCompletionPercentage() }}%</span>
           </div>
         </div>
       </div>
 
       <div class="details-main-grid">
-        <!-- GENERAL INFO -->
         <mat-card class="info-card">
           <div class="card-header-clean">
-            <h2>{{ 'detail.nc.infoOrigin' | t }}</h2>
             <mat-icon>info</mat-icon>
+            <h2>Informations & origine</h2>
           </div>
           <div class="info-grid">
             <div class="info-item full-width">
-              <label>{{ 'detail.nc.deviationDescription' | t }}</label>
+              <label>Description de l'écart</label>
               <p>{{ details.nonConformity.description || ('detail.nc.noDescription' | t) }}</p>
             </div>
             <div class="info-item">
-              <label>{{ 'detail.nc.linkedProcess' | t }}</label>
-              <div class="link-display" *ngIf="details.nonConformity.processCode; else noProc">
+              <label>Date de détection</label>
+              <p>{{ details.nonConformity.detectedDate | date: 'dd/MM/yyyy' }}</p>
+            </div>
+            <div class="info-item">
+              <label>Type</label>
+              <p>{{ details.nonConformity.type || '-' }}</p>
+            </div>
+            <div class="info-item">
+              <label>Processus lié</label>
+              <div class="link-display" *ngIf="details.nonConformity.processCode; else noProcess">
                 <mat-icon>hub</mat-icon>
                 <strong>{{ details.nonConformity.processCode }}</strong>
                 <span>{{ details.nonConformity.processName }}</span>
               </div>
-              <ng-template #noProc>
-                <p class="empty-text">{{ 'detail.nc.noLinkedProcess' | t }}</p>
-              </ng-template>
+              <ng-template #noProcess><p class="muted">Aucun processus lié.</p></ng-template>
             </div>
             <div class="info-item">
-              <label>{{ 'detail.nc.linkedProcedure' | t }}</label>
-              <div class="link-display" *ngIf="details.nonConformity.procedureCode; else noProc2">
+              <label>Procédure liée</label>
+              <div class="link-display" *ngIf="details.nonConformity.procedureCode; else noProcedure">
                 <mat-icon>description</mat-icon>
                 <strong>{{ details.nonConformity.procedureCode }}</strong>
                 <span>{{ details.nonConformity.procedureTitle }}</span>
               </div>
-              <ng-template #noProc2>
-                <p class="empty-text">{{ 'detail.nc.noLinkedProcedure' | t }}</p>
-              </ng-template>
-            </div>
-            <div class="info-item">
-              <label>{{ 'detail.nc.detectedDate' | t }}</label>
-              <p>{{ details.nonConformity.detectedDate | date: 'dd/MM/yyyy' }}</p>
-            </div>
-            <div class="info-item">
-              <label>{{ 'detail.nc.typeCategory' | t }}</label>
-              <p>{{ details.nonConformity.type || '-' }}</p>
+              <ng-template #noProcedure><p class="muted">Aucune procédure liée.</p></ng-template>
             </div>
           </div>
         </mat-card>
 
-        <mat-card class="info-card validation-card" *ngIf="canValidatePending">
+        <mat-card class="info-card">
           <div class="card-header-clean">
-            <h2>Validation non-conformite</h2>
-            <mat-icon>fact_check</mat-icon>
+            <mat-icon>published_with_changes</mat-icon>
+            <h2>Pilotage</h2>
           </div>
-
-          <div class="validation-panel">
-            <div class="validation-intro">
-              <div class="validation-copy">
-                <span class="validation-eyebrow">Controle qualite</span>
-                <p>Finalisez le code et confirmez le responsable avant la mise en traitement.</p>
+          <div class="info-grid">
+            <div class="info-item full-width" *ngIf="canWrite">
+              <label>Changer le statut</label>
+              <div class="status-grid">
+                <button mat-stroked-button type="button"
+                  [class.active]="details.nonConformity.status === 'OUVERTE'"
+                  (click)="changeStatus('OUVERTE')">Ouverte</button>
+                <button mat-stroked-button type="button"
+                  [class.active]="details.nonConformity.status === 'EN_COURS'"
+                  (click)="changeStatus('EN_COURS')">En cours</button>
+                <button mat-stroked-button type="button"
+                  [class.active]="details.nonConformity.status === 'CLOTUREE'"
+                  (click)="changeStatus('CLOTUREE')">Clôturée</button>
               </div>
-              <span class="validation-state-pill">En attente</span>
             </div>
-
-            <form class="validation-form" [formGroup]="validationForm" (ngSubmit)="validatePendingNonConformity()">
-              <div class="validation-grid">
-                <mat-form-field appearance="outline" class="validation-field validation-code-field">
-                  <mat-label>Code non-conformite</mat-label>
-                  <input matInput formControlName="code" />
-                  <mat-hint>Exemple: NC-009</mat-hint>
-                  <mat-error *ngIf="validationForm.controls.code.hasError('required')">
-                    Le code est obligatoire.
-                  </mat-error>
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" class="validation-field validation-owner-field">
-                  <mat-label>Responsable</mat-label>
-                  <mat-select formControlName="responsibleUserId">
-                    <mat-option [value]="0">Choisir</mat-option>
-                    <mat-option *ngFor="let user of users" [value]="user.id">
-                      {{ user.firstName }} {{ user.lastName }}
-                    </mat-option>
-                  </mat-select>
-                  <mat-hint>Affectation du suivi principal</mat-hint>
-                  <mat-error
-                    *ngIf="validationForm.controls.responsibleUserId.hasError('min') || validationForm.controls.responsibleUserId.hasError('required')">
-                    Selectionnez un responsable.
-                  </mat-error>
-                </mat-form-field>
-              </div>
-
-              <div class="validation-actions">
-                <div class="validation-note">
-                  <mat-icon>info</mat-icon>
-                  <span>Le code et le responsable seront enregistres au moment de la validation.</span>
-                </div>
-
-                <button mat-flat-button color="primary" class="validate-btn" type="submit"
-                  [disabled]="validationForm.invalid || savingValidation">
-                  <mat-icon>{{ savingValidation ? 'hourglass_top' : 'task_alt' }}</mat-icon>
-                  {{ savingValidation ? 'Validation...' : 'Valider la non-conformite' }}
-                </button>
-              </div>
-            </form>
+            <div class="info-item full-width">
+              <label>Résumé du traitement</label>
+              <p>
+                {{ getCompletedActionsCount() }} action{{ getCompletedActionsCount() > 1 ? 's' : '' }} terminée{{ getCompletedActionsCount() > 1 ? 's' : '' }}
+                sur {{ details.actions.length }}.
+              </p>
+            </div>
           </div>
         </mat-card>
+      </div>
+    </div>
 
-        <!-- PIÈCES JOINTES & PHOTOS -->
-        <mat-card class="info-card attachments-section">
-          <div class="card-header-clean">
-            <h2>Pièces jointes & Photos ({{ details.attachments.length || 0 }})</h2>
-            <mat-icon>attach_file</mat-icon>
+    <div class="tab-content-container" *ngIf="activeTab === 1">
+      <mat-card class="info-card actions-card">
+        <div class="card-header-clean split-header">
+          <div>
+            <mat-icon>playlist_add_check</mat-icon>
+            <h2>Plan d'actions correctives</h2>
+          </div>
+          <button mat-flat-button color="primary" type="button" *ngIf="canWrite && !showActionForm"
+            class="primary-action-btn" (click)="toggleActionForm()">
+            <mat-icon>add</mat-icon>
+            Ajouter action
+          </button>
+        </div>
+
+        <div class="progress-panel" *ngIf="details.actions.length > 0">
+          <div class="progress-copy">
+            <span>Avancement global</span>
+            <strong>{{ getCompletionPercentage() }}%</strong>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" [style.width.%]="getCompletionPercentage()"></div>
+          </div>
+          <div class="progress-meta">
+            <span>{{ getCompletedActionsCount() }} terminée{{ getCompletedActionsCount() > 1 ? 's' : '' }}</span>
+            <span>{{ details.actions.length }} au total</span>
+          </div>
+        </div>
+
+        <div class="filter-tabs" *ngIf="details.actions.length > 0">
+          <button type="button" [class.active]="activeActionFilter === 'TOUTES'" (click)="activeActionFilter = 'TOUTES'">
+            Toutes <span>{{ details.actions.length }}</span>
+          </button>
+          <button type="button" [class.active]="activeActionFilter === 'A_FAIRE'" (click)="activeActionFilter = 'A_FAIRE'">
+            À faire <span>{{ getActionCountByStatus('A_FAIRE') }}</span>
+          </button>
+          <button type="button" [class.active]="activeActionFilter === 'EN_COURS'" (click)="activeActionFilter = 'EN_COURS'">
+            En cours <span>{{ getActionCountByStatus('EN_COURS') }}</span>
+          </button>
+          <button type="button" [class.active]="activeActionFilter === 'TERMINEE'" (click)="activeActionFilter = 'TERMINEE'">
+            Terminées <span>{{ getActionCountByStatus('TERMINEE') }}</span>
+          </button>
+          <button type="button" [class.active]="activeActionFilter === 'EN_RETARD'" (click)="activeActionFilter = 'EN_RETARD'">
+            En retard <span>{{ getActionCountByStatus('EN_RETARD') }}</span>
+          </button>
+        </div>
+
+        <form class="action-form-panel" [formGroup]="actionForm" (ngSubmit)="saveAction()" *ngIf="showActionForm">
+          <div class="form-panel-title">
+            <mat-icon>{{ editingActionId ? 'edit_note' : 'add_task' }}</mat-icon>
+            <h3>{{ editingActionId ? 'Modifier l action corrective' : 'Nouvelle action corrective' }}</h3>
           </div>
 
-          <div class="empty-box" *ngIf="!details.attachments || details.attachments.length === 0">
-            <mat-icon>attachment</mat-icon>
-            <span>Aucune pièce jointe ou capture d'écran associée.</span>
+          <div class="action-form-grid">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Désignation / titre</mat-label>
+              <input matInput formControlName="title" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Description</mat-label>
+              <textarea matInput formControlName="description" rows="2"></textarea>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Responsable</mat-label>
+              <mat-select formControlName="responsibleUserId">
+                <mat-option [value]="0">Non assigné</mat-option>
+                <mat-option *ngFor="let user of users" [value]="user.id">
+                  {{ user.firstName }} {{ user.lastName }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Échéance</mat-label>
+              <input matInput type="date" formControlName="dueDate" />
+            </mat-form-field>
           </div>
 
-          <div class="attachments-list-detail" *ngIf="details.attachments && details.attachments.length > 0">
-            <div class="detail-attachment-item" *ngFor="let att of details.attachments">
-              <mat-icon class="file-icon-badge">insert_drive_file</mat-icon>
-              <div class="attachment-info">
-                <span class="file-name" [title]="att.originalFileName">{{ att.originalFileName }}</span>
-                <span class="file-meta">
-                  {{ att.createdAt | date: 'dd/MM/yyyy HH:mm' }}
-                  <span *ngIf="att.fileSize"> • {{ att.fileSize / 1024 | number:'1.0-1' }} KB</span>
-                </span>
+          <div class="form-actions">
+            <button mat-button type="button" (click)="cancelActionForm()">Annuler</button>
+            <button mat-flat-button color="primary" type="submit" [disabled]="actionForm.invalid || savingAction">
+              <mat-icon>{{ savingAction ? 'hourglass_top' : 'check' }}</mat-icon>
+              {{ savingAction ? 'Enregistrement...' : 'Enregistrer' }}
+            </button>
+          </div>
+        </form>
+
+        <div class="empty-state" *ngIf="details.actions.length === 0">
+          <mat-icon>playlist_add_check</mat-icon>
+          <h3>Aucune action corrective</h3>
+          <p>Créez la première action pour démarrer la résolution de l'écart.</p>
+        </div>
+
+        <div class="empty-state" *ngIf="details.actions.length > 0 && filteredActions.length === 0">
+          <mat-icon>filter_alt_off</mat-icon>
+          <h3>Aucune action correspondante</h3>
+          <p>Aucune action corrective ne correspond à ce filtre.</p>
+        </div>
+
+        <div class="actions-list" *ngIf="filteredActions.length > 0">
+          <div class="action-item-card" *ngFor="let action of filteredActions; trackBy: trackByActionId">
+            <div class="action-main">
+              <div class="action-status-icon" [ngClass]="action.status.toLowerCase()" [class.overdue]="action.isOverdue && action.status !== 'TERMINEE'">
+                <mat-icon *ngIf="action.status === 'TERMINEE'">check_circle</mat-icon>
+                <mat-icon *ngIf="action.status === 'EN_COURS'">sync</mat-icon>
+                <mat-icon *ngIf="action.status === 'A_FAIRE'">schedule</mat-icon>
               </div>
-              <div class="attachment-actions">
-                <button mat-icon-button class="action-btn download-btn" (click)="downloadAttachment(att)" [matTooltip]="'Télécharger'">
-                  <mat-icon>cloud_download</mat-icon>
+              <div class="action-text">
+                <h3>{{ action.title }}</h3>
+                <p>{{ action.description || 'Pas de description ajoutée.' }}</p>
+              </div>
+            </div>
+
+            <div class="action-side">
+              <div class="mini-info" *ngIf="action.responsibleFullName">
+                <span>Responsable</span>
+                <strong>{{ action.responsibleFullName }}</strong>
+              </div>
+              <div class="mini-info" [class.danger]="action.isOverdue && action.status !== 'TERMINEE'">
+                <span>Échéance</span>
+                <strong>{{ action.dueDate | date: 'dd/MM/yyyy' }}</strong>
+              </div>
+
+              <button mat-flat-button [matMenuTriggerFor]="itemStatusMenu" class="status-menu-btn"
+                [ngClass]="action.status.toLowerCase()" [disabled]="!canWrite">
+                {{ getActionStatusLabel(action.status) }}
+                <mat-icon *ngIf="canWrite">expand_more</mat-icon>
+              </button>
+              <mat-menu #itemStatusMenu="matMenu">
+                <button mat-menu-item (click)="updateActionStatus(action, 'A_FAIRE')">À faire</button>
+                <button mat-menu-item (click)="updateActionStatus(action, 'EN_COURS')">En cours</button>
+                <button mat-menu-item (click)="updateActionStatus(action, 'TERMINEE')">Terminée</button>
+              </mat-menu>
+
+              <div class="action-operations" *ngIf="canWrite">
+                <button mat-icon-button type="button" (click)="editAction(action)" matTooltip="Modifier">
+                  <mat-icon>edit</mat-icon>
                 </button>
-                <button *ngIf="canWrite" mat-icon-button class="action-btn delete-btn" (click)="deleteAttachment(att.id)" [matTooltip]="'Supprimer'">
+                <button mat-icon-button type="button" color="warn" (click)="deleteAction(action)" matTooltip="Supprimer">
                   <mat-icon>delete_outline</mat-icon>
                 </button>
               </div>
             </div>
           </div>
-        </mat-card>
-      </div>
+        </div>
+      </mat-card>
+    </div>
+
+    <div class="tab-content-container" *ngIf="activeTab === 2">
+      <mat-card class="info-card attachments-card">
+        <div class="card-header-clean">
+          <mat-icon>attach_file</mat-icon>
+          <h2>Pièces jointes & photos</h2>
+        </div>
+
+        <div class="empty-state" *ngIf="!details.attachments || details.attachments.length === 0">
+          <mat-icon>attachment</mat-icon>
+          <h3>Aucune pièce jointe</h3>
+          <p>Aucune pièce jointe ou capture d'écran associée.</p>
+        </div>
+
+        <div class="attachments-list-detail" *ngIf="details.attachments && details.attachments.length > 0">
+          <div class="detail-attachment-item" *ngFor="let att of details.attachments">
+            <mat-icon class="file-icon-badge">insert_drive_file</mat-icon>
+            <div class="attachment-info">
+              <span class="file-name" [title]="att.originalFileName">{{ att.originalFileName }}</span>
+              <span class="file-meta">
+                {{ att.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+                <span *ngIf="att.fileSize"> • {{ att.fileSize / 1024 | number:'1.0-1' }} KB</span>
+              </span>
+            </div>
+            <div class="attachment-actions">
+              <button mat-icon-button class="download-btn" (click)="downloadAttachment(att)" matTooltip="Télécharger">
+                <mat-icon>cloud_download</mat-icon>
+              </button>
+              <button *ngIf="canWrite" mat-icon-button color="warn" (click)="deleteAttachment(att.id)" matTooltip="Supprimer">
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </mat-card>
+    </div>
+
+    <div class="tab-content-container" *ngIf="activeTab === 3">
+      <mat-card class="info-card validation-card">
+        <div class="card-header-clean">
+          <mat-icon>fact_check</mat-icon>
+          <h2>Validation non-conformité</h2>
+        </div>
+
+        <div class="validation-panel" *ngIf="canValidatePending; else validationUnavailable">
+          <div class="validation-intro">
+            <div>
+              <span>Contrôle qualité</span>
+              <p>Finalisez le code et confirmez le responsable avant la mise en traitement.</p>
+            </div>
+            <strong>En attente</strong>
+          </div>
+
+          <form class="validation-form" [formGroup]="validationForm" (ngSubmit)="validatePendingNonConformity()">
+            <div class="validation-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Code non-conformité</mat-label>
+                <input matInput formControlName="code" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Responsable</mat-label>
+                <mat-select formControlName="responsibleUserId">
+                  <mat-option [value]="0">Choisir</mat-option>
+                  <mat-option *ngFor="let user of users" [value]="user.id">
+                    {{ user.firstName }} {{ user.lastName }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <div class="form-actions">
+              <button mat-flat-button color="primary" type="submit" [disabled]="validationForm.invalid || savingValidation">
+                <mat-icon>{{ savingValidation ? 'hourglass_top' : 'task_alt' }}</mat-icon>
+                {{ savingValidation ? 'Validation...' : 'Valider la non-conformité' }}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <ng-template #validationUnavailable>
+          <div class="empty-state compact">
+            <mat-icon>verified</mat-icon>
+            <h3>Aucune validation en attente</h3>
+            <p>Cette non-conformité ne nécessite pas de validation immédiate.</p>
+          </div>
+        </ng-template>
+      </mat-card>
     </div>
   </ng-container>
 </section>

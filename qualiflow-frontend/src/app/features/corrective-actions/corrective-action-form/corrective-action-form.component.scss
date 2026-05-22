@@ -86,6 +86,97 @@
   width: 100%;
 }
 
+.upload-zone {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border: 1px dashed var(--border-mid);
+  border-radius: 8px;
+  background: var(--bg-raised);
+
+  button {
+    border-radius: 8px !important;
+    font-weight: 700 !important;
+  }
+
+  span {
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+  }
+}
+
+.attachment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.section-label {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.attachment-row {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 36px;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+
+  > mat-icon {
+    color: var(--xl-green-mid);
+  }
+
+  div {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  strong,
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  strong {
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  span {
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+}
+
+.empty-attachments {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  color: var(--text-muted);
+  background: #f8fafc;
+  border-radius: 8px;
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+  }
+}
+
 ::ng-deep .mat-mdc-form-field-flex {
   background: var(--bg-raised) !important;
   border-radius: 8px !important;

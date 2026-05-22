@@ -113,7 +113,8 @@ namespace DocApi.Services
             }
 
             var history = await _correctiveActionActionLogRepository.GetByCorrectiveActionIdAsync(id, organizationId);
-            return MapToDetailsResponse(details, history);
+            var attachments = await _correctiveActionRepository.GetAttachmentsByCorrectiveActionIdAsync(id);
+            return MapToDetailsResponse(details, history, attachments);
         }
 
         public async Task<CorrectiveActionResponse> CreateAsync(CreateCorrectiveActionRequest request, UserContext userContext)
@@ -532,6 +533,106 @@ namespace DocApi.Services
             return await _correctiveActionActionLogRepository.DeleteAsync(logId, organizationId);
         }
 
+        public async Task<CorrectiveActionAttachmentResponse> AddAttachmentAsync(
+            int correctiveActionId,
+            string originalFileName,
+            string mimeType,
+            byte[] content,
+            UserContext userContext)
+        {
+            EnsureCanRead(userContext);
+            ValidateAttachment(originalFileName, content);
+
+            var action = await GetActionOrThrowAsync(correctiveActionId);
+            var organizationId = ResolveOrganizationScopeForRead(userContext);
+            EnsureAccessToOrganization(action, organizationId);
+            EnsureCanManageAttachment(action, userContext);
+
+            var fileExtension = System.IO.Path.GetExtension(originalFileName)?.Trim().ToLowerInvariant();
+            var uniqueFileName = $"{Guid.NewGuid():N}{fileExtension}";
+
+            var attachment = new CorrectiveActionAttachment
+            {
+                CorrectiveActionId = correctiveActionId,
+                OrganizationId = action.OrganizationId,
+                FileName = uniqueFileName,
+                OriginalFileName = originalFileName,
+                FileExtension = fileExtension,
+                MimeType = string.IsNullOrWhiteSpace(mimeType) ? "application/octet-stream" : mimeType,
+                FileSize = content.Length,
+                FileContent = content,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var id = await _correctiveActionRepository.AddAttachmentAsync(attachment);
+            attachment.Id = id;
+
+            await AddActionLogAsync(
+                action.OrganizationId,
+                correctiveActionId,
+                actionType: "ATTACHMENT_ADDED",
+                oldValue: null,
+                newValue: originalFileName,
+                comment: $"Fichier ajoute : {originalFileName}",
+                performedByUserId: userContext.UserId);
+
+            return MapToAttachmentResponse(attachment);
+        }
+
+        public async Task<CorrectiveActionAttachment?> GetAttachmentContentAsync(int attachmentId, UserContext userContext)
+        {
+            EnsureCanRead(userContext);
+
+            var attachment = await _correctiveActionRepository.GetAttachmentByIdAsync(attachmentId);
+            if (attachment == null)
+            {
+                throw new NotFoundException("Piece jointe introuvable.");
+            }
+
+            var organizationId = ResolveOrganizationScopeForRead(userContext);
+            if (attachment.OrganizationId != organizationId)
+            {
+                throw new ForbiddenException("Acces refuse a cette piece jointe.");
+            }
+
+            return attachment;
+        }
+
+        public async Task<bool> DeleteAttachmentAsync(int attachmentId, UserContext userContext)
+        {
+            EnsureCanRead(userContext);
+
+            var attachment = await _correctiveActionRepository.GetAttachmentByIdAsync(attachmentId);
+            if (attachment == null)
+            {
+                throw new NotFoundException("Piece jointe introuvable.");
+            }
+
+            var organizationId = ResolveOrganizationScopeForRead(userContext);
+            if (attachment.OrganizationId != organizationId)
+            {
+                throw new ForbiddenException("Acces refuse a cette piece jointe.");
+            }
+
+            var action = await GetActionOrThrowAsync(attachment.CorrectiveActionId);
+            EnsureCanManageAttachment(action, userContext);
+
+            var deleted = await _correctiveActionRepository.DeleteAttachmentAsync(attachmentId);
+            if (deleted)
+            {
+                await AddActionLogAsync(
+                    attachment.OrganizationId,
+                    attachment.CorrectiveActionId,
+                    actionType: "ATTACHMENT_DELETED",
+                    oldValue: attachment.OriginalFileName,
+                    newValue: null,
+                    comment: $"Fichier supprime : {attachment.OriginalFileName}",
+                    performedByUserId: userContext.UserId);
+            }
+
+            return deleted;
+        }
+
         private async Task<ValidatedPayload> ValidatePayloadAsync(
             int nonConformityId,
             string type,
@@ -772,7 +873,8 @@ namespace DocApi.Services
 
         private static CorrectiveActionDetailsResponse MapToDetailsResponse(
             CorrectiveActionDetailsData details,
-            IEnumerable<CorrectiveActionActionLogData> history)
+            IEnumerable<CorrectiveActionActionLogData> history,
+            IEnumerable<CorrectiveActionAttachment> attachments)
         {
             return new CorrectiveActionDetailsResponse
             {
@@ -799,7 +901,23 @@ namespace DocApi.Services
                         Type = details.ProofRecordType
                     }
                     : null,
+                Attachments = attachments.Select(MapToAttachmentResponse).ToList(),
                 History = history.Select(MapToActionLogResponse).ToList()
+            };
+        }
+
+        private static CorrectiveActionAttachmentResponse MapToAttachmentResponse(CorrectiveActionAttachment item)
+        {
+            return new CorrectiveActionAttachmentResponse
+            {
+                Id = item.Id,
+                CorrectiveActionId = item.CorrectiveActionId,
+                OrganizationId = item.OrganizationId,
+                OriginalFileName = item.OriginalFileName,
+                FileExtension = item.FileExtension,
+                MimeType = item.MimeType,
+                FileSize = item.FileSize,
+                CreatedAt = item.CreatedAt
             };
         }
 
@@ -845,6 +963,49 @@ namespace DocApi.Services
             }
 
             return value.Trim();
+        }
+
+        private static void EnsureCanManageAttachment(CorrectiveAction action, UserContext userContext)
+        {
+            var isOrgAdminOrQa = string.Equals(userContext.Role, UserRoles.ADMIN_ORG, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(userContext.Role, UserRoles.RESPONSABLE_QUALITE, StringComparison.OrdinalIgnoreCase);
+            var isActionResponsible = action.ResponsibleUserId == userContext.UserId;
+
+            if (!isOrgAdminOrQa && !isActionResponsible)
+            {
+                throw new ForbiddenException("Seul le responsable de l'action, le responsable qualite ou l'administrateur peut gerer les pieces jointes.");
+            }
+        }
+
+        private static void ValidateAttachment(string originalFileName, byte[] content)
+        {
+            if (string.IsNullOrWhiteSpace(originalFileName))
+            {
+                throw new ServiceException("Le nom du fichier est obligatoire.");
+            }
+
+            if (content == null || content.Length == 0)
+            {
+                throw new ServiceException("Le fichier est vide.");
+            }
+
+            const int maxFileSizeBytes = 20 * 1024 * 1024;
+            if (content.Length > maxFileSizeBytes)
+            {
+                throw new ServiceException("La taille du fichier depasse la limite autorisee (20 MB).");
+            }
+
+            var extension = System.IO.Path.GetExtension(originalFileName)?.Trim().ToLowerInvariant();
+            var allowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ".png", ".jpg", ".jpeg", ".webp", ".gif",
+                ".pdf", ".doc", ".docx", ".xls", ".xlsx"
+            };
+
+            if (string.IsNullOrWhiteSpace(extension) || !allowedExtensions.Contains(extension))
+            {
+                throw new ServiceException("Format non autorise. Ajoutez une image, un PDF, Word ou Excel.");
+            }
         }
 
         private sealed class ValidatedPayload

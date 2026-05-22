@@ -45,5 +45,9 @@ namespace DocApi.Repositories.Interfaces
         Task<bool> UpdateStatusAsync(int id, int organizationId, string status, DateTime? completionDate, DateTime updatedAt);
         Task<bool> UpdateEffectivenessAsync(int id, int organizationId, bool effectivenessVerified, string? effectivenessComment, DateTime updatedAt, string? status = null);
         Task<int> CountOverdueAsync(int organizationId, int? restrictedUserId = null);
+        Task<int> AddAttachmentAsync(CorrectiveActionAttachment attachment);
+        Task<CorrectiveActionAttachment?> GetAttachmentByIdAsync(int attachmentId);
+        Task<IEnumerable<CorrectiveActionAttachment>> GetAttachmentsByCorrectiveActionIdAsync(int correctiveActionId);
+        Task<bool> DeleteAttachmentAsync(int attachmentId);
     }
 }
