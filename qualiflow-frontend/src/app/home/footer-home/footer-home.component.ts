@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 @Component({
@@ -9,5 +9,10 @@ import { RouterLink } from '@angular/router';
   styleUrls: ['./footer-home.component.scss']
 })
 export class FooterHomeComponent {
+  @Output() reclamationClick = new EventEmitter<void>();
   currentYear = new Date().getFullYear();
+
+  onReclamationClick(): void {
+    this.reclamationClick.emit();
+  }
 }

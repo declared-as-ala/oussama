@@ -55,7 +55,6 @@ export class HeaderHomeComponent {
     { label: 'Services', key: 'home.nav.services', section: 'services' },
     { label: 'ISO 21001', key: 'home.nav.iso', section: 'iso' },
     { label: 'Demander un Espace', key: 'home.nav.requestOrg', section: 'request-org' },
-    { label: 'Réclamations', key: 'home.nav.reclamations', section: 'reclamations' },
     { label: 'Contact', key: 'home.nav.contact', section: 'contact' }
   ];
 

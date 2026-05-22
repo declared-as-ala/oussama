@@ -406,6 +406,26 @@ export class SuperAdminDashboardComponent implements OnInit {
       stroke: { show: false },
       dataLabels: { enabled: false },
       legend: { position: 'bottom', labels: { useSeriesColors: true } },
+      responsive: [
+        {
+          breakpoint: 560,
+          options: {
+            chart: { height: 240 },
+            legend: { fontSize: '11px', itemMargin: { horizontal: 6, vertical: 2 } },
+            plotOptions: {
+              pie: {
+                donut: {
+                  size: '68%',
+                  labels: {
+                    name: { fontSize: '12px' },
+                    value: { fontSize: '18px' }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
       plotOptions: {
         pie: {
           donut: {
@@ -447,7 +467,34 @@ export class SuperAdminDashboardComponent implements OnInit {
         labels: { useSeriesColors: true },
         formatter: (seriesName: string, opts: any) => seriesName + ":  " + opts.w.globals.series[opts.seriesIndex] + "%",
         itemMargin: { vertical: 3 }
-      }
+      },
+      responsive: [
+        {
+          breakpoint: 768,
+          options: {
+            chart: { height: 260 },
+            legend: {
+              floating: false,
+              position: 'bottom',
+              offsetX: 0,
+              offsetY: 0
+            },
+            plotOptions: {
+              radialBar: {
+                endAngle: 360,
+                hollow: { size: '36%' }
+              }
+            }
+          }
+        },
+        {
+          breakpoint: 420,
+          options: {
+            chart: { height: 230 },
+            legend: { fontSize: '11px' }
+          }
+        }
+      ]
     };
 
     // 3. Trends (Combined Area/Column)
@@ -480,7 +527,26 @@ export class SuperAdminDashboardComponent implements OnInit {
       xaxis: { type: 'category' },
       yaxis: { min: 0 },
       tooltip: { shared: true, intersect: false },
-      colors: ['#10b981', '#3b82f6', '#ef4444']
+      colors: ['#10b981', '#3b82f6', '#ef4444'],
+      responsive: [
+        {
+          breakpoint: 768,
+          options: {
+            chart: { height: 300 },
+            plotOptions: { bar: { columnWidth: '65%' } },
+            xaxis: { labels: { rotate: -45, trim: true, hideOverlappingLabels: true } },
+            legend: { position: 'bottom' }
+          }
+        },
+        {
+          breakpoint: 420,
+          options: {
+            chart: { height: 280 },
+            stroke: { width: [0, 2, 2] },
+            markers: { size: 0 }
+          }
+        }
+      ]
     };
 
     // 4. Visitors (Area Spline)
@@ -496,7 +562,17 @@ export class SuperAdminDashboardComponent implements OnInit {
       xaxis: { categories: userTrends.map(d => d.period), labels: { style: { colors: '#64748b' } } },
       yaxis: { labels: { style: { colors: '#64748b' } } },
       colors: ['#3b82f6'],
-      grid: { borderColor: 'rgba(0,0,0,0.05)', strokeDashArray: 4 }
+      grid: { borderColor: 'rgba(0,0,0,0.05)', strokeDashArray: 4 },
+      responsive: [
+        {
+          breakpoint: 560,
+          options: {
+            chart: { height: 240 },
+            xaxis: { labels: { rotate: -45, trim: true, hideOverlappingLabels: true } },
+            yaxis: { labels: { show: false } }
+          }
+        }
+      ]
     };
 
     // 5. Device Breakdown (Donut)
@@ -508,7 +584,15 @@ export class SuperAdminDashboardComponent implements OnInit {
       colors: this.devicePalette,
       stroke: { show: false },
       plotOptions: { pie: { donut: { size: '70%' } } },
-      tooltip: { enabled: true }
+      tooltip: { enabled: true },
+      responsive: [
+        {
+          breakpoint: 560,
+          options: {
+            chart: { height: 160 }
+          }
+        }
+      ]
     };
   }
 
