@@ -54,6 +54,10 @@ export class CorrectiveActionService {
     return this.apiService.patch<CorrectiveActionResponse>(`${this.endpoint}/${id}/status`, payload);
   }
 
+  notifyCompletion(id: number): Observable<CorrectiveActionResponse> {
+    return this.apiService.post<CorrectiveActionResponse>(`${this.endpoint}/${id}/completion-notification`, {});
+  }
+
   verifyEffectiveness(id: number, payload: VerifyCorrectiveActionEffectivenessRequest): Observable<CorrectiveActionResponse> {
     return this.apiService.patch<CorrectiveActionResponse>(`${this.endpoint}/${id}/verify-effectiveness`, payload);
   }

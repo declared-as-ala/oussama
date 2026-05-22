@@ -16,7 +16,7 @@ namespace DocApi.Infrastructure
 {
     public sealed class PdfHeaderStampService : IPdfHeaderStampService
     {
-        private const string HeaderStampKeyword = "QualiFlowHeaderStampedV2";
+        private const string HeaderStampKeyword = "QualiFlowHeaderStampedV3";
         private readonly ILogger<PdfHeaderStampService> _logger;
         private readonly bool _enabled;
         private readonly string? _organizationLogosPath;
@@ -105,14 +105,9 @@ namespace DocApi.Infrastructure
                     page.Size = PageSize.A4;
                     gfx = XGraphics.FromPdfPage(page);
 
-                    if (_enabled && pdfDocument.PageCount == 1) // First page only!
-                    {
-                        y = HeaderHeight + bodyTopMargin;
-                    }
-                    else
-                    {
-                        y = bodyTopMargin;
-                    }
+                    y = _enabled
+                        ? HeaderTop + HeaderHeight + bodyTopMargin
+                        : bodyTopMargin;
 
                     bodyWidth = page.Width - leftMargin - rightMargin;
                     maxY = page.Height - bottomMargin;
@@ -161,12 +156,9 @@ namespace DocApi.Infrastructure
                 {
                     for (int i = 0; i < pdfDocument.Pages.Count; i++)
                     {
-                        if (i == 0) // Draw header on the first page only!
-                        {
-                            var page = pdfDocument.Pages[i];
-                            using var headerGfx = XGraphics.FromPdfPage(page, XGraphicsPdfPageOptions.Append);
-                            DrawHeader(headerGfx, page.Width, metadata, logoImage, i + 1, pdfDocument.Pages.Count);
-                        }
+                        var page = pdfDocument.Pages[i];
+                        using var headerGfx = XGraphics.FromPdfPage(page, XGraphicsPdfPageOptions.Append);
+                        DrawHeader(headerGfx, page.Width, metadata, logoImage, i + 1, pdfDocument.Pages.Count);
                     }
 
                     pdfDocument.Info.Keywords = AppendStampKeyword(pdfDocument.Info.Keywords);
@@ -394,21 +386,21 @@ namespace DocApi.Infrastructure
             }
         }
 
-                private static void DrawHeader(XGraphics gfx, double pageWidth, PdfHeaderMetadata metadata, XImage? logoImage, int pageNumber, int totalPages)
+        private static void DrawHeader(XGraphics gfx, double pageWidth, PdfHeaderMetadata metadata, XImage? logoImage, int pageNumber, int totalPages)
         {
-            var borderPen = new XPen(XColors.Black, 0.8);
-            var linePen = new XPen(XColors.Black, 0.6);
+            var borderPen = new XPen(XColors.Black, 0.9);
+            var linePen = new XPen(XColors.Black, 0.5);
             var fillBrush = XBrushes.White;
 
-            var centerTopFont = new XFont("Arial", 12, XFontStyle.Bold);
-            var titleFont = new XFont("Arial", 18, XFontStyle.Bold);
-            var rightCodeFont = new XFont("Arial", 14, XFontStyle.Bold);
-            var rightInfoFont = new XFont("Arial", 10, XFontStyle.Bold);
+            var centerTopFont = new XFont("Arial", 12.5, XFontStyle.Bold);
+            var titleFont = new XFont("Arial", 17, XFontStyle.Bold);
+            var rightCodeFont = new XFont("Arial", 13.5, XFontStyle.Bold);
+            var rightInfoFont = new XFont("Arial", 9.5, XFontStyle.Bold);
             var textBrush = XBrushes.Black;
 
-            var marginLeft = 6d;
-            var marginRight = 6d;
-            var headerY = 6d;
+            var marginLeft = 22d;
+            var marginRight = 22d;
+            var headerY = HeaderTop;
             var headerWidth = pageWidth - marginLeft - marginRight;
             var headerRect = new XRect(marginLeft, headerY, headerWidth, HeaderHeight);
 
@@ -427,8 +419,8 @@ namespace DocApi.Infrastructure
 
             if (logoImage != null)
             {
-                var maxLogoW = leftRect.Width - 10;
-                var maxLogoH = leftRect.Height - 10;
+                var maxLogoW = leftRect.Width - 12;
+                var maxLogoH = leftRect.Height - 12;
                 var ratio = Math.Min(maxLogoW / logoImage.PixelWidth, maxLogoH / logoImage.PixelHeight);
                 var drawW = logoImage.PixelWidth * ratio;
                 var drawH = logoImage.PixelHeight * ratio;
@@ -440,23 +432,24 @@ namespace DocApi.Infrastructure
             var processCode = string.IsNullOrWhiteSpace(metadata.ProcessCode) ? "-" : metadata.ProcessCode.Trim();
             var procedureCode = string.IsNullOrWhiteSpace(metadata.ProcedureCode) ? "-" : metadata.ProcedureCode.Trim();
             var centerTopText = $"Processus : {processCode}   ---   Procedure : {procedureCode}";
-            gfx.DrawString(centerTopText, centerTopFont, textBrush, new XRect(centerRect.X, centerRect.Y + 8, centerRect.Width, 22), XStringFormats.TopCenter);
-            gfx.DrawLine(linePen, centerRect.X + 6, centerRect.Y + 28, centerRect.Right - 6, centerRect.Y + 28);
+            gfx.DrawString(centerTopText, centerTopFont, textBrush, new XRect(centerRect.X, centerRect.Y + 9, centerRect.Width, 21), XStringFormats.TopCenter);
+            gfx.DrawLine(linePen, centerRect.X + 6, centerRect.Y + 32, centerRect.Right - 6, centerRect.Y + 32);
 
-            var title = string.IsNullOrWhiteSpace(metadata.DocumentTitle) ? "Titre de document" : Truncate(metadata.DocumentTitle, 48);
-            gfx.DrawString(title, titleFont, textBrush, new XRect(centerRect.X, centerRect.Y + 30, centerRect.Width, 34), XStringFormats.TopCenter);
+            var title = string.IsNullOrWhiteSpace(metadata.DocumentTitle) ? "Titre de document" : Truncate(metadata.DocumentTitle, 52);
+            gfx.DrawString(title, titleFont, textBrush, new XRect(centerRect.X, centerRect.Y + 38, centerRect.Width, 28), XStringFormats.TopCenter);
 
             var dateText = metadata.GeneratedAtUtc.ToLocalTime().ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
             var docCode = string.IsNullOrWhiteSpace(metadata.DocumentCode) ? "-" : metadata.DocumentCode.Trim();
             var version = string.IsNullOrWhiteSpace(metadata.VersionNumber) ? "-" : metadata.VersionNumber.Trim();
             var pageText = $"{pageNumber} / {Math.Max(1, totalPages)}";
 
-            gfx.DrawString(docCode, rightCodeFont, textBrush, new XRect(rightRect.X + 4, rightRect.Y + 6, rightRect.Width - 8, 20), XStringFormats.TopCenter);
-            gfx.DrawString($"Version : {version}", rightInfoFont, textBrush, new XRect(rightRect.X + 6, rightRect.Y + 26, rightRect.Width - 12, 14), XStringFormats.TopLeft);
-            gfx.DrawString($"Date : {dateText}", rightInfoFont, textBrush, new XRect(rightRect.X + 6, rightRect.Y + 42, rightRect.Width - 12, 14), XStringFormats.TopLeft);
-            gfx.DrawString($"Page : {pageText}", rightInfoFont, textBrush, new XRect(rightRect.X + 6, rightRect.Y + 58, rightRect.Width - 12, 14), XStringFormats.TopLeft);
+            gfx.DrawString(docCode, rightCodeFont, textBrush, new XRect(rightRect.X + 4, rightRect.Y + 8, rightRect.Width - 8, 20), XStringFormats.TopCenter);
+            gfx.DrawString($"Version : {version}", rightInfoFont, textBrush, new XRect(rightRect.X + 7, rightRect.Y + 30, rightRect.Width - 12, 13), XStringFormats.TopLeft);
+            gfx.DrawString($"Date : {dateText}", rightInfoFont, textBrush, new XRect(rightRect.X + 7, rightRect.Y + 46, rightRect.Width - 12, 13), XStringFormats.TopLeft);
+            gfx.DrawString($"Page : {pageText}", rightInfoFont, textBrush, new XRect(rightRect.X + 7, rightRect.Y + 62, rightRect.Width - 12, 13), XStringFormats.TopLeft);
         }
-private static void DrawSignature(XGraphics gfx, double pageWidth, double pageHeight, XImage signatureImage, PdfHeaderMetadata metadata)
+
+        private static void DrawSignature(XGraphics gfx, double pageWidth, double pageHeight, XImage signatureImage, PdfHeaderMetadata metadata)
         {
             var labelFont = new XFont("Arial", 9, XFontStyle.Bold);
             var dateFont = new XFont("Arial", 7, XFontStyle.Italic);
@@ -545,14 +538,7 @@ private static void DrawSignature(XGraphics gfx, double pageWidth, double pageHe
                 page.Height = form.PointHeight;
 
                 using var gfx = XGraphics.FromPdfPage(page);
-                if (index == 0)
-                {
-                    DrawFirstPageWithHeader(gfx, page.Width, page.Height, form, metadata, logoImage, form.PageCount);
-                }
-                else
-                {
-                    gfx.DrawImage(form, 0, 0, page.Width, page.Height);
-                }
+                DrawPageWithHeader(gfx, page.Width, page.Height, form, metadata, logoImage, index + 1, form.PageCount);
 
                 if (index == form.PageCount - 1 && signatureImage != null)
                 {
@@ -570,24 +556,25 @@ private static void DrawSignature(XGraphics gfx, double pageWidth, double pageHe
             return stampedStream;
         }
 
-        private static void DrawFirstPageWithHeader(
+        private static void DrawPageWithHeader(
             XGraphics gfx,
             double pageWidth,
             double pageHeight,
             XPdfForm sourcePage,
             PdfHeaderMetadata metadata,
             XImage? logoImage,
+            int pageNumber,
             int totalPages)
         {
             const double contentGap = 8d;
-            var contentTop = HeaderHeight + 12d + contentGap;
+            var contentTop = HeaderTop + HeaderHeight + contentGap;
             var availableHeight = Math.Max(1d, pageHeight - contentTop);
             var scale = Math.Min(1d, availableHeight / pageHeight);
             var drawWidth = pageWidth * scale;
             var drawHeight = pageHeight * scale;
             var drawX = (pageWidth - drawWidth) / 2d;
 
-            DrawHeader(gfx, pageWidth, metadata, logoImage, 1, totalPages);
+            DrawHeader(gfx, pageWidth, metadata, logoImage, pageNumber, totalPages);
             gfx.DrawImage(sourcePage, drawX, contentTop, drawWidth, drawHeight);
         }
 
@@ -658,6 +645,7 @@ private static void DrawSignature(XGraphics gfx, double pageWidth, double pageHe
             return Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), trimmed));
         }
 
+        private const double HeaderTop = 10d;
         private const double HeaderHeight = 78d;
     }
 }

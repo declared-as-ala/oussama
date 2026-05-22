@@ -14,6 +14,7 @@ namespace DocApi.Services.Interfaces
         Task<CorrectiveActionResponse> UpdateAsync(int id, UpdateCorrectiveActionRequest request, UserContext userContext);
         Task<bool> DeleteAsync(int id, UserContext userContext);
         Task<CorrectiveActionResponse> UpdateStatusAsync(int id, UpdateCorrectiveActionStatusRequest request, UserContext userContext);
+        Task<CorrectiveActionResponse> NotifyCompletionAsync(int id, UserContext userContext);
         Task<CorrectiveActionResponse> VerifyEffectivenessAsync(int id, VerifyCorrectiveActionEffectivenessRequest request, UserContext userContext);
         Task<CorrectiveActionStatisticsResponse> GetStatisticsAsync(UserContext userContext);
         Task<List<CorrectiveActionListItemResponse>> GetByNonConformityIdAsync(int nonConformityId, UserContext userContext);

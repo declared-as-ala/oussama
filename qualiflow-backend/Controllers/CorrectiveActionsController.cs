@@ -154,12 +154,35 @@ namespace DocApi.Controllers
         }
 
         [HttpPatch("{id:int}/status")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE")]
         public async Task<ActionResult<CorrectiveActionResponse>> UpdateStatus(int id, [FromBody] UpdateCorrectiveActionStatusRequest request)
         {
             try
             {
                 var result = await _correctiveActionService.UpdateStatusAsync(id, request, GetUserContext());
+                return Ok(result);
+            }
+            catch (ForbiddenException)
+            {
+                return Forbid();
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ServiceException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("{id:int}/completion-notification")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
+        public async Task<ActionResult<CorrectiveActionResponse>> NotifyCompletion(int id)
+        {
+            try
+            {
+                var result = await _correctiveActionService.NotifyCompletionAsync(id, GetUserContext());
                 return Ok(result);
             }
             catch (ForbiddenException)

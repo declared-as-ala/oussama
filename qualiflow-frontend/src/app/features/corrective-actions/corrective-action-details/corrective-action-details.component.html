@@ -188,12 +188,13 @@
             <mat-icon>verified</mat-icon>
             <div>
               <strong>Plan terminé</strong>
-              <span>Le responsable peut passer l'action au statut réalisée.</span>
+              <span *ngIf="canWrite">La qualité peut passer l'action au statut réalisée.</span>
+              <span *ngIf="!canWrite">Le responsable peut notifier la qualité pour validation du statut.</span>
             </div>
             <button mat-flat-button color="primary" type="button" [disabled]="savingCompletion || !canCompleteFromPlan"
               (click)="completeActionFromPlan()">
               <mat-spinner *ngIf="savingCompletion" diameter="18"></mat-spinner>
-              <span *ngIf="!savingCompletion">Marquer réalisée</span>
+              <span *ngIf="!savingCompletion">{{ canWrite ? 'Marquer réalisée' : 'Notifier terminé' }}</span>
             </button>
           </div>
         </div>

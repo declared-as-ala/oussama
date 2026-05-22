@@ -290,11 +290,10 @@ namespace DocApi.Services
             EnsureAccessToOrganization(action, organizationId);
 
             bool isOrgAdminOrQa = userContext.Role == UserRoles.ADMIN_ORG || userContext.Role == UserRoles.RESPONSABLE_QUALITE;
-            bool isActionResponsible = action.ResponsibleUserId == userContext.UserId;
 
-            if (!isOrgAdminOrQa && !isActionResponsible)
+            if (!isOrgAdminOrQa)
             {
-                throw new ForbiddenException("Seul le responsable de l'action, le responsable qualité ou l'administrateur de l'organisation peut modifier la situation de cette action corrective.");
+                throw new ForbiddenException("Seul le responsable qualite ou l'administrateur de l'organisation peut modifier la situation de cette action corrective.");
             }
 
             var nextStatus = NormalizeStatus(request.Status);
@@ -350,6 +349,54 @@ namespace DocApi.Services
             }
 
             return MapToResponse(updated);
+        }
+
+        public async Task<CorrectiveActionResponse> NotifyCompletionAsync(int id, UserContext userContext)
+        {
+            EnsureCanRead(userContext);
+            var action = await GetActionOrThrowAsync(id);
+            var organizationId = ResolveOrganizationScopeForRead(userContext);
+            EnsureAccessToOrganization(action, organizationId);
+
+            if (action.ResponsibleUserId != userContext.UserId)
+            {
+                throw new ForbiddenException("Seul le responsable de l'action peut notifier la fin de realisation.");
+            }
+
+            if (CorrectiveActionConstants.IsCompletedStatus(action.Status))
+            {
+                throw new ServiceException("Cette action est deja marquee comme realisee ou verifiee.");
+            }
+
+            await AddActionLogAsync(
+                organizationId,
+                id,
+                actionType: "COMPLETION_NOTIFIED",
+                oldValue: action.Status,
+                newValue: action.Status,
+                comment: "Le responsable a signale que les taches sont terminees et demande la validation du statut.",
+                performedByUserId: userContext.UserId);
+
+            await _notificationEventPublisher.PublishToRolesAsync(
+                organizationId,
+                new List<string> { UserRoles.ADMIN_ORG, UserRoles.RESPONSABLE_QUALITE },
+                NotificationConstants.TypeSystemAlert,
+                NotificationConstants.CategoryInfo,
+                "Action corrective terminee a valider",
+                $"Le responsable signale que l'action corrective #{id} \"{action.Title}\" est terminee. Merci de verifier et changer le statut si conforme.",
+                NotificationConstants.PriorityHigh,
+                "CORRECTIVE_ACTION",
+                id.ToString(),
+                $"/corrective-actions/{id}",
+                userContext.UserId);
+
+            var details = await _correctiveActionRepository.GetDetailsByIdAsync(id, organizationId);
+            if (details == null)
+            {
+                throw new NotFoundException("Action corrective introuvable apres notification.");
+            }
+
+            return MapToResponse(details);
         }
 
         public async Task<CorrectiveActionResponse> VerifyEffectivenessAsync(int id, VerifyCorrectiveActionEffectivenessRequest request, UserContext userContext)

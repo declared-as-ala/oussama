@@ -137,15 +137,15 @@ export class CorrectiveActionDetailsComponent implements OnInit, OnDestroy {
   }
 
   get canCompleteFromPlan(): boolean {
-    return this.canChangeStatus;
-  }
-
-  get canChangeStatus(): boolean {
     return this.canWrite || this.isAssignee;
   }
 
+  get canChangeStatus(): boolean {
+    return this.canWrite;
+  }
+
   get canManageAttachments(): boolean {
-    return this.canChangeStatus;
+    return this.canWrite || this.isAssignee;
   }
 
   get completedStepsCount(): number {
@@ -290,10 +290,17 @@ export class CorrectiveActionDetailsComponent implements OnInit, OnDestroy {
   }
 
   completeActionFromPlan(): void {
-    if (!this.shouldOfferCompletion || !this.canCompleteFromPlan) {
-      if (!this.canCompleteFromPlan) {
-        this.notificationService.showWarning('Plan terminé. Le responsable ou l admin organisation peut changer la situation en réalisée.');
-      }
+    if (!this.shouldOfferCompletion) {
+      return;
+    }
+
+    if (!this.canCompleteFromPlan) {
+      this.notificationService.showWarning('Plan termine. Le responsable de l action peut notifier la fin, puis la qualite valide le statut.');
+      return;
+    }
+
+    if (!this.canWrite && this.isAssignee) {
+      this.notifyCompletionFromPlan();
       return;
     }
 
@@ -331,6 +338,38 @@ export class CorrectiveActionDetailsComponent implements OnInit, OnDestroy {
         error: () => {
           this.savingCompletion = false;
           this.notificationService.showError('Impossible de marquer l action comme réalisée.');
+        }
+      });
+    });
+  }
+
+  private notifyCompletionFromPlan(): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Notifier la fin de l action',
+        message: 'Toutes les tâches sont cochées. Envoyer une notification au responsable qualité et à l administrateur pour valider le statut ?',
+        confirmText: 'Notifier',
+        cancelText: 'Annuler',
+        type: 'info'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (!confirmed) {
+        return;
+      }
+
+      this.savingCompletion = true;
+
+      this.correctiveActionService.notifyCompletion(this.actionId).subscribe({
+        next: () => {
+          this.savingCompletion = false;
+          this.notificationService.showSuccess('Notification envoyee au responsable qualite et a l administrateur.');
+          this.load();
+        },
+        error: () => {
+          this.savingCompletion = false;
+          this.notificationService.showError('Notification impossible.');
         }
       });
     });
@@ -400,6 +439,8 @@ export class CorrectiveActionDetailsComponent implements OnInit, OnDestroy {
         return 'Changement de statut';
       case 'EFFECTIVENESS_VERIFIED':
         return 'Efficacité vérifiée';
+      case 'COMPLETION_NOTIFIED':
+        return 'Fin notifiée';
       case 'ATTACHMENT_ADDED':
         return 'Ajout de fichier';
       case 'ATTACHMENT_DELETED':
@@ -421,6 +462,9 @@ export class CorrectiveActionDetailsComponent implements OnInit, OnDestroy {
     }
     if (actionType.includes('VERIFIED')) {
       return 'verified';
+    }
+    if (actionType.includes('COMPLETION')) {
+      return 'outgoing_mail';
     }
     if (actionType.includes('ATTACHMENT')) {
       return 'attach_file';
