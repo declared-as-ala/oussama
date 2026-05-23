@@ -55,7 +55,7 @@ interface CorrectiveActionPlanStep {
 })
 export class CorrectiveActionDetailsComponent implements OnInit, OnDestroy {
   readonly statusOptions = CORRECTIVE_ACTION_STATUS_OPTIONS;
-  readonly historyColumns = ['action', 'comment', 'user', 'date', 'actions'];
+  readonly historyColumns = ['action', 'comment', 'user', 'date'];
   activeTab = 0;
   planSteps: CorrectiveActionPlanStep[] = [];
   planAutoCompletionNotified = false;

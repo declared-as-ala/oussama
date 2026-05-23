@@ -380,15 +380,7 @@
               <td mat-cell *matCellDef="let item">{{ item.performedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
             </ng-container>
 
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef></th>
-              <td mat-cell *matCellDef="let item">
-                <button mat-icon-button color="warn" *ngIf="canWrite" type="button"
-                  title="Supprimer cet historique" (click)="deleteActionLog(item.id)">
-                  <mat-icon>delete_outline</mat-icon>
-                </button>
-              </td>
-            </ng-container>
+
 
             <tr mat-header-row *matHeaderRowDef="historyColumns"></tr>
             <tr mat-row *matRowDef="let row; columns: historyColumns"></tr>

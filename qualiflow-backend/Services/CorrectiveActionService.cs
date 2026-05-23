@@ -568,16 +568,8 @@ namespace DocApi.Services
 
         public async Task<bool> DeleteActionLogAsync(int logId, UserContext userContext)
         {
-            EnsureCanWrite(userContext);
-            var organizationId = ResolveOrganizationScopeForWrite(userContext);
-
-            var log = await _correctiveActionActionLogRepository.GetByIdAsync(logId, organizationId);
-            if (log == null)
-            {
-                throw new NotFoundException("Log d'actions introuvable.");
-            }
-
-            return await _correctiveActionActionLogRepository.DeleteAsync(logId, organizationId);
+            await Task.CompletedTask;
+            throw new ForbiddenException("La suppression de l'historique d'actions correctives est interdite pour garantir l'intégrité de l'audit.");
         }
 
         public async Task<CorrectiveActionAttachmentResponse> AddAttachmentAsync(
