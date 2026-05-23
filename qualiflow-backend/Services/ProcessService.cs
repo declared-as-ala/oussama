@@ -125,6 +125,8 @@ namespace DocApi.Services
             var id = await _processRepository.CreateAsync(process);
             var created = await GetProcessOrThrowAsync(id);
 
+            await SyncPilotInActorsAsync(created.Id, created.OrganizationId, created.PilotUserId);
+
             await LogProcessActionAsync(
                 created,
                 "PROCESS_CREATED",
@@ -368,6 +370,46 @@ namespace DocApi.Services
                 .GroupBy(actor => actor.UserId)
                 .Select(group => group.First())
                 .ToList();
+
+            // Align the actors list with the process's main pilot to maintain domain model consistency
+            if (process.PilotUserId.HasValue)
+            {
+                // Demote any other user with role PILOTE to COPILOTE to maintain the single-pilot constraint without failing
+                foreach (var actor in normalizedActors)
+                {
+                    if (string.Equals(NormalizeUpper(actor.ActorType), ProcessConstants.ActorPilote, StringComparison.OrdinalIgnoreCase)
+                        && actor.UserId != process.PilotUserId.Value)
+                    {
+                        actor.ActorType = ProcessConstants.ActorCopilote;
+                    }
+                }
+
+                // Ensure the main pilot is present in the actors list with the PILOTE role
+                var mainPilotActor = normalizedActors.FirstOrDefault(a => a.UserId == process.PilotUserId.Value);
+                if (mainPilotActor != null)
+                {
+                    mainPilotActor.ActorType = ProcessConstants.ActorPilote;
+                }
+                else
+                {
+                    normalizedActors.Add(new AssignProcessActorItemRequest
+                    {
+                        UserId = process.PilotUserId.Value,
+                        ActorType = ProcessConstants.ActorPilote
+                    });
+                }
+            }
+            else
+            {
+                // Demote any PILOTE actor if the process has no main pilot
+                foreach (var actor in normalizedActors)
+                {
+                    if (string.Equals(NormalizeUpper(actor.ActorType), ProcessConstants.ActorPilote, StringComparison.OrdinalIgnoreCase))
+                    {
+                        actor.ActorType = ProcessConstants.ActorCopilote;
+                    }
+                }
+            }
 
             var oldActors = (await _processActorRepository.GetActorsByProcessIdAsync(processId)).ToList();
             var protectedProcedurePilots = oldActors

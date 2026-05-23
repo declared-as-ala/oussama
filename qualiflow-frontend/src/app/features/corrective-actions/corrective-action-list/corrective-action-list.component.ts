@@ -114,8 +114,7 @@ export class CorrectiveActionListComponent implements OnInit {
   }
 
   canChangeItemStatus(item: CorrectiveActionListItemResponse): boolean {
-    const currentUserId = this.authService.getCurrentUser()?.id ?? null;
-    return this.canWrite || (!!currentUserId && item.responsibleUserId === currentUserId);
+    return this.canWrite;
   }
 
   toggleFilters(): void {
