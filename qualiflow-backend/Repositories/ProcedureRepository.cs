@@ -324,20 +324,12 @@ namespace DocApi.Repositories
         public async Task<bool> AddProcessLinkAsync(int processId, int procedureId)
         {
             using var connection = _connectionFactory.CreateConnection();
-            
-            const string checkSql = "SELECT COUNT(1) FROM ProcessProcedures WHERE ProcessId = @ProcessId AND ProcedureId = @ProcedureId";
-            var exists = await connection.QuerySingleAsync<int>(checkSql, new { ProcessId = processId, ProcedureId = procedureId }) > 0;
-            if (exists)
-            {
-                return true;
-            }
-
             const string sql = @"
                 INSERT INTO ProcessProcedures (ProcessId, ProcedureId)
                 VALUES (@ProcessId, @ProcedureId)
                 ON CONFLICT (ProcessId, ProcedureId) DO NOTHING;";
             var rows = await connection.ExecuteAsync(sql, new { ProcessId = processId, ProcedureId = procedureId });
-            return rows > 0 || exists;
+            return rows > 0;
         }
 
         public async Task<bool> RemoveProcessLinkAsync(int processId, int procedureId)
