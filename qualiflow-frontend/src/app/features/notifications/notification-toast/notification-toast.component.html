@@ -1,6 +1,11 @@
 <div class="notification-toast" [ngClass]="cssClass">
-  <div class="toast-content">
+  <div class="toast-icon-col">
+    <span class="toast-icon">{{ icon }}</span>
+  </div>
+  <div class="toast-body">
     <div class="toast-title">{{ data.title }}</div>
     <div class="toast-message">{{ data.message }}</div>
   </div>
+  <button class="toast-close" (click)="dismiss()" aria-label="Fermer">✕</button>
+  <div class="toast-progress-bar" [style.width.%]="progressWidth"></div>
 </div>

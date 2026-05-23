@@ -145,21 +145,19 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   }
 
   private showRealtimeNotificationAlert(notification: NotificationSignalRMessage): void {
+    // Always play the notification sound
     void this.browserNotificationService.playNotificationSound();
 
-    if (this.browserNotificationService.isDocumentHidden()) {
-      void this.browserNotificationService.showSystemNotification(notification);
-      return;
-    }
+    // Always attempt to show the Windows/OS system notification
+    void this.browserNotificationService.showSystemNotification(notification);
 
-    if (this.router.url.startsWith('/notifications')) {
-      return;
+    // Also show the in-app toast if the user is focused on the tab and not on the notifications page
+    if (!this.router.url.startsWith('/notifications')) {
+      this.uiNotificationService.showRealtimeNotification(
+        notification.title,
+        notification.message,
+        notification.category
+      );
     }
-
-    this.uiNotificationService.showRealtimeNotification(
-      notification.title,
-      notification.message,
-      notification.category
-    );
   }
 }
