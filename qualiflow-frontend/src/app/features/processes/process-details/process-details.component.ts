@@ -16,6 +16,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { UserResponse, UserService } from '../../../core/services/user.service';
+import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import {
   PROCESS_ACTOR_TYPE_OPTIONS,
   PROCESS_STATUS_OPTIONS,
@@ -144,6 +145,38 @@ export class ProcessDetailsComponent implements OnInit {
 
   editProcess(): void {
     this.router.navigate(['/processes', this.processId, 'edit']);
+  }
+
+  deleteProcess(): void {
+    if (!this.details) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Supprimer le processus',
+        message: `Confirmer la suppression de ${this.details.process.code} - ${this.details.process.name} ?`,
+        confirmText: 'Supprimer',
+        cancelText: 'Annuler',
+        type: 'danger'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (!confirmed) {
+        return;
+      }
+
+      this.processService.deleteProcess(this.processId).subscribe({
+        next: () => {
+          this.notificationService.showSuccess('Processus supprime avec succes.');
+          this.router.navigate(['/processes']);
+        },
+        error: () => {
+          this.notificationService.showError('Suppression impossible.');
+        }
+      });
+    });
   }
 
   loadAllAvailableProcedures(): void {

@@ -91,3 +91,54 @@ Build at: 2026-05-22T17:13:52.980Z - Hash: a00602f3d03350bd - Time: 28339ms
 
 
 √ Compiled successfully.
+
+Initial chunk files                                                                                     | Names                                                                                     |  Raw size
+runtime.js                                                                                              | runtime                                                                                   |  12.67 kB | 
+
+Lazy chunk files                                                                                        | Names                                                                                     |  Raw size
+src_app_features_corrective-actions_corrective-action-details_corrective-action-details_compo-46cf84.js | features-corrective-actions-corrective-action-details-corrective-action-details-component | 235.70 kB | 
+src_app_features_corrective-actions_corrective-action-list_corrective-action-list_component_ts.js       | features-corrective-actions-corrective-action-list-corrective-action-list-component       |  98.01 kB | 
+src_app_features_corrective-actions_corrective-action-form_corrective-action-form_component_ts.js       | features-corrective-actions-corrective-action-form-corrective-action-form-component       |  89.44 kB | 
+common.js                                                                                               | common                                                                                    |  47.32 kB | 
+
+71 unchanged chunks
+
+Build at: 2026-05-22T18:38:32.517Z - Hash: 223d045941585e3a - Time: 8207ms
+
+√ Compiled successfully.
+
+Initial chunk files                                                                                     | Names                                                                                     |  Raw size
+runtime.js                                                                                              | runtime                                                                                   |  12.67 kB | 
+
+Lazy chunk files                                                                                        | Names                                                                                     |  Raw size
+src_app_features_corrective-actions_corrective-action-details_corrective-action-details_compo-46cf84.js | features-corrective-actions-corrective-action-details-corrective-action-details-component | 236.86 kB | 
+
+74 unchanged chunks
+
+Build at: 2026-05-22T18:38:40.077Z - Hash: 36d66a87f0c56a1c - Time: 2896ms
+
+√ Compiled successfully.
+
+Initial chunk files                                                                                     | Names                                                                                     |  Raw size
+runtime.js                                                                                              | runtime                                                                                   |  12.67 kB | 
+
+Lazy chunk files                                                                                        | Names                                                                                     |  Raw size
+src_app_features_corrective-actions_corrective-action-details_corrective-action-details_compo-46cf84.js | features-corrective-actions-corrective-action-details-corrective-action-details-component | 237.01 kB | 
+
+74 unchanged chunks
+
+Build at: 2026-05-22T18:38:45.716Z - Hash: 22bbfdfb142217cd - Time: 2476ms
+
+√ Compiled successfully.
+
+Initial chunk files                                                                                     | Names                                                                                     |  Raw size
+runtime.js                                                                                              | runtime                                                                                   |  12.67 kB | 
+
+Lazy chunk files                                                                                        | Names                                                                                     |  Raw size
+src_app_features_corrective-actions_corrective-action-details_corrective-action-details_compo-46cf84.js | features-corrective-actions-corrective-action-details-corrective-action-details-component | 238.42 kB | 
+
+74 unchanged chunks
+
+Build at: 2026-05-22T18:38:53.742Z - Hash: a988493638c61c02 - Time: 1992ms
+
+√ Compiled successfully.

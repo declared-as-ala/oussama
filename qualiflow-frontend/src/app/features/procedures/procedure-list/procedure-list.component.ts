@@ -91,7 +91,7 @@ export class ProcedureListComponent implements OnInit {
       pageSize: 300,
       items: [] as UserResponse[]
     };
-    const usersRequest$ = this.canWrite
+    const usersRequest$ = this.canManageAllProcedures
       ? this.userService.getAll(1, 300).pipe(catchError(() => of(emptyUsersResponse)))
       : of(emptyUsersResponse);
 
@@ -111,8 +111,30 @@ export class ProcedureListComponent implements OnInit {
     });
   }
 
-  get canWrite(): boolean {
+  get canManageAllProcedures(): boolean {
     return this.authService.hasRole(['ADMIN_ORG', 'RESPONSABLE_QUALITE']);
+  }
+
+  get canCreateProcedure(): boolean {
+    if (this.canManageAllProcedures) {
+      return true;
+    }
+
+    const currentUserId = this.authService.getCurrentUser()?.id;
+    return !!currentUserId && this.processes.some(process => process.pilotUserId === currentUserId);
+  }
+
+  canManageProcedure(item: ProcedureListItemResponse): boolean {
+    if (this.canManageAllProcedures) {
+      return true;
+    }
+
+    const currentUserId = this.authService.getCurrentUser()?.id;
+    if (!currentUserId) {
+      return false;
+    }
+
+    return this.processes.some(process => process.id === item.processId && process.pilotUserId === currentUserId);
   }
 
   get activeCount(): number {

@@ -115,8 +115,17 @@ export class ProcessListComponent implements OnInit {
     });
   }
 
-  get canWrite(): boolean {
+  get canCreateProcess(): boolean {
     return this.authService.hasRole(['ADMIN_ORG', 'RESPONSABLE_QUALITE']);
+  }
+
+  canManageProcess(process: ProcessListItemResponse): boolean {
+    if (this.authService.hasRole(['ADMIN_ORG', 'RESPONSABLE_QUALITE'])) {
+      return true;
+    }
+
+    const currentUserId = this.authService.getCurrentUser()?.id;
+    return !!currentUserId && process.pilotUserId === currentUserId;
   }
 
   get activeCount(): number {

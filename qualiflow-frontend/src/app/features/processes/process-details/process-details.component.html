@@ -28,6 +28,11 @@
           style="background-color: var(--xl-green-mid) !important; color: white !important;">
           <mat-icon>edit</mat-icon> {{ 'common.edit' | t }}
         </button>
+        <button *ngIf="canWrite" mat-stroked-button color="warn" (click)="deleteProcess()"
+          style="border-radius: 12px; font-weight: 700; height: 40px; display: flex; align-items: center; gap: 8px;">
+          <mat-icon style="font-size: 20px; width: 20px; height: 20px; margin-right: 0;">delete_outline</mat-icon>
+          <span>Supprimer</span>
+        </button>
       </div>
     </div>
 

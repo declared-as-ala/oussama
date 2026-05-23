@@ -93,7 +93,23 @@ export class ProcessActorsComponent implements OnInit {
   }
 
   get canWrite(): boolean {
-    return this.authService.hasRole(['ADMIN_ORG', 'RESPONSABLE_QUALITE']);
+    if (this.authService.hasRole(['ADMIN_ORG', 'RESPONSABLE_QUALITE'])) {
+      return true;
+    }
+
+    const currentUserId = this.authService.getCurrentUser()?.id;
+    if (!currentUserId || !this.details) {
+      return false;
+    }
+
+    if (this.details.process.pilotUserId === currentUserId) {
+      return true;
+    }
+
+    return this.details.actors.some(
+      actor => actor.userId === currentUserId &&
+        (actor.actorType === 'PILOTE' || actor.actorType === 'COPILOTE')
+    );
   }
 
   get availableUsers(): UserResponse[] {

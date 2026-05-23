@@ -95,7 +95,16 @@ export class ProcedureDetailsComponent implements OnInit {
   }
 
   get canWrite(): boolean {
-    return this.authService.hasRole(['ADMIN_ORG', 'RESPONSABLE_QUALITE']);
+    if (this.authService.hasRole(['ADMIN_ORG', 'RESPONSABLE_QUALITE'])) {
+      return true;
+    }
+
+    const currentUserId = this.authService.getCurrentUser()?.id;
+    if (!currentUserId || !this.details) {
+      return false;
+    }
+
+    return (this.details.procedure.processes || []).some(process => process.pilotUserId === currentUserId);
   }
 
   get hasData(): boolean {
@@ -132,6 +141,38 @@ export class ProcedureDetailsComponent implements OnInit {
 
   editProcedure(): void {
     this.router.navigate(['/procedures', this.procedureId, 'edit']);
+  }
+
+  deleteProcedure(): void {
+    if (!this.details) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Supprimer la procedure',
+        message: `Confirmer la suppression de ${this.details.procedure.code} - ${this.details.procedure.title} ?`,
+        confirmText: 'Supprimer',
+        cancelText: 'Annuler',
+        type: 'danger'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (!confirmed) {
+        return;
+      }
+
+      this.procedureService.deleteProcedure(this.procedureId).subscribe({
+        next: () => {
+          this.notificationService.showSuccess('Procedure supprimee avec succes.');
+          this.router.navigate(['/procedures']);
+        },
+        error: () => {
+          this.notificationService.showError('Suppression impossible.');
+        }
+      });
+    });
   }
 
   viewHistory(): void {

@@ -23,7 +23,7 @@
                   </button>
                 </div>
 
-                <button *ngIf="canWrite" mat-flat-button color="primary" class="btn-create" (click)="createProcedure()">
+                <button *ngIf="canCreateProcedure" mat-flat-button color="primary" class="btn-create" (click)="createProcedure()">
                     <mat-icon>add</mat-icon>
                     {{ 'list.procedures.new' | t }}
                 </button>
@@ -129,7 +129,7 @@
                     <span class="empty-text">À définir</span>
                   </div>
                   <div class="actions">
-                    <button mat-icon-button (click)="$event.stopPropagation(); editProcedure(item)" *ngIf="canWrite">
+                    <button mat-icon-button (click)="$event.stopPropagation(); editProcedure(item)" *ngIf="canManageProcedure(item)">
                       <mat-icon>edit</mat-icon>
                     </button>
                   </div>
@@ -204,11 +204,11 @@
                                     (click)="$event.stopPropagation(); viewProcedure(item)">
                                     <mat-icon>visibility</mat-icon>
                                 </button>
-                                <button *ngIf="canWrite" mat-icon-button class="action-btn edit-btn"
+                                <button *ngIf="canManageProcedure(item)" mat-icon-button class="action-btn edit-btn"
                                     matTooltip="Modifier" (click)="$event.stopPropagation(); editProcedure(item)">
                                     <mat-icon>edit</mat-icon>
                                 </button>
-                                <button *ngIf="canWrite" mat-icon-button class="action-btn delete-btn"
+                                <button *ngIf="canManageProcedure(item)" mat-icon-button class="action-btn delete-btn"
                                     matTooltip="Supprimer" (click)="$event.stopPropagation(); deleteProcedure(item)">
                                     <mat-icon>delete_outline</mat-icon>
                                 </button>

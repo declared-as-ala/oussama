@@ -268,37 +268,83 @@ control "Notification" as N
 
 ref over RQ, N : Authentification
 
-RQ -> V : Saisir action corrective
-V -> C : creerActionCorrective(donnees)
-C -> M : verifierNonConformiteEtResponsable()
-M --> C : verificationOK
-C -> M : enregistrerActionCorrective(donnees)
-M --> C : actionCreee
-C -> N : notifierResponsableAction()
-N --> C : notificationPreparee
-C --> V : afficherAction(action)
-V --> RQ : Confirmation creation
+group 1. Creation action corrective
+    RQ -> V : Saisir action corrective
+    V -> C : creerActionCorrective(donnees)
+    C -> M : verifierNonConformiteEtResponsable()
+    
+    alt Erreur verification
+        M --> C : Erreur
+        C --> V : Message erreur
+        V --> RQ : Erreur affichee
+    else OK
+        M --> C : OK
+        C -> M : enregistrerActionCorrective(Status=PLANIFIEE)
+        C -> M : ajouterHistorique(CORRECTIVE_ACTION_CREATED)
+        C -> N : notifierResponsable()
+        N --> RA : Notification assignation
+        C --> V : Action creee
+        V --> RQ : Confirmation
+    end
+end
 
-alt Mise a jour de l'avancement
-    RA -> V : Changer statut action
-    V -> C : mettreAJourStatut(actionId, statut)
+group 2. Gestion avancement
+    alt Ajouter piece jointe
+        RA -> V : Uploader fichier
+        V -> C : ajouterPieceJointe(actionId, fichier)
+        C -> M : enregistrerAttachment()
+        C -> M : ajouterHistorique(ATTACHMENT_ADDED)
+        C --> V : OK
+        V --> RA : Fichier ajoute
+    end
+    
+    alt Notifier completion
+        RA -> V : Action terminee
+        V -> C : notifierCompletion(actionId)
+        C -> M : verifierResponsable()
+        C -> M : ajouterHistorique(COMPLETION_NOTIFIED)
+        C -> N : notifierRoles([ADMIN_ORG, RESPONSABLE_QUALITE])
+        N --> RQ : A valider
+        C --> V : OK
+    end
+end
+
+group 3. Verification efficacite
+    RQ -> V : Consulter action
+    V -> C : consulterDetails(actionId)
+    C -> M : chargerDetails()
+    C --> V : Afficher
+    
+    RQ -> V : Changer statut REALISEE
+    V -> C : mettreAJourStatut(Status=REALISEE)
     C -> M : verifierTransitionStatut()
-    M --> C : transitionValide
-    C -> M : enregistrerNouveauStatut()
-    C -> M : ajouterHistorique()
-    M --> C : statutMisAJour
-    C --> V : afficherStatut(statut)
-    V --> RA : Confirmation mise a jour
+    alt Transition invalide
+        M --> C : Erreur
+        C --> V : Erreur
+    else OK
+        M --> C : OK
+        C -> M : enregistrerNouveauStatut(CompletionDate=NOW)
+        C -> M : ajouterHistorique(STATUS_CHANGED)
+        C -> N : notifierRoles()
+        C --> V : OK
+    end
+    
+    RQ -> V : Verifier efficacite (resultat + commentaire)
+    V -> C : verifierEfficacite(actionId, EffectivenessVerified, Comment)
+    C -> M : validerCommentaire()
+    alt Commentaire vide
+        M --> C : Erreur
+        C --> V : Erreur
+    else OK
+        M --> C : OK
+        C -> M : enregistrerVerification(Status=VERIFIEE si TRUE, sinon REALISEE)
+        C -> M : ajouterHistorique(EFFECTIVENESS_VERIFIED)
+        C -> M : mettreAJourEffectivenessComment()
+        C --> V : OK
+        V --> RQ : Action verifiee
+    end
 end
 
-alt Verification de l'efficacite
-    RQ -> V : Saisir resultat verification
-    V -> C : verifierEfficacite(actionId, resultat)
-    C -> M : enregistrerVerification()
-    M --> C : verificationEnregistree
-    C --> V : afficherResultatVerification()
-    V --> RQ : Action verifiee
-end
 
 @enduml
 ```

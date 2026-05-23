@@ -134,7 +134,7 @@ export const routes: Routes = [
             loadComponent: () => import('./features/processes/process-form/process-form.component').then(m => m.ProcessFormComponent),
             data: {
               title: 'Modifier processus',
-              roles: ['ADMIN_ORG', 'RESPONSABLE_QUALITE']
+              roles: ['ADMIN_ORG', 'RESPONSABLE_QUALITE', 'UTILISATEUR']
             }
           },
           {
@@ -195,7 +195,7 @@ export const routes: Routes = [
             loadComponent: () => import('./features/procedures/procedure-form/procedure-form.component').then(m => m.ProcedureFormComponent),
             data: {
               title: 'Nouvelle procedure',
-              roles: ['ADMIN_ORG', 'RESPONSABLE_QUALITE']
+              roles: ['ADMIN_ORG', 'RESPONSABLE_QUALITE', 'UTILISATEUR']
             }
           },
           {
@@ -203,7 +203,7 @@ export const routes: Routes = [
             loadComponent: () => import('./features/procedures/procedure-form/procedure-form.component').then(m => m.ProcedureFormComponent),
             data: {
               title: 'Modifier procedure',
-              roles: ['ADMIN_ORG', 'RESPONSABLE_QUALITE']
+              roles: ['ADMIN_ORG', 'RESPONSABLE_QUALITE', 'UTILISATEUR']
             }
           },
           {

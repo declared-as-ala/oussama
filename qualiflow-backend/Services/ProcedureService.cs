@@ -380,6 +380,7 @@ namespace DocApi.Services
 
             var procedure = await GetProcedureOrThrowAsync(procedureId);
             EnsureProcedureWriteAccess(userContext, procedure.OrganizationId);
+            await VerifyProcedureWritePermissionAsync(procedure.ProcessId, userContext);
 
             await ValidateInstructionPayloadAsync(procedureId, request.Code, request.Title, request.Status, null);
 
@@ -425,6 +426,7 @@ namespace DocApi.Services
 
             var procedure = await GetProcedureOrThrowAsync(procedureId);
             EnsureProcedureWriteAccess(userContext, procedure.OrganizationId);
+            await VerifyProcedureWritePermissionAsync(procedure.ProcessId, userContext);
 
             var instruction = await _instructionRepository.GetByIdAsync(instructionId);
             if (instruction == null)
@@ -472,6 +474,7 @@ namespace DocApi.Services
 
             var procedure = await GetProcedureOrThrowAsync(procedureId);
             EnsureProcedureWriteAccess(userContext, procedure.OrganizationId);
+            await VerifyProcedureWritePermissionAsync(procedure.ProcessId, userContext);
 
             var instruction = await _instructionRepository.GetByIdAsync(instructionId);
             if (instruction == null)

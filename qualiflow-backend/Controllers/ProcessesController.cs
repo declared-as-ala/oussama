@@ -195,7 +195,7 @@ namespace DocApi.Controllers
         }
 
         [HttpDelete("{id:int}")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -223,7 +223,7 @@ namespace DocApi.Controllers
         }
 
         [HttpPatch("{id:int}/toggle-status")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<ProcessResponse>> ToggleStatus(int id)
         {
             try
@@ -292,7 +292,7 @@ namespace DocApi.Controllers
         }
 
         [HttpPost("{id:int}/actors")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<ProcessActorResponse>> AssignActors(int id, [FromBody] AssignProcessActorsRequest request)
         {
             try
@@ -315,7 +315,7 @@ namespace DocApi.Controllers
         }
 
         [HttpDelete("{id:int}/actors/{userId:int}")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<IActionResult> RemoveActor(int id, int userId)
         {
             try

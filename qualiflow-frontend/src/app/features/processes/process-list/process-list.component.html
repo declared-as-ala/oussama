@@ -22,7 +22,7 @@
           </button>
         </div>
 
-        <button *ngIf="canWrite" mat-flat-button color="primary" class="btn-create" (click)="createProcess()">
+        <button *ngIf="canCreateProcess" mat-flat-button color="primary" class="btn-create" (click)="createProcess()">
           <mat-icon>add_circle</mat-icon>
           {{ 'list.processes.new' | t }}
         </button>
@@ -141,9 +141,13 @@
                 matTooltip="Journal d'actions">
                 <mat-icon>history</mat-icon>
               </button>
-              <button mat-icon-button (click)="$event.stopPropagation(); editProcess(item)" *ngIf="canWrite"
+              <button mat-icon-button (click)="$event.stopPropagation(); editProcess(item)" *ngIf="canManageProcess(item)"
                 matTooltip="Modifier">
                 <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button (click)="$event.stopPropagation(); deleteProcess(item)" *ngIf="canManageProcess(item)"
+                matTooltip="Supprimer">
+                <mat-icon>delete_outline</mat-icon>
               </button>
             </div>
           </div>
@@ -228,14 +232,18 @@
                   (click)="$event.stopPropagation(); viewProcess(item, 'history')">
                   <mat-icon>history</mat-icon>
                 </button>
-                <button *ngIf="canWrite" mat-icon-button class="action-btn edit-btn" matTooltip="Modifier"
+                <button *ngIf="canManageProcess(item)" mat-icon-button class="action-btn edit-btn" matTooltip="Modifier"
                   (click)="$event.stopPropagation(); editProcess(item)">
                   <mat-icon>edit</mat-icon>
                 </button>
-                <button *ngIf="canWrite" mat-icon-button class="action-btn status-btn"
+                <button *ngIf="canManageProcess(item)" mat-icon-button class="action-btn status-btn"
                   [matTooltip]="item.status === 'ACTIF' ? 'Désactiver' : 'Activer'"
                   (click)="$event.stopPropagation(); toggleStatus(item)">
                   <mat-icon>{{ item.status === 'ACTIF' ? 'toggle_on' : 'toggle_off' }}</mat-icon>
+                </button>
+                <button *ngIf="canManageProcess(item)" mat-icon-button class="action-btn delete-btn"
+                  matTooltip="Supprimer" (click)="$event.stopPropagation(); deleteProcess(item)">
+                  <mat-icon>delete_outline</mat-icon>
                 </button>
               </div>
             </td>

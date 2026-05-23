@@ -1,0 +1,162 @@
+@startuml Traiter une Action Corrective
+
+title Workflow - Traiter une Action Corrective
+
+actor "Responsable Qualité" as RQ
+participant "Vue Action" as VAC
+participant "Controller" as CAC
+participant "Service" as CAS
+participant "Repository" as CAR
+database "PostgreSQL" as DB
+participant "Notification" as NP
+actor "Responsable Action" as RA
+participant "Personne Qualité" as PQ
+
+rect rgb(200, 220, 255)
+  note right of RQ: 1 - CREATION
+  RQ -> VAC: Saisir les détails (titre, type, date limite, responsable)
+  VAC -> CAC: POST /api/corrective-actions\n(CreateCorrectiveActionRequest)
+  CAC -> CAS: CreateAsync(request, userContext)
+  CAS -> CAS: ValidatePayloadAsync()\n(NonConformité, Type, Responsable, Date)
+  CAS -> CAR: CreateAsync(entity)
+  CAR -> DB: INSERT INTO CorrectiveActions\n(PLANIFIEE, Type, Title, DueDate, ResponsibleUserId)
+  CAR --> CAS: id
+  CAS -> CAR: AddActionLogAsync("CORRECTIVE_ACTION_CREATED")
+  CAR -> DB: INSERT INTO CorrectiveActionActionLogs
+  CAS -> NP: PublishToUserAsync()\nTypeCorrectiveActionAssigned
+  NP --> RA: 🔔 Notification: "Action corrective assignée"
+  CAS --> CAC: CorrectiveActionResponse
+  CAC --> VAC: 201 Created
+  VAC --> RQ: Afficher confirmation
+end
+
+rect rgb(220, 255, 220)
+  note right of RA: 2 - TRAVAIL EN COURS
+  RA -> VAC: Consulter les détails\nGET /api/corrective-actions/{id}
+  VAC -> CAC: Récupérer détails, historique, pièces jointes
+  CAC -> CAS: GetByIdAsync(id, userContext)
+  CAS -> CAR: GetDetailsByIdAsync()
+  CAR -> DB: SELECT FROM CorrectiveActions
+  CAR --> CAS: CorrectiveActionDetailsData
+  CAS -> CAR: GetHistoryAsync()
+  CAR -> DB: SELECT FROM CorrectiveActionActionLogs
+  CAS --> CAC: CorrectiveActionDetailsResponse
+  CAC --> VAC: Afficher détails + historique
+  VAC --> RA: Consulter action
+  
+  RA -> VAC: Ajouter preuve/fichier
+  VAC -> CAC: POST /api/corrective-actions/{id}/attachments
+  CAC -> CAS: AddAttachmentAsync(file, userContext)
+  CAS -> CAR: AddAttachmentAsync(CorrectiveActionAttachment)
+  CAR -> DB: INSERT INTO CorrectiveActionAttachments
+  CAR --> CAS: AttachmentResponse
+  CAS -> CAR: AddActionLogAsync("ATTACHMENT_ADDED")
+  CAR -> DB: INSERT log
+  CAS --> CAC: CorrectiveActionAttachmentResponse
+  CAC --> VAC: ✓ Fichier ajouté
+  VAC --> RA: Afficher succès
+end
+
+rect rgb(255, 240, 200)
+  note right of RA: 3 - NOTIFICATION DE REALISATION
+  RA -> VAC: Cliquer "Action terminée"
+  VAC -> CAC: POST /api/corrective-actions/{id}/notify-completion
+  CAC -> CAS: NotifyCompletionAsync(id, userContext)
+  CAS -> CAS: Valider que RA est responsable
+  CAS -> CAR: AddActionLogAsync("COMPLETION_NOTIFIED")
+  CAR -> DB: INSERT log
+  CAS -> NP: PublishToRolesAsync()\nRoles=[ADMIN_ORG, RESPONSABLE_QUALITE]\nTypeSystemAlert
+  NP --> RQ: 🔔 "Action terminée à valider"
+  NP --> PQ: 🔔 "Action terminée à valider"
+  CAS --> CAC: CorrectiveActionResponse
+  CAC --> VAC: ✓ Notification envoyée
+  VAC --> RA: Demande de validation
+end
+
+rect rgb(255, 200, 220)
+  note right of RQ: 4 - CHANGE STATUT -> REALISEE
+  RQ -> VAC: Examiner et approuver l'action
+  RQ -> VAC: Mettre à jour le statut
+  VAC -> CAC: PUT /api/corrective-actions/{id}/status\n(UpdateCorrectiveActionStatusRequest)
+  CAC -> CAS: UpdateStatusAsync(id, request, userContext)
+  CAS -> CAS: Valider transition\n(PLANIFIEE/EN_COURS → REALISEE)
+  CAS -> CAR: UpdateStatusAsync(nextStatus="REALISEE", CompletionDate=Now)
+  CAR -> DB: UPDATE CorrectiveActions\nStatus = REALISEE, CompletionDate = NOW()
+  CAR --> CAS: ✓ Updated
+  CAS -> CAR: AddActionLogAsync("STATUS_CHANGED")
+  CAR -> DB: INSERT log
+  CAS -> NP: PublishToRolesAsync()\nTypeSystemAlert + CategorySuccess\n"Action corrective réalisée"
+  NP --> PQ: 🔔 "Vérifier efficacité"
+  CAS --> CAC: CorrectiveActionResponse (Status=REALISEE)
+  CAC --> VAC: 200 OK
+  VAC --> RQ: ✓ Statut mis à jour
+end
+
+rect rgb(200, 255, 255)
+  note right of PQ: 5 - VERIFICATION D'EFFICACITE
+  PQ -> VAC: Consulter action complétée
+  VAC -> CAC: GET /api/corrective-actions/{id}
+  PQ -> VAC: Saisir commentaire de vérification\n+ Efficacité (Oui/Non)
+  VAC -> CAC: PUT /api/corrective-actions/{id}/verify-effectiveness\n(VerifyCorrectiveActionEffectivenessRequest)
+  CAC -> CAS: VerifyEffectivenessAsync(id, request, userContext)
+  
+  alt Efficacité vérifiée = TRUE
+    CAS -> CAS: nextStatus = VERIFIEE
+    note right of CAS: Transition REALISEE → VERIFIEE
+  else Efficacité vérifiée = FALSE
+    CAS -> CAS: nextStatus = REALISEE
+    note right of CAS: Pas de changement
+  end
+  
+  CAS -> CAR: UpdateStatusAsync(nextStatus, CompletionDate)
+  CAR -> DB: UPDATE Status, EffectivenessVerified, EffectivenessComment
+  CAS -> CAR: AddActionLogAsync("EFFECTIVENESS_VERIFIED")
+  CAR -> DB: INSERT log détaillé
+  CAS --> CAC: CorrectiveActionResponse (Status=VERIFIEE)
+  CAC --> VAC: 200 OK
+  VAC --> PQ: ✓ Efficacité validée
+end
+
+rect rgb(240, 220, 255)
+  note right of PQ: 6 - STATISTIQUES & DASHBOARD
+  PQ -> VAC: Afficher tableau de bord
+  VAC -> CAC: GET /api/corrective-actions/statistics
+  CAC -> CAS: GetStatisticsAsync(userContext)
+  CAS -> CAR: SyncOverdueStatusesAsync()\n(Mettre à jour statuts périmés)
+  CAR -> DB: UPDATE Status si DueDate < TODAY
+  CAS -> CAR: GetForStatisticsAsync()
+  CAR -> DB: SELECT * FROM CorrectiveActions\nCompter par statut, type, responsable
+  CAR --> CAS: Items with counts
+  CAS --> CAC: CorrectiveActionStatisticsResponse\n{Total, Planned, InProgress, Completed, Verified, Overdue, ByType, ByResponsible, ByNonConformity}
+  CAC --> VAC: Afficher statistiques
+  VAC --> PQ: Dashboard actualisé
+end
+
+note over RQ, PQ
+  **STATUTS POSSIBLES:**
+  • PLANIFIEE (Prévu)
+  • EN_COURS (En travail)
+  • REALISEE (Action terminée, en attente de vérification)
+  • VERIFIEE (Efficacité vérifiée, action fermée)
+  
+  **TYPES D'ACTIONS:**
+  • CORRECTIVE: Corriger un écart existant
+  • CURATIVE: Traiter la cause racine
+  • RISQUE: Prévention d'un risque potentiel
+  
+  **TRANSITIONS AUTORISEES:**
+  • PLANIFIEE → EN_COURS, REALISEE
+  • EN_COURS → PLANIFIEE, REALISEE
+  • REALISEE → EN_COURS, VERIFIEE
+  • VERIFIEE → EN_COURS, REALISEE
+end note
+
+note over RQ, PQ
+  **ACTEURS & PERMISSIONS:**
+  • RESPONSABLE_QUALITE: Créer, mettre à jour, vérifier l'efficacité
+  • ADMIN_ORG: Même permissions que RQ
+  • Responsable assigné: Notifier fin, ajouter pièces jointes
+  • UTILISATEUR: Lecture seule (ses actions)
+end note
+
+@enduml

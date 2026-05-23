@@ -83,7 +83,7 @@ namespace DocApi.Controllers
         }
 
         [HttpPost("by-process/{processId:int}/link/{procedureId:int}")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult> AddProcessLink(int processId, int procedureId)
         {
             try
@@ -110,7 +110,7 @@ namespace DocApi.Controllers
         }
 
         [HttpDelete("by-process/{processId:int}/link/{procedureId:int}")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult> RemoveProcessLink(int processId, int procedureId)
         {
             try
@@ -160,7 +160,7 @@ namespace DocApi.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<ProcedureResponse>> Create([FromBody] CreateProcedureRequest request)
         {
             try
@@ -202,7 +202,7 @@ namespace DocApi.Controllers
         }
 
         [HttpDelete("{id:int}")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -230,7 +230,7 @@ namespace DocApi.Controllers
         }
 
         [HttpPatch("{id:int}/toggle-status")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<ProcedureResponse>> ToggleStatus(int id)
         {
             try
@@ -276,7 +276,7 @@ namespace DocApi.Controllers
         }
 
         [HttpPost("{procedureId:int}/instructions")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<InstructionResponse>> CreateInstruction(int procedureId, [FromBody] CreateInstructionRequest request)
         {
             try
@@ -299,7 +299,7 @@ namespace DocApi.Controllers
         }
 
         [HttpPut("{procedureId:int}/instructions/{instructionId:int}")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<InstructionResponse>> UpdateInstruction(int procedureId, int instructionId, [FromBody] UpdateInstructionRequest request)
         {
             try
@@ -322,7 +322,7 @@ namespace DocApi.Controllers
         }
 
         [HttpDelete("{procedureId:int}/instructions/{instructionId:int}")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<IActionResult> DeleteInstruction(int procedureId, int instructionId)
         {
             try
