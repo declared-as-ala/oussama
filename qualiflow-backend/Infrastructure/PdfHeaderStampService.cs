@@ -34,56 +34,60 @@ namespace DocApi.Infrastructure
         {
             var sourceCopy = await CopyToMemoryAsync(sourcePdfStream, cancellationToken);
 
-            if (!_enabled || !LooksLikePdf(sourceCopy))
+            if (!_enabled)
             {
+                _logger.LogInformation("PDF header stamping is disabled (PdfHeaderEnabled=false). Returning original stream.");
                 sourceCopy.Position = 0;
                 return sourceCopy;
             }
 
+            if (!LooksLikePdf(sourceCopy))
+            {
+                _logger.LogWarning("Source stream does not appear to be a valid PDF (missing %PDF header). Returning original stream.");
+                sourceCopy.Position = 0;
+                return sourceCopy;
+            }
+
+            _logger.LogInformation("Starting PDF header stamping. Document: {Code}, Version: {Version}, Size: {Size} bytes.",
+                metadata.DocumentCode, metadata.VersionNumber, sourceCopy.Length);
+
             try
             {
-                sourceCopy.Position = 0;
-                string? sourceKeywords;
-                using (var tempCopy = new MemoryStream(sourceCopy.ToArray()))
-                using (var pdfDocument = PdfReader.Open(tempCopy, PdfDocumentOpenMode.Modify))
+                // Always re-stamp: documents are stored pristine. Extract original keywords to append to.
+                string? sourceKeywords = null;
+                try
                 {
-                    if (IsAlreadyStamped(pdfDocument))
-                    {
-                        return new MemoryStream(sourceCopy.ToArray());
-                    }
-
+                    sourceCopy.Position = 0;
+                    using var tempCopy = new MemoryStream(sourceCopy.ToArray());
+                    using var pdfDocument = PdfReader.Open(tempCopy, PdfDocumentOpenMode.InformationOnly);
                     sourceKeywords = pdfDocument.Info.Keywords;
+                }
+                catch (Exception kwEx)
+                {
+                    _logger.LogWarning(kwEx, "Could not read existing PDF keywords — stamping will proceed with null keywords.");
                 }
 
                 sourceCopy.Position = 0;
                 var stampedStream = RebuildPdfWithHeader(sourceCopy, metadata, sourceKeywords, cancellationToken);
                 sourceCopy.Dispose();
+                _logger.LogInformation("PDF header stamping succeeded. Output size: {Size} bytes.", stampedStream.Length);
                 return stampedStream;
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "PDF header stamping failed with the standard reader. Trying fallback rebuild.");
+                _logger.LogWarning(ex, "PDF header stamping failed (primary path). Attempting fallback rebuild.");
                 try
                 {
                     sourceCopy.Position = 0;
                     var stampedStream = RebuildPdfWithHeader(sourceCopy, metadata, null, cancellationToken);
                     sourceCopy.Dispose();
+                    _logger.LogInformation("PDF header stamping fallback succeeded. Output size: {Size} bytes.", stampedStream.Length);
                     return stampedStream;
                 }
                 catch (Exception fallbackEx)
                 {
-                    _logger.LogWarning(fallbackEx, "PDF header fallback rebuild failed. Returning original stream.");
-                    try
-                    {
-                        if (sourceCopy.CanSeek)
-                        {
-                            sourceCopy.Position = 0;
-                        }
-                    }
-                    catch
-                    {
-                        // Resilient fallback
-                    }
+                    _logger.LogError(fallbackEx, "PDF header fallback rebuild also failed. Returning original unstamped stream.");
+                    try { if (sourceCopy.CanSeek) sourceCopy.Position = 0; } catch { /* swallow */ }
                     return sourceCopy;
                 }
             }
@@ -118,7 +122,7 @@ namespace DocApi.Infrastructure
                     page.Size = PageSize.A4;
                     gfx = XGraphics.FromPdfPage(page);
 
-                    y = _enabled
+                    y = (_enabled && pdfDocument.Pages.Count == 1)
                         ? HeaderTop + HeaderHeight + bodyTopMargin
                         : bodyTopMargin;
 
@@ -165,14 +169,11 @@ namespace DocApi.Infrastructure
                 gfx?.Dispose();
                 gfx = null;
 
-                if (_enabled)
+                if (_enabled && pdfDocument.Pages.Count > 0)
                 {
-                    for (int i = 0; i < pdfDocument.Pages.Count; i++)
-                    {
-                        var page = pdfDocument.Pages[i];
-                        using var headerGfx = XGraphics.FromPdfPage(page, XGraphicsPdfPageOptions.Append);
-                        DrawHeader(headerGfx, page.Width, metadata, logoImage, i + 1, pdfDocument.Pages.Count);
-                    }
+                    var page = pdfDocument.Pages[0];
+                    using var headerGfx = XGraphics.FromPdfPage(page, XGraphicsPdfPageOptions.Append);
+                    DrawHeader(headerGfx, page.Width, metadata, logoImage, 1, pdfDocument.Pages.Count);
 
                     pdfDocument.Info.Keywords = AppendStampKeyword(pdfDocument.Info.Keywords);
                 }
@@ -610,6 +611,10 @@ namespace DocApi.Infrastructure
             var logoImage = TryLoadLogoImage(logoPath);
             var signatureImage = TryLoadSignatureImage(metadata.SignatureBase64);
 
+            _logger.LogInformation(
+                "RebuildPdfWithHeader: pages={Pages}, logoPath={Logo}, hasSignature={Sig}",
+                form.PageCount, logoPath ?? "(none)", signatureImage != null);
+
             for (var index = 0; index < form.PageCount; index++)
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -618,17 +623,35 @@ namespace DocApi.Infrastructure
                 var page = outputDocument.AddPage();
                 var originalWidth = form.PointWidth;
                 var originalHeight = form.PointHeight;
-                var headerSpace = HeaderTop + HeaderHeight + 4d;  // same contentTop as DrawPageWithHeader
 
-                page.Width = originalWidth;
-                page.Height = originalHeight + headerSpace;
-
-                using var gfx = XGraphics.FromPdfPage(page);
-                DrawPageWithHeader(gfx, page.Width, page.Height, originalHeight, form, metadata, logoImage, index + 1, form.PageCount);
-
-                if (index == form.PageCount - 1 && signatureImage != null)
+                if (index == 0)
                 {
-                    DrawSignature(gfx, page.Width, page.Height, signatureImage, metadata);
+                    // Draw first page with expanded height and the header
+                    var headerSpace = HeaderTop + HeaderHeight + 4d;
+                    page.Width = originalWidth;
+                    page.Height = originalHeight + headerSpace;
+
+                    using var gfx = XGraphics.FromPdfPage(page);
+                    DrawPageWithHeader(gfx, page.Width, page.Height, originalHeight, form, metadata, logoImage, index + 1, form.PageCount);
+
+                    if (index == form.PageCount - 1 && signatureImage != null)
+                    {
+                        DrawSignature(gfx, page.Width, page.Height, signatureImage, metadata);
+                    }
+                }
+                else
+                {
+                    // Keep other pages at original height with no header
+                    page.Width = originalWidth;
+                    page.Height = originalHeight;
+
+                    using var gfx = XGraphics.FromPdfPage(page);
+                    gfx.DrawImage(form, 0, 0, page.Width, page.Height);
+
+                    if (index == form.PageCount - 1 && signatureImage != null)
+                    {
+                        DrawSignature(gfx, page.Width, page.Height, signatureImage, metadata);
+                    }
                 }
             }
 
