@@ -839,54 +839,6 @@ namespace DocApi.Services
             }
         }
 
-        private static void EnsureProcedureWriteAccess(UserContext userContext, int organizationId)
-        {
-            EnsureCanWrite(userContext);
-
-            if (!userContext.OrganizationId.HasValue || userContext.OrganizationId.Value != organizationId)
-            {
-                throw new ForbiddenException("Acces refuse a cette procedure.");
-            }
-        }
-
-        private async Task VerifyProcedureWritePermissionAsync(int processId, UserContext userContext)
-        {
-            if (userContext.IsSuperAdmin || userContext.Role == UserRoles.RESPONSABLE_QUALITE || userContext.Role == UserRoles.ADMIN_ORG)
-            {
-                return;
-            }
-
-            if (userContext.Role == UserRoles.UTILISATEUR)
-            {
-                var process = await _processRepository.GetByIdAsync(processId);
-            if (process == null)
-                {
-                    throw new NotFoundException("Processus associe introuvable.");
-                }
-
-                if (process.PilotUserId == userContext.UserId)
-                {
-                    return;
-                }
-
-                var actors = await _processActorRepository.GetActorsByProcessIdAsync(processId);
-                var userActor = actors.FirstOrDefault(a => a.UserId == userContext.UserId);
-                if (userActor != null)
-                {
-                    var type = userActor.ActorType.Trim().ToUpperInvariant();
-                    if (type == ProcessConstants.ActorPilote || type == ProcessConstants.ActorCopilote || type == ProcessConstants.ActorContributeur)
-                    {
-                        return;
-                    }
-                }
-
-                throw new ForbiddenException("Vous n'avez pas les droits de modification sur les procedures de ce processus car les observateurs ne peuvent pas modifier.");
-            }
-        }
-
-        private static string? NormalizeSearch(string? value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
             {
                 return null;
             }
