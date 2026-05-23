@@ -401,65 +401,134 @@ namespace DocApi.Infrastructure
 
         private static void DrawHeader(XGraphics gfx, double pageWidth, PdfHeaderMetadata metadata, XImage? logoImage, int pageNumber, int totalPages)
         {
-            var borderPen = new XPen(XColors.Black, 0.9);
-            var linePen = new XPen(XColors.Black, 0.5);
-            var fillBrush = XBrushes.White;
+            var borderPen   = new XPen(XColors.Black, 0.8);
+            var thinPen     = new XPen(XColors.Black, 0.4);
+            var fillBrush   = XBrushes.White;
+            var textBrush   = XBrushes.Black;
+            var labelBrush  = new XSolidBrush(XColor.FromArgb(80, 80, 80));
 
-            var centerTopFont = new XFont("Arial", 12.5, XFontStyle.Bold);
-            var titleFont = new XFont("Arial", 17, XFontStyle.Bold);
-            var rightCodeFont = new XFont("Arial", 13.5, XFontStyle.Bold);
-            var rightInfoFont = new XFont("Arial", 9.5, XFontStyle.Bold);
-            var textBrush = XBrushes.Black;
+            // Fonts
+            var labelFont     = new XFont("Arial",  7.5, XFontStyle.Regular);
+            var valueFont     = new XFont("Arial",  8.5, XFontStyle.Bold);
+            var titleFont     = new XFont("Arial", 11.0, XFontStyle.Bold);
+            var subInfoFont   = new XFont("Arial",  7.5, XFontStyle.Regular);
+            var logoTextFont  = new XFont("Arial",  7.5, XFontStyle.Bold);
 
-            var marginLeft = 22d;
-            var marginRight = 22d;
-            var headerY = HeaderTop;
-            var headerWidth = pageWidth - marginLeft - marginRight;
-            var headerRect = new XRect(marginLeft, headerY, headerWidth, HeaderHeight);
+            var marginLeft  = 18d;
+            var marginRight = 18d;
+            var headerY     = HeaderTop;
+            var totalWidth  = pageWidth - marginLeft - marginRight;
 
-            var leftWidth = 104d;
-            var rightWidth = 108d;
-            var centerWidth = headerWidth - leftWidth - rightWidth;
+            // Column widths: left=logo 13%, center=info 55%, right=metadata 32%
+            var leftW   = Math.Round(totalWidth * 0.13);
+            var rightW  = Math.Round(totalWidth * 0.32);
+            var centerW = totalWidth - leftW - rightW;
 
-            var leftRect = new XRect(headerRect.X, headerRect.Y, leftWidth, HeaderHeight);
-            var centerRect = new XRect(leftRect.Right, headerRect.Y, centerWidth, HeaderHeight);
-            var rightRect = new XRect(centerRect.Right, headerRect.Y, rightWidth, HeaderHeight);
+            var leftX   = marginLeft;
+            var centerX = leftX + leftW;
+            var rightX  = centerX + centerW;
+            var hY      = headerY;
+            var hH      = HeaderHeight;
 
-            gfx.DrawRectangle(fillBrush, headerRect);
-            gfx.DrawRectangle(borderPen, headerRect);
-            gfx.DrawLine(borderPen, leftRect.Right, headerRect.Y, leftRect.Right, headerRect.Bottom);
-            gfx.DrawLine(borderPen, rightRect.X, headerRect.Y, rightRect.X, headerRect.Bottom);
+            // ── Background fill ──────────────────────────────────────────────
+            gfx.DrawRectangle(fillBrush, new XRect(leftX, hY, totalWidth, hH));
 
+            // ── LEFT COLUMN – Logo ───────────────────────────────────────────
             if (logoImage != null)
             {
-                var maxLogoW = leftRect.Width - 12;
-                var maxLogoH = leftRect.Height - 12;
-                var ratio = Math.Min(maxLogoW / logoImage.PixelWidth, maxLogoH / logoImage.PixelHeight);
-                var drawW = logoImage.PixelWidth * ratio;
-                var drawH = logoImage.PixelHeight * ratio;
-                var drawX = leftRect.X + (leftRect.Width - drawW) / 2d;
-                var drawY = leftRect.Y + (leftRect.Height - drawH) / 2d;
+                var padding  = 6d;
+                var maxLogoW = leftW - padding * 2;
+                var maxLogoH = hH    - padding * 2;
+                var ratio    = Math.Min(maxLogoW / logoImage.PixelWidth, maxLogoH / logoImage.PixelHeight);
+                var drawW    = logoImage.PixelWidth  * ratio;
+                var drawH    = logoImage.PixelHeight * ratio;
+                var drawX    = leftX + (leftW - drawW) / 2d;
+                var drawY    = hY    + (hH   - drawH) / 2d;
                 gfx.DrawImage(logoImage, drawX, drawY, drawW, drawH);
             }
+            else
+            {
+                // Fallback: organisation name/code as text
+                var orgName = string.IsNullOrWhiteSpace(metadata.OrganizationName)
+                    ? "Organisation"
+                    : Truncate(metadata.OrganizationName, 14);
+                gfx.DrawString(orgName, logoTextFont, textBrush,
+                    new XRect(leftX, hY, leftW, hH), XStringFormats.Center);
+            }
 
-            var processCode = string.IsNullOrWhiteSpace(metadata.ProcessCode) ? "-" : metadata.ProcessCode.Trim();
+            // ── CENTER COLUMN ────────────────────────────────────────────────
+            // Row 1: Processus & Procédure
+            var processCode   = string.IsNullOrWhiteSpace(metadata.ProcessCode)   ? "-" : metadata.ProcessCode.Trim();
             var procedureCode = string.IsNullOrWhiteSpace(metadata.ProcedureCode) ? "-" : metadata.ProcedureCode.Trim();
-            var centerTopText = $"Processus : {processCode}   ---   Procedure : {procedureCode}";
-            gfx.DrawString(centerTopText, centerTopFont, textBrush, new XRect(centerRect.X, centerRect.Y + 9, centerRect.Width, 21), XStringFormats.TopCenter);
-            gfx.DrawLine(linePen, centerRect.X + 6, centerRect.Y + 32, centerRect.Right - 6, centerRect.Y + 32);
+            var row1H = hH * 0.28;
+            var row1Text = $"Processus : {processCode}     |     Procédure : {procedureCode}";
+            gfx.DrawString(row1Text, subInfoFont, labelBrush,
+                new XRect(centerX + 4, hY, centerW - 8, row1H), XStringFormats.Center);
 
-            var title = string.IsNullOrWhiteSpace(metadata.DocumentTitle) ? "Titre de document" : Truncate(metadata.DocumentTitle, 52);
-            gfx.DrawString(title, titleFont, textBrush, new XRect(centerRect.X, centerRect.Y + 38, centerRect.Width, 28), XStringFormats.TopCenter);
+            // Horizontal divider after row 1
+            var div1Y = hY + row1H;
+            gfx.DrawLine(thinPen, centerX, div1Y, centerX + centerW, div1Y);
 
-            var dateText = metadata.GeneratedAtUtc.ToLocalTime().ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
-            var docCode = string.IsNullOrWhiteSpace(metadata.DocumentCode) ? "-" : metadata.DocumentCode.Trim();
-            var version = string.IsNullOrWhiteSpace(metadata.VersionNumber) ? "-" : metadata.VersionNumber.Trim();
-            var pageText = $"{pageNumber} / {Math.Max(1, totalPages)}";
+            // Row 2: Document title (large, centred)
+            var titleRowH = hH * 0.44;
+            var title = string.IsNullOrWhiteSpace(metadata.DocumentTitle)
+                ? "Titre du document"
+                : Truncate(metadata.DocumentTitle, 55);
+            gfx.DrawString(title, titleFont, textBrush,
+                new XRect(centerX + 4, div1Y, centerW - 8, titleRowH), XStringFormats.Center);
 
-            gfx.DrawString(docCode, rightCodeFont, textBrush, new XRect(rightRect.X + 4, rightRect.Y + 8, rightRect.Width - 8, 20), XStringFormats.TopCenter);
-            gfx.DrawString($"Version : {version}", rightInfoFont, textBrush, new XRect(rightRect.X + 7, rightRect.Y + 30, rightRect.Width - 12, 13), XStringFormats.TopLeft);
-            gfx.DrawString($"Date : {dateText}", rightInfoFont, textBrush, new XRect(rightRect.X + 7, rightRect.Y + 46, rightRect.Width - 12, 13), XStringFormats.TopLeft);
-            gfx.DrawString($"Page : {pageText}", rightInfoFont, textBrush, new XRect(rightRect.X + 7, rightRect.Y + 62, rightRect.Width - 12, 13), XStringFormats.TopLeft);
+            // Horizontal divider after row 2
+            var div2Y = div1Y + titleRowH;
+            gfx.DrawLine(thinPen, centerX, div2Y, centerX + centerW, div2Y);
+
+            // Row 3: Organisation contact / description
+            var contact = BuildOrganizationContact(metadata);
+            if (string.IsNullOrWhiteSpace(contact))
+                contact = string.IsNullOrWhiteSpace(metadata.OrganizationName) ? "Système de Management Qualité" : metadata.OrganizationName.Trim();
+            gfx.DrawString(contact, subInfoFont, labelBrush,
+                new XRect(centerX + 4, div2Y, centerW - 8, hH - (div2Y - hY)), XStringFormats.Center);
+
+            // ── RIGHT COLUMN – Metadata grid ────────────────────────────────
+            // 5 equal rows: Code | Version | Statut | Date | Page
+            var rows = new (string Label, string Value)[]
+            {
+                ("Code :",    string.IsNullOrWhiteSpace(metadata.DocumentCode)   ? "-" : metadata.DocumentCode.Trim()),
+                ("Version :", string.IsNullOrWhiteSpace(metadata.VersionNumber)  ? "-" : metadata.VersionNumber.Trim()),
+                ("Statut :",  string.IsNullOrWhiteSpace(metadata.Status)         ? "-" : metadata.Status.Trim()),
+                ("Date :",    metadata.GeneratedAtUtc.ToLocalTime().ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)),
+                ("Page :",    $"{pageNumber} / {Math.Max(1, totalPages)}")
+            };
+
+            var rowH      = hH / rows.Length;
+            var labelColW = rightW * 0.42;
+            var valueColW = rightW - labelColW;
+
+            for (var i = 0; i < rows.Length; i++)
+            {
+                var ry = hY + i * rowH;
+                var (rowLabel, rowValue) = rows[i];
+
+                // Row separator (skip first)
+                if (i > 0)
+                    gfx.DrawLine(thinPen, rightX, ry, rightX + rightW, ry);
+
+                // Internal label/value divider
+                var midX = rightX + labelColW;
+                gfx.DrawLine(thinPen, midX, ry, midX, ry + rowH);
+
+                // Label text (right-aligned inside label cell)
+                gfx.DrawString(rowLabel, labelFont, labelBrush,
+                    new XRect(rightX + 2, ry, labelColW - 4, rowH), XStringFormats.CenterLeft);
+
+                // Value text (bold, left-aligned inside value cell)
+                gfx.DrawString(rowValue, valueFont, textBrush,
+                    new XRect(midX + 3, ry, valueColW - 5, rowH), XStringFormats.CenterLeft);
+            }
+
+            // ── Outer border + column dividers ───────────────────────────────
+            gfx.DrawRectangle(borderPen, new XRect(leftX, hY, totalWidth, hH));
+            gfx.DrawLine(borderPen, centerX,         hY, centerX,         hY + hH);
+            gfx.DrawLine(borderPen, rightX,          hY, rightX,          hY + hH);
         }
 
         private static void DrawSignature(XGraphics gfx, double pageWidth, double pageHeight, XImage signatureImage, PdfHeaderMetadata metadata)
@@ -661,8 +730,8 @@ namespace DocApi.Infrastructure
             return Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), trimmed));
         }
 
-        private const double HeaderTop = 10d;
-        private const double HeaderHeight = 78d;
+        private const double HeaderTop    = 10d;
+        private const double HeaderHeight  = 90d;
     }
 }
 
