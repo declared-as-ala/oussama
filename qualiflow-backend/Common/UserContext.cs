@@ -52,7 +52,9 @@ namespace DocApi.Common
         public bool CanWriteDocuments => Role == UserRoles.ADMIN_ORG
             || Role == UserRoles.RESPONSABLE_QUALITE;
 
-        public bool CanSubmitDocuments => CanWriteDocuments;
+        public bool CanSubmitDocuments => Role == UserRoles.ADMIN_ORG
+            || Role == UserRoles.RESPONSABLE_QUALITE
+            || Role == UserRoles.UTILISATEUR;
 
         public bool CanReadDocuments => Role == UserRoles.ADMIN_ORG
             || Role == UserRoles.RESPONSABLE_QUALITE
