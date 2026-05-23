@@ -20,7 +20,8 @@
       <button *ngIf="canWrite" mat-stroked-button type="button" color="warn" (click)="deleteDocument($event)">
         <mat-icon>delete_outline</mat-icon> Supprimer
       </button>
-      <button mat-stroked-button type="button" (click)="printCurrent()" style="color: #6200ee; border-color: #6200ee; margin-right: 8px;">
+      <button mat-stroked-button type="button" (click)="printCurrent()"
+        style="color: #6200ee; border-color: #6200ee; margin-right: 8px;">
         <mat-icon>print</mat-icon> Imprimer
       </button>
       <button mat-flat-button color="primary" type="button" (click)="downloadCurrent()">
@@ -103,7 +104,8 @@
                 <strong>{{ model.document.processCode }}</strong>
                 <span>{{ model.document.processName }}</span>
               </div>
-              <p *ngIf="!model.document.processId" class="text-muted italic">{{ 'detail.document.noProcessLinked' | t }}</p>
+              <p *ngIf="!model.document.processId" class="text-muted italic">{{ 'detail.document.noProcessLinked' | t }}
+              </p>
             </div>
             <div class="info-item">
               <label>{{ 'detail.document.procedureLink' | t }}</label>
@@ -112,7 +114,8 @@
                 <strong>{{ model.document.procedureCode }}</strong>
                 <span>{{ model.document.procedureTitle }}</span>
               </div>
-              <p *ngIf="!model.document.procedureId" class="text-muted italic">{{ 'detail.document.noProcedureLinked' | t }}</p>
+              <p *ngIf="!model.document.procedureId" class="text-muted italic">{{ 'detail.document.noProcedureLinked' |
+                t }}</p>
             </div>
             <div class="info-item">
               <label>{{ 'detail.document.keywords' | t }}</label>
@@ -120,7 +123,8 @@
                 <span class="k-tag" *ngFor="let k of (model.document.keywords || '').split(',')">
                   {{ k.trim() }}
                 </span>
-                <span *ngIf="!model.document.keywords" class="text-muted italic">{{ 'detail.document.noKeyword' | t }}</span>
+                <span *ngIf="!model.document.keywords" class="text-muted italic">{{ 'detail.document.noKeyword' | t
+                  }}</span>
               </div>
             </div>
           </div>
@@ -135,7 +139,8 @@
           <div class="card-header-clean">
             <h2>{{ 'detail.document.versionHistory' | t }}</h2>
             <div class="header-actions-inline">
-              <button mat-icon-button (click)="previewCurrent()" [matTooltip]="'detail.document.previewActiveVersion' | t">
+              <button mat-icon-button (click)="previewCurrent()"
+                [matTooltip]="'detail.document.previewActiveVersion' | t">
                 <mat-icon>visibility</mat-icon>
               </button>
             </div>
@@ -179,7 +184,8 @@
               <ng-container matColumnDef="actions">
                 <th mat-header-cell *matHeaderCellDef></th>
                 <td mat-cell *matCellDef="let row">
-                  <button mat-icon-button class="action-btn-mini" (click)="downloadVersion(row)" [matTooltip]="'detail.document.downloadVersion' | t">
+                  <button mat-icon-button class="action-btn-mini" (click)="downloadVersion(row)"
+                    [matTooltip]="'detail.document.downloadVersion' | t">
                     <mat-icon>download</mat-icon>
                   </button>
                 </td>
@@ -201,37 +207,54 @@
     <!-- TAB 2: ACTION LOGS -->
     <div class="tab-content-container" *ngIf="activeTab === 2">
       <!-- MILESTONE / HIGHLIGHT CARDS FOR DOCUMENT -->
-      <div class="summary-cards" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;">
+      <div class="summary-cards"
+        style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;">
         <!-- Card 1: Création -->
-        <div class="summary-card" style="background: white; border-radius: 12px; padding: 16px 20px; border: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.01);">
-          <span style="font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 700; letter-spacing: 0.5px;">Création du Document</span>
-          <div style="font-size: 15px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px; margin-top: 4px;">
-            <mat-icon style="color: var(--xl-green-mid); font-size: 18px; width: 18px; height: 18px;">add_circle_outline</mat-icon>
+        <div class="summary-card"
+          style="background: white; border-radius: 12px; padding: 16px 20px; border: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.01);">
+          <span
+            style="font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 700; letter-spacing: 0.5px;">Création
+            du Document</span>
+          <div
+            style="font-size: 15px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+            <mat-icon
+              style="color: var(--xl-green-mid); font-size: 18px; width: 18px; height: 18px;">add_circle_outline</mat-icon>
             <span>{{ creationLog?.performedByFullName || 'Système' }}</span>
           </div>
           <span style="font-size: 12px; color: #64748b; margin-top: 4px;" *ngIf="creationLog">
             Le {{ creationLog.performedAt | date: 'dd/MM/yyyy à HH:mm' }}
           </span>
-          <span style="font-size: 12px; color: #94a3b8; font-style: italic;" *ngIf="!creationLog">Aucun jalon de création</span>
+          <span style="font-size: 12px; color: #94a3b8; font-style: italic;" *ngIf="!creationLog">Aucun jalon de
+            création</span>
         </div>
 
         <!-- Card 2: Dernière modification -->
-        <div class="summary-card" style="background: white; border-radius: 12px; padding: 16px 20px; border: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.01);">
-          <span style="font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 700; letter-spacing: 0.5px;">Dernier Changement</span>
-          <div style="font-size: 15px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px; margin-top: 4px;">
-            <mat-icon style="color: #3b82f6; font-size: 18px; width: 18px; height: 18px;">{{ getActionIcon(lastLog?.actionType || '') }}</mat-icon>
+        <div class="summary-card"
+          style="background: white; border-radius: 12px; padding: 16px 20px; border: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.01);">
+          <span
+            style="font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 700; letter-spacing: 0.5px;">Dernier
+            Changement</span>
+          <div
+            style="font-size: 15px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+            <mat-icon style="color: #3b82f6; font-size: 18px; width: 18px; height: 18px;">{{
+              getActionIcon(lastLog?.actionType || '') }}</mat-icon>
             <span>{{ lastLog?.performedByFullName || 'Système' }}</span>
           </div>
           <span style="font-size: 12px; color: #64748b; margin-top: 4px;" *ngIf="lastLog">
             {{ getActionLabel(lastLog.actionType) }} — {{ lastLog.performedAt | date: 'dd/MM/yyyy' }}
           </span>
-          <span style="font-size: 12px; color: #94a3b8; font-style: italic;" *ngIf="!lastLog">Aucun changement récent</span>
+          <span style="font-size: 12px; color: #94a3b8; font-style: italic;" *ngIf="!lastLog">Aucun changement
+            récent</span>
         </div>
 
         <!-- Card 3: Volume total -->
-        <div class="summary-card" style="background: white; border-radius: 12px; padding: 16px 20px; border: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.01);">
-          <span style="font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 700; letter-spacing: 0.5px;">Volume d'Actions</span>
-          <div style="font-size: 20px; font-weight: 800; color: #0f172a; margin-top: 4px; display: flex; align-items: center; gap: 8px;">
+        <div class="summary-card"
+          style="background: white; border-radius: 12px; padding: 16px 20px; border: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.01);">
+          <span
+            style="font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 700; letter-spacing: 0.5px;">Volume
+            d'Actions</span>
+          <div
+            style="font-size: 20px; font-weight: 800; color: #0f172a; margin-top: 4px; display: flex; align-items: center; gap: 8px;">
             <mat-icon style="color: #64748b; font-size: 20px; width: 20px; height: 20px;">history</mat-icon>
             <span>{{ totalActions }} actions</span>
           </div>

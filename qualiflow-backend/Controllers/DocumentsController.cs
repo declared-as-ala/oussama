@@ -129,9 +129,9 @@ namespace DocApi.Controllers
                 var result = await _documentService.CreateAsync(request, GetUserContext());
                 return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
             }
-            catch (ForbiddenException)
+            catch (ForbiddenException ex)
             {
-                return Forbid();
+                return StatusCode(403, new { message = ex.Message });
             }
             catch (ServiceException ex)
             {

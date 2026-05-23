@@ -753,6 +753,8 @@ namespace DocApi.Services
             var stored = await ReadDocumentFileForDatabaseAsync(
                 request.File);
 
+            // Bypassed stamping on upload to store the original, pristine file in the database
+            /*
             if (string.Equals(stored.FileExtension, ".pdf", StringComparison.OrdinalIgnoreCase))
             {
                 var headerMetadata = await BuildPdfHeaderMetadataAsync(
@@ -798,6 +800,7 @@ namespace DocApi.Services
                 stored.FileContent = await StampUploadedXlsxAsync(stored.FileContent, headerMetadata);
                 stored.FileSize = stored.FileContent.LongLength;
             }
+            */
 
             var now = DateTime.UtcNow;
 
@@ -1877,7 +1880,7 @@ namespace DocApi.Services
             {
                 if (!processId.HasValue)
                 {
-                    throw new ForbiddenException("Ce document n'est pas associe a un processus.");
+                    return;
                 }
 
                 var process = await _processRepository.GetByIdAsync(processId.Value);
