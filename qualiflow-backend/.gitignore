@@ -44,3 +44,5 @@ appsettings.*.Local.json
 .env
 /artifacts/
 /StorageFiles/
+/scratch/
+
