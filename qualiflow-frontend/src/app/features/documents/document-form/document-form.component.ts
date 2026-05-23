@@ -678,7 +678,8 @@ COMMENTAIRES LIBRES :
       status: this.canValidateStatus ? raw.initialVersionStatus : 'EN_REVISION',
       revisionComment: raw.initialRevisionComment?.trim() || null,
       effectiveDate: this.formatDateForApi(raw.initialEffectiveDate) || this.getTodayInputDate(),
-      expiryDate: this.formatDateForApi(raw.initialExpiryDate)
+      expiryDate: this.formatDateForApi(raw.initialExpiryDate),
+      signature: raw.signature
     };
   }
 

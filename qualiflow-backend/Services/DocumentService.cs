@@ -747,6 +747,9 @@ namespace DocApi.Services
             var versionNumber = await ResolveVersionNumberAsync(documentId, request.VersionNumber);
             await ValidateVersionPayloadAsync(documentId, versionNumber, normalizedStatus);
 
+            var isPublished = normalizedStatus == DocumentConstants.StatusPublie;
+            var isApproved = normalizedStatus == DocumentConstants.StatusApprouve || isPublished;
+
             var stored = await ReadDocumentFileForDatabaseAsync(
                 request.File);
 
@@ -758,7 +761,9 @@ namespace DocApi.Services
                     {
                         VersionNumber = versionNumber,
                         Status = normalizedStatus,
-                        Signature = request.Signature
+                        Signature = request.Signature,
+                        EstablishedByUserId = userContext.UserId,
+                        ValidatedByUserId = isApproved ? userContext.UserId : null
                     });
                 stored.FileContent = await StampUploadedPdfAsync(stored.FileContent, headerMetadata);
                 stored.FileSize = stored.FileContent.LongLength;
@@ -771,7 +776,9 @@ namespace DocApi.Services
                     {
                         VersionNumber = versionNumber,
                         Status = normalizedStatus,
-                        Signature = request.Signature
+                        Signature = request.Signature,
+                        EstablishedByUserId = userContext.UserId,
+                        ValidatedByUserId = isApproved ? userContext.UserId : null
                     });
                 stored.FileContent = await StampUploadedDocxAsync(stored.FileContent, headerMetadata);
                 stored.FileSize = stored.FileContent.LongLength;
@@ -784,15 +791,15 @@ namespace DocApi.Services
                     {
                         VersionNumber = versionNumber,
                         Status = normalizedStatus,
-                        Signature = request.Signature
+                        Signature = request.Signature,
+                        EstablishedByUserId = userContext.UserId,
+                        ValidatedByUserId = isApproved ? userContext.UserId : null
                     });
                 stored.FileContent = await StampUploadedXlsxAsync(stored.FileContent, headerMetadata);
                 stored.FileSize = stored.FileContent.LongLength;
             }
 
             var now = DateTime.UtcNow;
-            var isPublished = normalizedStatus == DocumentConstants.StatusPublie;
-            var isApproved = normalizedStatus == DocumentConstants.StatusApprouve || isPublished;
 
             var version = new DocumentVersion
             {
@@ -1388,11 +1395,43 @@ namespace DocApi.Services
                 {
                     signerRole = signer.Role switch
                     {
+                        UserRoles.SUPER_ADMIN => "Super Admin",
                         UserRoles.ADMIN_ORG => "Admin",
                         UserRoles.RESPONSABLE_QUALITE => "Responsable Qualité",
-                        _ => signer.Role
+                        UserRoles.UTILISATEUR => "Utilisateur",
+                        _ => signer.Role ?? string.Empty
                     };
                 }
+            }
+
+            if (string.IsNullOrEmpty(signerRole))
+            {
+                var userId = version.ValidatedByUserId ?? version.EstablishedByUserId;
+                if (userId == 0 && document.OwnerUserId.HasValue)
+                {
+                    userId = document.OwnerUserId.Value;
+                }
+
+                if (userId > 0)
+                {
+                    var signer = await _userRepository.GetByIdAsync(userId);
+                    if (signer != null)
+                    {
+                        signerRole = signer.Role switch
+                        {
+                            UserRoles.SUPER_ADMIN => "Super Admin",
+                            UserRoles.ADMIN_ORG => "Admin",
+                            UserRoles.RESPONSABLE_QUALITE => "Responsable Qualité",
+                            UserRoles.UTILISATEUR => "Utilisateur",
+                            _ => signer.Role ?? string.Empty
+                        };
+                    }
+                }
+            }
+
+            if (string.IsNullOrEmpty(signerRole))
+            {
+                signerRole = "Collaborateur";
             }
 
             return new PdfHeaderMetadata

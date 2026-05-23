@@ -44,7 +44,8 @@ namespace DocApi.Infrastructure
             {
                 sourceCopy.Position = 0;
                 string? sourceKeywords;
-                using (var pdfDocument = PdfReader.Open(sourceCopy, PdfDocumentOpenMode.Modify))
+                using (var tempCopy = new MemoryStream(sourceCopy.ToArray()))
+                using (var pdfDocument = PdfReader.Open(tempCopy, PdfDocumentOpenMode.Modify))
                 {
                     if (IsAlreadyStamped(pdfDocument))
                     {
@@ -54,6 +55,7 @@ namespace DocApi.Infrastructure
                     sourceKeywords = pdfDocument.Info.Keywords;
                 }
 
+                sourceCopy.Position = 0;
                 var stampedStream = RebuildPdfWithHeader(sourceCopy, metadata, sourceKeywords, cancellationToken);
                 sourceCopy.Dispose();
                 return stampedStream;
@@ -63,6 +65,7 @@ namespace DocApi.Infrastructure
                 _logger.LogWarning(ex, "PDF header stamping failed with the standard reader. Trying fallback rebuild.");
                 try
                 {
+                    sourceCopy.Position = 0;
                     var stampedStream = RebuildPdfWithHeader(sourceCopy, metadata, null, cancellationToken);
                     sourceCopy.Dispose();
                     return stampedStream;
@@ -70,7 +73,17 @@ namespace DocApi.Infrastructure
                 catch (Exception fallbackEx)
                 {
                     _logger.LogWarning(fallbackEx, "PDF header fallback rebuild failed. Returning original stream.");
-                    sourceCopy.Position = 0;
+                    try
+                    {
+                        if (sourceCopy.CanSeek)
+                        {
+                            sourceCopy.Position = 0;
+                        }
+                    }
+                    catch
+                    {
+                        // Resilient fallback
+                    }
                     return sourceCopy;
                 }
             }
