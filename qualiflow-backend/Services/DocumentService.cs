@@ -659,12 +659,24 @@ namespace DocApi.Services
             await using var memoryStream = new MemoryStream();
             await file.CopyToAsync(memoryStream);
 
+            var mimeType = file.ContentType;
+            if (string.IsNullOrWhiteSpace(mimeType) || mimeType == "application/octet-stream")
+            {
+                mimeType = normalizedExtension.ToLowerInvariant() switch
+                {
+                    ".pdf" => "application/pdf",
+                    ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    _ => "application/octet-stream"
+                };
+            }
+
             return new DatabaseDocumentFile
             {
                 FileName = $"{DateTime.UtcNow:yyyyMMddHHmmssfff}_{Guid.NewGuid():N}{normalizedExtension}",
                 OriginalFileName = file.FileName,
                 FileExtension = normalizedExtension,
-                MimeType = string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType,
+                MimeType = mimeType,
                 FileSize = memoryStream.Length,
                 FileContent = memoryStream.ToArray()
             };

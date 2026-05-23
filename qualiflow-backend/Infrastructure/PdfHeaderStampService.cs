@@ -594,8 +594,24 @@ namespace DocApi.Infrastructure
                 return false;
             }
 
-            var buffer = stream.GetBuffer();
-            return buffer[0] == '%' && buffer[1] == 'P' && buffer[2] == 'D' && buffer[3] == 'F';
+            var pos = stream.Position;
+            try
+            {
+                stream.Position = 0;
+                var b0 = stream.ReadByte();
+                var b1 = stream.ReadByte();
+                var b2 = stream.ReadByte();
+                var b3 = stream.ReadByte();
+                return b0 == '%' && b1 == 'P' && b2 == 'D' && b3 == 'F';
+            }
+            catch
+            {
+                return false;
+            }
+            finally
+            {
+                try { stream.Position = pos; } catch { /* swallow */ }
+            }
         }
 
         private MemoryStream RebuildPdfWithHeader(

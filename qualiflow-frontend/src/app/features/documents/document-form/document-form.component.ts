@@ -252,13 +252,26 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
         details: this.documentService.getDocumentById(this.documentId)
       }).subscribe({
         next: ({ base, details }) => {
-          this.processes = base.processes.items;
           this.owners = base.users.items.filter(user => user.isActive);
-          this.patchDocument(details.document);
-          if (!this.canSelectOwner && currentUser?.id) {
-            this.ensureCurrentUserAsOwnerOption(currentUser);
-            this.documentForm.controls.ownerUserId.setValue(currentUser.id);
+
+          if (!this.canSelectOwner && currentUser) {
+            this.processes = base.processes.items.filter(p => p.pilotUserId === currentUser.id);
+          } else {
+            this.processes = base.processes.items;
           }
+
+          if (details.document.ownerUserId) {
+            this.ensurePilotInOwners(details.document.ownerUserId, details.document.ownerFullName ?? null);
+          }
+
+          this.patchDocument(details.document);
+
+          if (currentUser) {
+            this.ensureCurrentUserAsOwnerOption(currentUser);
+          }
+
+          // Disable ownerUserId control so it is read-only and cannot be modified
+          this.documentForm.controls.ownerUserId.disable({ emitEvent: false });
 
           if (details.document.processId) {
             this.loadProceduresForProcess(details.document.processId, details.document.procedureId ?? null);
@@ -278,12 +291,21 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
 
     baseData$.subscribe({
       next: ({ processes, users }) => {
-        this.processes = processes.items;
         this.owners = users.items.filter(user => user.isActive);
-        if (!this.canSelectOwner && currentUser?.id) {
-          this.ensureCurrentUserAsOwnerOption(currentUser);
-          this.documentForm.controls.ownerUserId.setValue(currentUser.id);
+
+        if (!this.canSelectOwner && currentUser) {
+          this.processes = processes.items.filter(p => p.pilotUserId === currentUser.id);
+        } else {
+          this.processes = processes.items;
         }
+
+        if (currentUser) {
+          this.ensureCurrentUserAsOwnerOption(currentUser);
+        }
+
+        // Disable ownerUserId control so it is read-only and cannot be modified
+        this.documentForm.controls.ownerUserId.disable({ emitEvent: false });
+
         this.loading = false;
       },
       error: () => {
@@ -548,12 +570,11 @@ COMMENTAIRES LIBRES :
       return;
     }
 
-    // Pour RESPONSABLE_QUALITE et ADMIN_ORG : auto-sélectionner le pilote du processus comme propriétaire
-    if (this.canSelectOwner) {
-      const selectedProcess = this.processes.find(p => p.id === processId);
-      if (selectedProcess?.pilotUserId) {
-        this.documentForm.controls.ownerUserId.setValue(selectedProcess.pilotUserId);
-      }
+    // Auto-select process owner (pilotUserId) for all processes
+    const selectedProcess = this.processes.find(p => p.id === processId);
+    if (selectedProcess?.pilotUserId) {
+      this.ensurePilotInOwners(selectedProcess.pilotUserId, selectedProcess.pilotFullName ?? null);
+      this.documentForm.controls.ownerUserId.setValue(selectedProcess.pilotUserId);
     }
 
     this.loadProceduresForProcess(processId, null);
@@ -721,6 +742,9 @@ COMMENTAIRES LIBRES :
       initialExpiryDate: null,
       signature: document.signature ?? null
     });
+    if (document.ownerUserId) {
+      this.ensurePilotInOwners(document.ownerUserId, document.ownerFullName ?? null);
+    }
     this.signaturePreview = document.signature ?? null;
   }
 
@@ -758,6 +782,30 @@ COMMENTAIRES LIBRES :
         isActive: currentUser.isActive,
         createdAt: currentUser.createdAt
       },
+      ...this.owners
+    ];
+  }
+
+  private ensurePilotInOwners(pilotUserId: number, pilotFullName: string | null): void {
+    const alreadyExists = this.owners.some(owner => owner.id === pilotUserId);
+    if (alreadyExists) {
+      return;
+    }
+
+    const parts = (pilotFullName ?? '').trim().split(' ');
+    const firstName = parts[0] || 'Pilote';
+    const lastName = parts.slice(1).join(' ') || 'Processus';
+
+    this.owners = [
+      {
+        id: pilotUserId,
+        firstName,
+        lastName,
+        email: '',
+        role: 'UTILISATEUR',
+        isActive: true,
+        createdAt: new Date().toISOString()
+      } as any,
       ...this.owners
     ];
   }
