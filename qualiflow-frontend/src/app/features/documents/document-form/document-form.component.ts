@@ -235,8 +235,12 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
     this.loading = true;
     const currentUser = this.authService.getCurrentUser();
 
+    // Pour UTILISATEUR : le backend filtre automatiquement par acteur/pilote du processus
+    // Pour ADMIN/RESPONSABLE : tous les processus de l'organisation
+    const processParams = { pageNumber: 1, pageSize: 300 };
+
     const baseData$ = forkJoin({
-      processes: this.processService.getProcesses({ pageNumber: 1, pageSize: 300 }),
+      processes: this.processService.getProcesses(processParams),
       users: this.canSelectOwner
         ? this.userService.getAll(1, 300)
         : of<UserListResponse>({ total: 0, page: 1, pageSize: 0, items: [] })
@@ -321,6 +325,14 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
 
   get canSelectOwner(): boolean {
     return this.authService.hasRole(['ADMIN_ORG', 'RESPONSABLE_QUALITE']);
+  }
+
+  get isResponsableQualite(): boolean {
+    return this.authService.hasRole(['RESPONSABLE_QUALITE']);
+  }
+
+  get isAdminOrg(): boolean {
+    return this.authService.hasRole(['ADMIN_ORG']);
   }
 
   onTemplateSelected(value: string | null): void {
@@ -534,6 +546,14 @@ COMMENTAIRES LIBRES :
     if (!processId) {
       this.procedures = [];
       return;
+    }
+
+    // Pour RESPONSABLE_QUALITE et ADMIN_ORG : auto-sélectionner le pilote du processus comme propriétaire
+    if (this.canSelectOwner) {
+      const selectedProcess = this.processes.find(p => p.id === processId);
+      if (selectedProcess?.pilotUserId) {
+        this.documentForm.controls.ownerUserId.setValue(selectedProcess.pilotUserId);
+      }
     }
 
     this.loadProceduresForProcess(processId, null);

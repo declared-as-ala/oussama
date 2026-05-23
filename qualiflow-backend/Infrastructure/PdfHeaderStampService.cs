@@ -16,7 +16,7 @@ namespace DocApi.Infrastructure
 {
     public sealed class PdfHeaderStampService : IPdfHeaderStampService
     {
-        private const string HeaderStampKeyword = "QualiFlowHeaderStampedV3";
+        private const string HeaderStampKeyword = "QualiFlowHeaderStampedV4";
         private readonly ILogger<PdfHeaderStampService> _logger;
         private readonly bool _enabled;
         private readonly string? _organizationLogosPath;
