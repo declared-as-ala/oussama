@@ -547,11 +547,15 @@ namespace DocApi.Infrastructure
 
                 form.PageNumber = index + 1;
                 var page = outputDocument.AddPage();
-                page.Width = form.PointWidth;
-                page.Height = form.PointHeight;
+                var originalWidth = form.PointWidth;
+                var originalHeight = form.PointHeight;
+                var headerSpace = HeaderTop + HeaderHeight + 4d;  // same contentTop as DrawPageWithHeader
+
+                page.Width = originalWidth;
+                page.Height = originalHeight + headerSpace;
 
                 using var gfx = XGraphics.FromPdfPage(page);
-                DrawPageWithHeader(gfx, page.Width, page.Height, form, metadata, logoImage, index + 1, form.PageCount);
+                DrawPageWithHeader(gfx, page.Width, page.Height, originalHeight, form, metadata, logoImage, index + 1, form.PageCount);
 
                 if (index == form.PageCount - 1 && signatureImage != null)
                 {
@@ -573,22 +577,21 @@ namespace DocApi.Infrastructure
             XGraphics gfx,
             double pageWidth,
             double pageHeight,
+            double sourceContentHeight,
             XPdfForm sourcePage,
             PdfHeaderMetadata metadata,
             XImage? logoImage,
             int pageNumber,
             int totalPages)
         {
-            const double contentGap = 8d;
+            const double contentGap = 4d;
             var contentTop = HeaderTop + HeaderHeight + contentGap;
-            var availableHeight = Math.Max(1d, pageHeight - contentTop);
-            var scale = Math.Min(1d, availableHeight / pageHeight);
-            var drawWidth = pageWidth * scale;
-            var drawHeight = pageHeight * scale;
-            var drawX = (pageWidth - drawWidth) / 2d;
 
+            // Draw the header block at the top
             DrawHeader(gfx, pageWidth, metadata, logoImage, pageNumber, totalPages);
-            gfx.DrawImage(sourcePage, drawX, contentTop, drawWidth, drawHeight);
+
+            // Draw the original page content at its original size below the header
+            gfx.DrawImage(sourcePage, 0, contentTop, pageWidth, sourceContentHeight);
         }
 
         private static bool IsAlreadyStamped(PdfDocument pdfDocument)
