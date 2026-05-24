@@ -181,12 +181,36 @@
                 </td>
               </ng-container>
 
+              <ng-container matColumnDef="verifiedBy">
+                <th mat-header-cell *matHeaderCellDef>Vérifié par</th>
+                <td mat-cell *matCellDef="let row" class="text-truncate" style="max-width: 120px;">
+                  {{ row.verifiedByUser || '-' }}
+                  <small *ngIf="row.verifiedAt" style="display: block; font-size: 10px; color: #64748b;">
+                    ({{ row.verifiedAt | date: 'dd/MM/yy' }})
+                  </small>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="validatedBy">
+                <th mat-header-cell *matHeaderCellDef>Approuvé par</th>
+                <td mat-cell *matCellDef="let row" class="text-truncate" style="max-width: 120px;">
+                  {{ row.validatedByUser || '-' }}
+                  <small *ngIf="row.validatedAt" style="display: block; font-size: 10px; color: #64748b;">
+                    ({{ row.validatedAt | date: 'dd/MM/yy' }})
+                  </small>
+                </td>
+              </ng-container>
+
               <ng-container matColumnDef="actions">
                 <th mat-header-cell *matHeaderCellDef></th>
-                <td mat-cell *matCellDef="let row">
+                <td mat-cell *matCellDef="let row" style="display: flex; gap: 4px; justify-content: flex-end; align-items: center;">
                   <button mat-icon-button class="action-btn-mini" (click)="downloadVersion(row)"
                     [matTooltip]="'detail.document.downloadVersion' | t">
                     <mat-icon>download</mat-icon>
+                  </button>
+                  <button *ngIf="canWrite" mat-icon-button class="action-btn-mini" color="primary" (click)="updateVersionStatus(row)"
+                    [matTooltip]="'Mettre à jour le statut' | t">
+                    <mat-icon>edit_note</mat-icon>
                   </button>
                 </td>
               </ng-container>

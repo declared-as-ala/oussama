@@ -20,6 +20,7 @@ import {
 } from '../models/document.models';
 import { DocumentService } from '../services/document.service';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
+import { VersionStatusDialogComponent } from '../document-versions/version-status-dialog.component';
 
 @Component({
   selector: 'app-document-details',
@@ -40,7 +41,7 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
   styleUrls: ['./document-details.component.scss']
 })
 export class DocumentDetailsComponent implements OnInit {
-  readonly displayedVersionColumns: string[] = ['version', 'status', 'file', 'date', 'author', 'actions'];
+  readonly displayedVersionColumns: string[] = ['version', 'status', 'file', 'date', 'author', 'verifiedBy', 'validatedBy', 'actions'];
   readonly displayedActionLogColumns: string[] = ['action', 'version', 'user', 'date', 'comment'];
 
   loading = false;
@@ -163,6 +164,45 @@ export class DocumentDetailsComponent implements OnInit {
       error: () => {
         this.notificationService.showError('Telechargement impossible.');
       }
+    });
+  }
+
+  updateVersionStatus(version: DocumentVersionResponse): void {
+    if (!this.canWrite) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open(VersionStatusDialogComponent, {
+      data: {
+        versionNumber: version.versionNumber,
+        currentStatus: version.status,
+        currentComment: version.revisionComment || ''
+      },
+      width: '500px'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (!result) {
+        return;
+      }
+
+      const { status, revisionComment } = result;
+
+      this.documentService.updateVersionStatus(this.documentId, version.id, {
+        status,
+        revisionComment: revisionComment?.trim() || null
+      }).subscribe({
+        next: () => {
+          this.notificationService.showSuccess(status === 'PUBLIE'
+            ? 'Version publiée avec succès.'
+            : 'Statut de version mis à jour.');
+          this.loadDetails();
+          this.loadActionLogs();
+        },
+        error: () => {
+          this.notificationService.showError('Mise à jour du statut impossible.');
+        }
+      });
     });
   }
 

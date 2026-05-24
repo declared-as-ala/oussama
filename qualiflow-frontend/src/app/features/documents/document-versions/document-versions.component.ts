@@ -20,6 +20,8 @@ import {
   DocumentVersionResponse
 } from '../models/document.models';
 import { DocumentService } from '../services/document.service';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { VersionStatusDialogComponent } from './version-status-dialog.component';
 
 @Component({
   selector: 'app-document-versions',
@@ -36,14 +38,15 @@ import { DocumentService } from '../services/document.service';
     MatInputModule,
     MatSelectModule,
     MatTableModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatDialogModule
   ],
   templateUrl: './document-versions.component.html',
   styleUrls: ['./document-versions.component.scss']
 })
 export class DocumentVersionsComponent implements OnInit {
   readonly statusOptions = DOCUMENT_STATUS_OPTIONS;
-  readonly displayedColumns: string[] = ['version', 'status', 'file', 'effectiveDate', 'author', 'comment', 'actions'];
+  readonly displayedColumns: string[] = ['version', 'status', 'file', 'effectiveDate', 'author', 'verifiedBy', 'validatedBy', 'comment', 'actions'];
   readonly acceptedFileTypes = '.pdf,.docx,.xlsx';
   readonly allowedFileFormatsLabel = 'PDF, Word (.docx) ou Excel (.xlsx)';
 
@@ -86,7 +89,8 @@ export class DocumentVersionsComponent implements OnInit {
     private readonly router: Router,
     private readonly documentService: DocumentService,
     private readonly authService: AuthService,
-    private readonly notificationService: NotificationService
+    private readonly notificationService: NotificationService,
+    private readonly dialog: MatDialog
   ) { }
 
   ngOnInit(): void {
@@ -303,6 +307,46 @@ export class DocumentVersionsComponent implements OnInit {
       return;
     }
 
+    const dialogRef = this.dialog.open(VersionStatusDialogComponent, {
+      data: {
+        versionNumber: version.versionNumber,
+        currentStatus: version.status,
+        currentComment: version.revisionComment || ''
+      },
+      width: '500px'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (!result) {
+        return;
+      }
+
+      const { status, revisionComment } = result;
+
+      this.documentService.updateVersionStatus(this.documentId, version.id, { 
+        status, 
+        revisionComment: revisionComment?.trim() || null 
+      }).subscribe({
+        next: () => {
+          this.notificationService.showSuccess(status === 'PUBLIE'
+            ? 'Version publiée avec succès.'
+            : 'Statut de version mis à jour.');
+          this.loadDetails();
+        },
+        error: () => {
+          this.notificationService.showError('Mise à jour du statut impossible.');
+        }
+      });
+    });
+  }
+
+  /*
+  old_updateVersionStatus(version: DocumentVersionResponse): void { return; }
+  unused_method_wrapper() {
+    if (!this.canWrite) {
+      return;
+    }
+
     const status = this.statusByVersion[version.id] || version.status;
     const revisionComment = this.commentByVersion[version.id]?.trim() || null;
 
@@ -319,6 +363,8 @@ export class DocumentVersionsComponent implements OnInit {
     });
   }
 
+  }
+  */
   downloadVersion(version: DocumentVersionResponse): void {
     this.documentService.downloadVersion(this.documentId, version.id).subscribe({
       next: (blob) => {
