@@ -87,6 +87,8 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
     keywords: this.fb.control<string>(''),
     processId: this.fb.control<number | null>(null),
     procedureId: this.fb.control<number | null>(null),
+    processIds: this.fb.control<number[]>([]),
+    procedureIds: this.fb.control<number[]>([]),
     ownerUserId: this.fb.control<number | null>(null),
     isActive: this.fb.nonNullable.control(true),
     initialVersionStatus: this.fb.nonNullable.control<DocumentStatus>('BROUILLON'),
@@ -273,9 +275,31 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
           // Disable ownerUserId control so it is read-only and cannot be modified
           this.documentForm.controls.ownerUserId.disable({ emitEvent: false });
 
-          if (details.document.processId) {
-            this.loadProceduresForProcess(details.document.processId, details.document.procedureId ?? null);
+          const pIds = details.document.processIds && details.document.processIds.length > 0
+            ? details.document.processIds
+            : (details.document.processId ? [details.document.processId] : []);
+
+          const currentProcIds = details.document.procedureIds && details.document.procedureIds.length > 0
+            ? details.document.procedureIds
+            : (details.document.procedureId ? [details.document.procedureId] : []);
+
+          if (pIds.length > 0) {
+            this.documentForm.controls.procedureIds.enable({ emitEvent: false });
+            const obsList = pIds.map(pId => this.procedureService.getProceduresByProcess(pId));
+            forkJoin(obsList).subscribe({
+              next: (results) => {
+                this.procedures = results.reduce((acc, curr) => acc.concat(curr), []);
+                this.documentForm.controls.procedureIds.setValue(currentProcIds);
+                this.loading = false;
+              },
+              error: () => {
+                this.procedures = [];
+                this.loading = false;
+                this.notificationService.showWarning('Impossible de charger les procedures.');
+              }
+            });
           } else {
+            this.documentForm.controls.procedureIds.disable({ emitEvent: false });
             this.loading = false;
           }
         },
@@ -305,6 +329,7 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
 
         // Disable ownerUserId control so it is read-only and cannot be modified
         this.documentForm.controls.ownerUserId.disable({ emitEvent: false });
+        this.documentForm.controls.procedureIds.disable({ emitEvent: false });
 
         this.loading = false;
       },
@@ -315,12 +340,12 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
     });
 
     // Auto-select responsible from procedure
-    this.documentForm.controls.procedureId.valueChanges.subscribe(procedureId => {
-      if (!procedureId) {
+    this.documentForm.controls.procedureIds.valueChanges.subscribe(procedureIds => {
+      if (!procedureIds || procedureIds.length === 0) {
         return;
       }
 
-      const selectedProcedure = this.procedures.find(item => item.id === procedureId);
+      const selectedProcedure = this.procedures.find(item => item.id === procedureIds[0]);
       if (selectedProcedure?.responsibleUserId) {
         this.documentForm.controls.ownerUserId.setValue(selectedProcedure.responsibleUserId);
       }
@@ -562,22 +587,35 @@ COMMENTAIRES LIBRES :
   }
 
   onProcessChanged(): void {
-    const processId = this.documentForm.controls.processId.value;
-    this.documentForm.controls.procedureId.setValue(null);
+    const processIds = this.documentForm.controls.processIds.value || [];
+    this.documentForm.controls.procedureIds.setValue([]);
 
-    if (!processId) {
+    if (processIds.length === 0) {
       this.procedures = [];
+      this.documentForm.controls.procedureIds.disable({ emitEvent: false });
       return;
     }
 
-    // Auto-select process owner (pilotUserId) for all processes
-    const selectedProcess = this.processes.find(p => p.id === processId);
-    if (selectedProcess?.pilotUserId) {
-      this.ensurePilotInOwners(selectedProcess.pilotUserId, selectedProcess.pilotFullName ?? null);
-      this.documentForm.controls.ownerUserId.setValue(selectedProcess.pilotUserId);
-    }
+    this.documentForm.controls.procedureIds.enable({ emitEvent: false });
 
-    this.loadProceduresForProcess(processId, null);
+    // Fetch procedures for all selected processes
+    const obsList = processIds.map(pId => this.procedureService.getProceduresByProcess(pId));
+    forkJoin(obsList).subscribe({
+      next: (results) => {
+        this.procedures = results.reduce((acc, curr) => acc.concat(curr), []);
+        
+        // Auto-select process owner (pilotUserId) of the first selected process
+        const selectedProcess = this.processes.find(p => p.id === processIds[0]);
+        if (selectedProcess?.pilotUserId) {
+          this.ensurePilotInOwners(selectedProcess.pilotUserId, selectedProcess.pilotFullName ?? null);
+          this.documentForm.controls.ownerUserId.setValue(selectedProcess.pilotUserId);
+        }
+      },
+      error: () => {
+        this.procedures = [];
+        this.notificationService.showWarning('Impossible de charger les procedures des processus.');
+      }
+    });
   }
 
   onFileSelected(event: Event): void {
@@ -698,8 +736,10 @@ COMMENTAIRES LIBRES :
     const raw = this.documentForm.getRawValue();
 
     return {
-      processId: raw.processId ?? null,
-      procedureId: raw.procedureId ?? null,
+      processId: raw.processIds && raw.processIds.length > 0 ? raw.processIds[0] : null,
+      procedureId: raw.procedureIds && raw.procedureIds.length > 0 ? raw.procedureIds[0] : null,
+      processIds: raw.processIds || [],
+      procedureIds: raw.procedureIds || [],
       code: raw.code.trim(),
       title: raw.title.trim(),
       type: raw.type,
@@ -734,6 +774,8 @@ COMMENTAIRES LIBRES :
       keywords: document.keywords ?? '',
       processId: document.processId ?? null,
       procedureId: document.procedureId ?? null,
+      processIds: document.processIds ?? (document.processId ? [document.processId] : []),
+      procedureIds: document.procedureIds ?? (document.procedureId ? [document.procedureId] : []),
       ownerUserId: document.ownerUserId ?? null,
       isActive: document.isActive,
       initialVersionStatus: document.currentVersionStatus ?? 'BROUILLON',

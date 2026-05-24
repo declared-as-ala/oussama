@@ -59,12 +59,12 @@ export class ProcessActorsComponent implements OnInit {
   readonly displayedActorColumns: string[] = ['fullName', 'email', 'function', 'actorType', 'assignedAt', 'actions'];
 
   get assignableActorTypeOptions() {
-    return this.actorTypeOptions.filter(option => option.value !== 'PILOTE' && option.value !== 'PILOTE_PROCEDURE');
+    return this.actorTypeOptions.filter(option => option.value === 'OBSERVATEUR');
   }
 
   readonly actorForm = this.fb.group({
     userId: [null as number | null, Validators.required],
-    actorType: ['CONTRIBUTEUR' as ProcessActorType, Validators.required]
+    actorType: ['OBSERVATEUR' as ProcessActorType, Validators.required]
   });
 
   constructor(
@@ -184,7 +184,7 @@ export class ProcessActorsComponent implements OnInit {
         }
 
         this.details.actors = actors;
-        this.actorForm.reset({ userId: null, actorType: 'CONTRIBUTEUR' });
+        this.actorForm.reset({ userId: null, actorType: 'OBSERVATEUR' });
         this.notificationService.showSuccess('Acteur ajoute au processus.');
       },
       error: () => {

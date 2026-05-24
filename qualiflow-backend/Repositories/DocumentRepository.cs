@@ -321,14 +321,44 @@ namespace DocApi.Repositories
             using var connection = _connectionFactory.CreateConnection();
             if (connection.State != System.Data.ConnectionState.Open) await ((System.Data.Common.DbConnection)connection).OpenAsync();
 
-            const string sql = @"
-                INSERT INTO Documents
-                    (OrganizationId, ProcessId, ProcedureId, Code, Title, Type, Description, Category, Keywords, Signature, OwnerUserId, CurrentVersionId, IsActive, DeletedAt, CreatedAt, UpdatedAt)
-                VALUES
-                    (@OrganizationId, @ProcessId, @ProcedureId, @Code, @Title, @Type, @Description, @Category, @Keywords, @Signature, @OwnerUserId, @CurrentVersionId, @IsActive, @DeletedAt, @CreatedAt, @UpdatedAt)
-                RETURNING Id;";
+            using var transaction = connection.BeginTransaction();
+            try
+            {
+                const string sql = @"
+                    INSERT INTO Documents
+                        (OrganizationId, ProcessId, ProcedureId, Code, Title, Type, Description, Category, Keywords, Signature, OwnerUserId, CurrentVersionId, IsActive, DeletedAt, CreatedAt, UpdatedAt)
+                    VALUES
+                        (@OrganizationId, @ProcessId, @ProcedureId, @Code, @Title, @Type, @Description, @Category, @Keywords, @Signature, @OwnerUserId, @CurrentVersionId, @IsActive, @DeletedAt, @CreatedAt, @UpdatedAt)
+                    RETURNING Id;";
 
-            return await connection.QuerySingleAsync<int>(sql, document);
+                var id = await connection.QuerySingleAsync<int>(sql, document, transaction);
+
+                if (document.ProcessIds != null && document.ProcessIds.Any())
+                {
+                    const string processSql = "INSERT INTO DocumentProcesses (DocumentId, ProcessId) VALUES (@DocumentId, @ProcessId) ON CONFLICT DO NOTHING;";
+                    foreach (var processId in document.ProcessIds)
+                    {
+                        await connection.ExecuteAsync(processSql, new { DocumentId = id, ProcessId = processId }, transaction);
+                    }
+                }
+
+                if (document.ProcedureIds != null && document.ProcedureIds.Any())
+                {
+                    const string procedureSql = "INSERT INTO DocumentProcedures (DocumentId, ProcedureId) VALUES (@DocumentId, @ProcedureId) ON CONFLICT DO NOTHING;";
+                    foreach (var procedureId in document.ProcedureIds)
+                    {
+                        await connection.ExecuteAsync(procedureSql, new { DocumentId = id, ProcedureId = procedureId }, transaction);
+                    }
+                }
+
+                transaction.Commit();
+                return id;
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
         }
 
         public async Task<bool> UpdateAsync(Document document)
@@ -336,24 +366,57 @@ namespace DocApi.Repositories
             using var connection = _connectionFactory.CreateConnection();
             if (connection.State != System.Data.ConnectionState.Open) await ((System.Data.Common.DbConnection)connection).OpenAsync();
 
-            const string sql = @"
-                UPDATE Documents
-                SET ProcessId = @ProcessId,
-                    ProcedureId = @ProcedureId,
-                    Code = @Code,
-                    Title = @Title,
-                    Type = @Type,
-                    Description = @Description,
-                    Category = @Category,
-                    Keywords = @Keywords,
-                    Signature = @Signature,
-                    OwnerUserId = @OwnerUserId,
-                    IsActive = @IsActive,
-                    UpdatedAt = @UpdatedAt
-                WHERE Id = @Id;";
+            using var transaction = connection.BeginTransaction();
+            try
+            {
+                const string sql = @"
+                    UPDATE Documents
+                    SET ProcessId = @ProcessId,
+                        ProcedureId = @ProcedureId,
+                        Code = @Code,
+                        Title = @Title,
+                        Type = @Type,
+                        Description = @Description,
+                        Category = @Category,
+                        Keywords = @Keywords,
+                        Signature = @Signature,
+                        OwnerUserId = @OwnerUserId,
+                        IsActive = @IsActive,
+                        UpdatedAt = @UpdatedAt
+                    WHERE Id = @Id;";
 
-            var rows = await connection.ExecuteAsync(sql, document);
-            return rows > 0;
+                var rows = await connection.ExecuteAsync(sql, document, transaction);
+
+                // Sync ProcessIds
+                await connection.ExecuteAsync("DELETE FROM DocumentProcesses WHERE DocumentId = @DocumentId;", new { DocumentId = document.Id }, transaction);
+                if (document.ProcessIds != null && document.ProcessIds.Any())
+                {
+                    const string processSql = "INSERT INTO DocumentProcesses (DocumentId, ProcessId) VALUES (@DocumentId, @ProcessId) ON CONFLICT DO NOTHING;";
+                    foreach (var processId in document.ProcessIds)
+                    {
+                        await connection.ExecuteAsync(processSql, new { DocumentId = document.Id, ProcessId = processId }, transaction);
+                    }
+                }
+
+                // Sync ProcedureIds
+                await connection.ExecuteAsync("DELETE FROM DocumentProcedures WHERE DocumentId = @DocumentId;", new { DocumentId = document.Id }, transaction);
+                if (document.ProcedureIds != null && document.ProcedureIds.Any())
+                {
+                    const string procedureSql = "INSERT INTO DocumentProcedures (DocumentId, ProcedureId) VALUES (@DocumentId, @ProcedureId) ON CONFLICT DO NOTHING;";
+                    foreach (var procedureId in document.ProcedureIds)
+                    {
+                        await connection.ExecuteAsync(procedureSql, new { DocumentId = document.Id, ProcedureId = procedureId }, transaction);
+                    }
+                }
+
+                transaction.Commit();
+                return rows > 0;
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
         }
 
         public async Task<bool> SoftDeleteAsync(int id, int organizationId)
@@ -519,6 +582,40 @@ namespace DocApi.Repositories
             });
         }
 
+        public async Task<IEnumerable<int>> GetProcessIdsByDocumentIdAsync(int documentId)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await ((System.Data.Common.DbConnection)connection).OpenAsync();
+            const string sql = "SELECT ProcessId FROM DocumentProcesses WHERE DocumentId = @DocumentId;";
+            return await connection.QueryAsync<int>(sql, new { DocumentId = documentId });
+        }
+
+        public async Task<IEnumerable<int>> GetProcedureIdsByDocumentIdAsync(int documentId)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await ((System.Data.Common.DbConnection)connection).OpenAsync();
+            const string sql = "SELECT ProcedureId FROM DocumentProcedures WHERE DocumentId = @DocumentId;";
+            return await connection.QueryAsync<int>(sql, new { DocumentId = documentId });
+        }
+
+        public async Task<bool> AddProcessLinkAsync(int documentId, int processId)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await ((System.Data.Common.DbConnection)connection).OpenAsync();
+            const string sql = "INSERT INTO DocumentProcesses (DocumentId, ProcessId) VALUES (@DocumentId, @ProcessId) ON CONFLICT DO NOTHING;";
+            var affected = await connection.ExecuteAsync(sql, new { DocumentId = documentId, ProcessId = processId });
+            return affected > 0;
+        }
+
+        public async Task<bool> RemoveProcessLinkAsync(int documentId, int processId)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await ((System.Data.Common.DbConnection)connection).OpenAsync();
+            const string sql = "DELETE FROM DocumentProcesses WHERE DocumentId = @DocumentId AND ProcessId = @ProcessId;";
+            var affected = await connection.ExecuteAsync(sql, new { DocumentId = documentId, ProcessId = processId });
+            return affected > 0;
+        }
+
         private static string BuildWhereClause(
             DynamicParameters parameters,
             string? search,
@@ -579,13 +676,13 @@ namespace DocApi.Repositories
 
             if (processId.HasValue)
             {
-                conditions.Add("d.ProcessId = @ProcessId");
+                conditions.Add("(d.ProcessId = @ProcessId OR d.Id IN (SELECT DocumentId FROM DocumentProcesses WHERE ProcessId = @ProcessId))");
                 parameters.Add("@ProcessId", processId.Value);
             }
 
             if (procedureId.HasValue)
             {
-                conditions.Add("d.ProcedureId = @ProcedureId");
+                conditions.Add("(d.ProcedureId = @ProcedureId OR d.Id IN (SELECT DocumentId FROM DocumentProcedures WHERE ProcedureId = @ProcedureId))");
                 parameters.Add("@ProcedureId", procedureId.Value);
             }
 

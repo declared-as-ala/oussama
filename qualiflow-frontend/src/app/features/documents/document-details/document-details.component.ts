@@ -8,9 +8,14 @@ import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { forkJoin } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
+import { ProcessService } from '../../processes/services/process.service';
+import { ProcedureService } from '../../procedures/services/procedure.service';
+import { ProcessListItemResponse } from '../../processes/models/process.models';
+import { ProcedureListItemResponse } from '../../procedures/models/procedure.models';
 import {
   DocumentActionLogResponse,
   DocumentDetailsResponse,
@@ -54,6 +59,9 @@ export class DocumentDetailsComponent implements OnInit {
   totalActions = 0;
   activeTab = 0;
 
+  linkedProcesses: ProcessListItemResponse[] = [];
+  linkedProcedures: ProcedureListItemResponse[] = [];
+
   setActiveTab(index: number): void {
     this.activeTab = index;
   }
@@ -64,7 +72,9 @@ export class DocumentDetailsComponent implements OnInit {
     private readonly documentService: DocumentService,
     private readonly authService: AuthService,
     private readonly dialog: MatDialog,
-    private readonly notificationService: NotificationService
+    private readonly notificationService: NotificationService,
+    private readonly processService: ProcessService,
+    private readonly procedureService: ProcedureService
   ) { }
 
   ngOnInit(): void {
@@ -95,7 +105,35 @@ export class DocumentDetailsComponent implements OnInit {
     this.documentService.getDocumentById(this.documentId).subscribe({
       next: (details) => {
         this.details = details;
-        this.loading = false;
+        
+        const processIds = details.document.processIds && details.document.processIds.length > 0
+          ? details.document.processIds
+          : (details.document.processId ? [details.document.processId] : []);
+          
+        const procedureIds = details.document.procedureIds && details.document.procedureIds.length > 0
+          ? details.document.procedureIds
+          : (details.document.procedureId ? [details.document.procedureId] : []);
+
+        forkJoin({
+          processes: this.processService.getProcesses({ pageNumber: 1, pageSize: 300 }),
+          procedures: this.procedureService.getProcedures({ pageNumber: 1, pageSize: 300 })
+        }).subscribe({
+          next: ({ processes, procedures }) => {
+            this.linkedProcesses = processes.items.filter(p => processIds.includes(p.id));
+            this.linkedProcedures = procedures.items.filter(p => procedureIds.includes(p.id));
+            this.loading = false;
+          },
+          error: () => {
+            // Fallback: use primary if available
+            this.linkedProcesses = details.document.processId 
+              ? [{ id: details.document.processId, code: details.document.processCode || '', name: details.document.processName || '' } as any]
+              : [];
+            this.linkedProcedures = details.document.procedureId
+              ? [{ id: details.document.procedureId, code: details.document.procedureCode || '', title: details.document.procedureTitle || '' } as any]
+              : [];
+            this.loading = false;
+          }
+        });
       },
       error: () => {
         this.loading = false;
@@ -393,6 +431,37 @@ export class DocumentDetailsComponent implements OnInit {
       .join('')
       .slice(0, 3)
       .toUpperCase();
+  }
+
+  getFileIconAndColor(fileName?: string | null): { icon: string, colorClass: string } {
+    if (!fileName) {
+      return { icon: 'insert_drive_file', colorClass: 'file-generic' };
+    }
+    const ext = this.extractExtension(fileName);
+    switch (ext) {
+      case 'pdf':
+        return { icon: 'picture_as_pdf', colorClass: 'file-pdf' };
+      case 'png':
+      case 'jpg':
+      case 'jpeg':
+      case 'gif':
+      case 'webp':
+      case 'svg':
+        return { icon: 'image', colorClass: 'file-image' };
+      case 'xls':
+      case 'xlsx':
+      case 'csv':
+        return { icon: 'table_chart', colorClass: 'file-excel' };
+      case 'doc':
+      case 'docx':
+        return { icon: 'article', colorClass: 'file-word' };
+      case 'zip':
+      case 'rar':
+      case '7z':
+        return { icon: 'inventory_2', colorClass: 'file-zip' };
+      default:
+        return { icon: 'insert_drive_file', colorClass: 'file-generic' };
+    }
   }
 
   private saveBlob(blob: Blob, fileName: string): void {

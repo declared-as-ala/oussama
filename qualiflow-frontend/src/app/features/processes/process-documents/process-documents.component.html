@@ -23,6 +23,53 @@
       </button>
     </div>
 
+    <!-- ────── ASSOCIER UN DOCUMENT ────── -->
+    <div class="link-doc-section" *ngIf="canWrite" style="margin-bottom: 24px; padding: 20px; background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(10px); border-radius: 16px; border: 1px solid rgba(226, 232, 240, 0.8); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+        <mat-icon style="color: var(--xl-green-mid);">link</mat-icon>
+        <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #1e293b;">Associer un document à ce processus</h3>
+      </div>
+      <div class="doc-tab-actions" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+        <!-- Filter input -->
+        <mat-form-field appearance="outline" class="proc-tab-search-field" style="width: 250px; margin-bottom: 0 !important;">
+          <mat-label>Filtrer les documents</mat-label>
+          <mat-icon matPrefix>search</mat-icon>
+          <input matInput type="text" placeholder="Filtrer par code ou titre..." [(ngModel)]="docSearchTerm" />
+          <button *ngIf="docSearchTerm" matSuffix mat-icon-button (click)="docSearchTerm = ''" matTooltip="Effacer">
+            <mat-icon>close</mat-icon>
+          </button>
+        </mat-form-field>
+
+        <!-- Select dropdown -->
+        <mat-form-field appearance="outline" class="proc-tab-select-field" style="flex: 1; min-width: 300px; margin-bottom: 0 !important;">
+          <mat-label>Sélectionner un document</mat-label>
+          <mat-select [(ngModel)]="selectedDocIdToLink" (openedChange)="$event && loadAllAvailableDocs()">
+            <mat-select-trigger *ngIf="selectedDocIdToLink">
+              <span class="proc-selected-trigger-code" style="background-color: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-right: 8px;">{{ getSelectedDocCode() }}</span>
+              <span class="proc-selected-trigger-title">{{ getSelectedDocTitle() }}</span>
+            </mat-select-trigger>
+            <mat-option [value]="null" disabled class="proc-dropdown-placeholder">Choisir un document…</mat-option>
+            <mat-option *ngFor="let d of filteredAvailableDocs" [value]="d.id" class="proc-dropdown-option">
+              <span class="proc-option-code-pill" style="background-color: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-right: 8px;">{{ d.code }}</span>
+              <span class="proc-option-title">{{ d.title }}</span>
+            </mat-option>
+            <mat-option *ngIf="filteredAvailableDocs.length === 0" disabled class="proc-dropdown-empty">
+              <mat-icon style="margin-right: 8px; color: #94a3b8; font-size: 18px; width: 18px; height: 18px;">info</mat-icon>
+              <span>Aucun document disponible</span>
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Lier button -->
+        <button mat-flat-button color="primary" class="proc-tab-submit-btn" (click)="addDocumentLink()"
+          [disabled]="!selectedDocIdToLink || linkingDoc"
+          style="background-color: var(--xl-green-mid) !important; color: white !important; height: 48px; border-radius: 12px; display: inline-flex; align-items: center; gap: 8px;">
+          <mat-icon>add_link</mat-icon>
+          <span>{{ linkingDoc ? 'Liaison...' : 'Lier le document' }}</span>
+        </button>
+      </div>
+    </div>
+
     <!-- ────── PROCEDURE CHIPS ────── -->
     <div class="chips-zone">
       <!-- "Tous" chip -->
@@ -117,11 +164,16 @@
 
           <!-- Actions -->
           <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef style="width:52px;"></th>
+            <th mat-header-cell *matHeaderCellDef style="width:100px; text-align: center;">Actions</th>
             <td mat-cell *matCellDef="let d">
-              <button mat-icon-button color="primary" (click)="viewDocument(d.id)" matTooltip="Consulter">
-                <mat-icon>visibility</mat-icon>
-              </button>
+              <div style="display: inline-flex; gap: 4px; align-items: center;">
+                <button mat-icon-button color="primary" (click)="viewDocument(d.id)" matTooltip="Consulter" style="color: var(--xl-green-mid);">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+                <button *ngIf="canWrite" mat-icon-button color="warn" (click)="removeDocumentLink(d.id)" matTooltip="Délier du processus">
+                  <mat-icon>link_off</mat-icon>
+                </button>
+              </div>
             </td>
           </ng-container>
 

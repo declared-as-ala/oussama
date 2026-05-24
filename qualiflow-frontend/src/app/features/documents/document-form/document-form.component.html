@@ -118,17 +118,15 @@
 
       <div class="section-content grid-2-cols">
         <mat-form-field appearance="outline">
-          <mat-label>Processus associé</mat-label>
-          <mat-select formControlName="processId" (selectionChange)="onProcessChanged()">
-            <mat-option [value]="null">-- Aucun processus --</mat-option>
+          <mat-label>Processus associés</mat-label>
+          <mat-select formControlName="processIds" (selectionChange)="onProcessChanged()" multiple>
             <mat-option *ngFor="let p of processes" [value]="p.id">{{ p.code }} - {{ p.name }}</mat-option>
           </mat-select>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>Procédure liée</mat-label>
-          <mat-select formControlName="procedureId">
-            <mat-option [value]="null">-- Aucune procédure --</mat-option>
+          <mat-label>Procédures liées</mat-label>
+          <mat-select formControlName="procedureIds" multiple>
             <mat-option *ngFor="let proc of procedures" [value]="proc.id">{{ proc.code }} - {{ proc.title
               }}</mat-option>
           </mat-select>

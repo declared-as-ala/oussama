@@ -264,23 +264,7 @@ namespace DocApi.Infrastructure
             return null;
         }
 
-        private static string BuildOrganizationContact(PdfHeaderMetadata metadata)
-        {
-            var email = string.IsNullOrWhiteSpace(metadata.OrganizationEmail) ? null : metadata.OrganizationEmail.Trim();
-            var phone = string.IsNullOrWhiteSpace(metadata.OrganizationPhone) ? null : metadata.OrganizationPhone.Trim();
 
-            if (email == null && phone == null)
-            {
-                return string.Empty;
-            }
-
-            if (email != null && phone != null)
-            {
-                return $"{email} | {phone}";
-            }
-
-            return email ?? phone ?? string.Empty;
-        }
 
         private static XImage? TryLoadLogoImage(string? logoPath)
         {
@@ -482,10 +466,8 @@ namespace DocApi.Infrastructure
             var div2Y = div1Y + titleRowH;
             gfx.DrawLine(thinPen, centerX, div2Y, centerX + centerW, div2Y);
 
-            // Row 3: Organisation contact / description
-            var contact = BuildOrganizationContact(metadata);
-            if (string.IsNullOrWhiteSpace(contact))
-                contact = string.IsNullOrWhiteSpace(metadata.OrganizationName) ? "Système de Management Qualité" : metadata.OrganizationName.Trim();
+            // Row 3: Organisation name / description
+            var contact = string.IsNullOrWhiteSpace(metadata.OrganizationName) ? "Système de Management Qualité" : metadata.OrganizationName.Trim();
             gfx.DrawString(contact, subInfoFont, labelBrush,
                 new XRect(centerX + 4, div2Y, centerW - 8, hH - (div2Y - hY)), XStringFormats.Center);
 

@@ -21,5 +21,7 @@ namespace DocApi.Services.Interfaces
         Task<ProcessStatisticsResponse> GetStatisticsAsync(UserContext userContext);
         Task<List<ProcessActionLogResponse>> GetActionLogsAsync(int processId, UserContext userContext);
         Task<bool> DeleteActionLogAsync(int logId, UserContext userContext);
+        Task<bool> AddDocumentLinkAsync(int processId, int documentId, UserContext userContext);
+        Task<bool> RemoveDocumentLinkAsync(int processId, int documentId, UserContext userContext);
     }
 }

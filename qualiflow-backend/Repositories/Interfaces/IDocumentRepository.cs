@@ -51,5 +51,9 @@ namespace DocApi.Repositories.Interfaces
         Task<bool> SetCurrentVersionAsync(int documentId, int? currentVersionId);
         Task<IEnumerable<Document>> GetByOrganizationAsync(int? organizationId);
         Task<IEnumerable<DocumentExpiringData>> GetExpiringAsync(int organizationId, int withinDays);
+        Task<IEnumerable<int>> GetProcessIdsByDocumentIdAsync(int documentId);
+        Task<IEnumerable<int>> GetProcedureIdsByDocumentIdAsync(int documentId);
+        Task<bool> AddProcessLinkAsync(int documentId, int processId);
+        Task<bool> RemoveProcessLinkAsync(int documentId, int processId);
     }
 }

@@ -177,24 +177,29 @@
           </div>
         </div>
         <div *ngIf="canWrite" class="proc-tab-actions">
-          <!-- Search input -->
-          <mat-form-field appearance="outline" class="proc-tab-search-field">
-            <mat-label>Filtrer les procédures</mat-label>
-            <mat-icon matPrefix>search</mat-icon>
-            <input matInput type="text" placeholder="Filtrer par code ou titre..." [(ngModel)]="procedureSearchTerm" />
-            <button *ngIf="procedureSearchTerm" matSuffix mat-icon-button (click)="procedureSearchTerm = ''" matTooltip="Effacer">
-              <mat-icon>close</mat-icon>
-            </button>
-          </mat-form-field>
-
-          <!-- Select dropdown -->
-          <mat-form-field appearance="outline" class="proc-tab-select-field">
+          <!-- Select dropdown with integrated premium search -->
+          <mat-form-field appearance="outline" class="proc-tab-select-field" style="width: 350px;">
             <mat-label>Sélectionner une procédure</mat-label>
-            <mat-select [(ngModel)]="selectedProcedureToLink" (openedChange)="$event && loadAllAvailableProcedures()">
+            <mat-select [(ngModel)]="selectedProcedureToLink" (openedChange)="$event ? loadAllAvailableProcedures() : (procedureSearchTerm = '')" panelClass="premium-select-panel">
               <mat-select-trigger *ngIf="selectedProcedureToLink">
                 <span class="proc-selected-trigger-code">{{ getSelectedProcedureCode() }}</span>
                 <span class="proc-selected-trigger-title">{{ getSelectedProcedureTitle() }}</span>
               </mat-select-trigger>
+              
+              <!-- Sticky search box inside dropdown panel -->
+              <div class="proc-select-search-box" (click)="$event.stopPropagation()">
+                <mat-icon class="search-icon">search</mat-icon>
+                <input matInput 
+                       class="search-input" 
+                       placeholder="Rechercher par code ou titre..." 
+                       [(ngModel)]="procedureSearchTerm"
+                       (keydown)="$event.stopPropagation()" />
+                <button *ngIf="procedureSearchTerm" mat-icon-button class="clear-btn" (click)="procedureSearchTerm = ''; $event.stopPropagation()">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+              <div class="proc-dropdown-divider"></div>
+
               <mat-option [value]="null" disabled class="proc-dropdown-placeholder">Choisir une procédure…</mat-option>
               <mat-option *ngFor="let p of filteredAvailableProcedures" [value]="p.id" class="proc-dropdown-option">
                 <span class="proc-option-code-pill">{{ p.code }}</span>
@@ -202,7 +207,7 @@
               </mat-option>
               <mat-option *ngIf="filteredAvailableProcedures.length === 0" disabled class="proc-dropdown-empty">
                 <mat-icon style="margin-right: 8px; color: #94a3b8; font-size: 18px; width: 18px; height: 18px;">info</mat-icon>
-                <span>Aucune procédure disponible</span>
+                <span>Aucune procédure trouvée</span>
               </mat-option>
             </mat-select>
           </mat-form-field>

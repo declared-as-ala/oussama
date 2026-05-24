@@ -541,6 +541,76 @@
         .mat-mdc-form-field-subscript-wrapper {
           display: none !important;
         }
+
+        /* Sticky Search Box inside dropdown */
+        .proc-select-search-box {
+          display: flex;
+          align-items: center;
+          padding: 8px 16px;
+          background: #ffffff;
+          position: sticky;
+          top: 0;
+          z-index: 100;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+          
+          .search-icon {
+            color: #94a3b8 !important;
+            margin-right: 8px;
+            font-size: 20px !important;
+            width: 20px !important;
+            height: 20px !important;
+          }
+          
+          .search-input {
+            border: none !important;
+            background: transparent !important;
+            outline: none !important;
+            width: 100% !important;
+            font-size: 13.5px !important;
+            font-weight: 500 !important;
+            color: #1e293b !important;
+            padding: 8px 0 !important;
+            box-shadow: none !important;
+            
+            &::placeholder {
+              color: #94a3b8 !important;
+              font-style: italic !important;
+            }
+          }
+          
+          .clear-btn {
+            width: 28px !important;
+            height: 28px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 0 !important;
+            color: #94a3b8 !important;
+            border: none !important;
+            background: transparent !important;
+            cursor: pointer !important;
+            
+            mat-icon {
+              font-size: 18px !important;
+              width: 18px !important;
+              height: 18px !important;
+              color: #94a3b8 !important;
+            }
+            
+            &:hover {
+              color: #475569 !important;
+              mat-icon {
+                color: #475569 !important;
+              }
+            }
+          }
+        }
+
+        .proc-dropdown-divider {
+          height: 1px;
+          background: rgba(0, 0, 0, 0.06);
+          margin-bottom: 4px;
+        }
         
         /* Selected item inside input field */
         .proc-selected-trigger-code {

@@ -10,11 +10,13 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { forkJoin } from 'rxjs';
 import { NotificationService } from '../../../core/services/notification.service';
 import { ProcessService } from '../services/process.service';
 import { ProcedureService } from '../../procedures/services/procedure.service';
 import { DocumentService } from '../../documents/services/document.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { ProcedureListItemResponse } from '../../procedures/models/procedure.models';
 import { DocumentListItemResponse } from '../../documents/models/document.models';
@@ -35,6 +37,7 @@ import { ProcessDetailsResponse } from '../models/process.models';
     MatTooltipModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     TranslatePipe
   ],
   templateUrl: './process-documents.component.html',
@@ -46,6 +49,11 @@ export class ProcessDocumentsComponent implements OnInit {
   details: ProcessDetailsResponse | null = null;
   procedures: ProcedureListItemResponse[] = [];
   allDocuments: DocumentListItemResponse[] = [];
+
+  allAvailableDocs: DocumentListItemResponse[] = [];
+  docSearchTerm = '';
+  selectedDocIdToLink: number | null = null;
+  linkingDoc = false;
 
   /** null = "Tous les documents" */
   selectedProcedureId: number | null = null;
@@ -60,7 +68,8 @@ export class ProcessDocumentsComponent implements OnInit {
     private readonly processService: ProcessService,
     private readonly procedureService: ProcedureService,
     private readonly documentService: DocumentService,
-    private readonly notificationService: NotificationService
+    private readonly notificationService: NotificationService,
+    private readonly authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -94,7 +103,7 @@ export class ProcessDocumentsComponent implements OnInit {
       next: ({ details, procedures, documents }) => {
         this.details = details;
         this.procedures = procedures;
-        this.allDocuments = documents.items.filter(d => d.processId === this.processId);
+        this.allDocuments = documents.items.filter(d => d.processId === this.processId || (d.processIds && d.processIds.includes(this.processId)));
         this.loading = false;
       },
       error: () => {
@@ -162,5 +171,97 @@ export class ProcessDocumentsComponent implements OnInit {
     if (!this.showSearch) {
       this.searchTerm = '';
     }
+  }
+
+  get canWrite(): boolean {
+    if (this.authService.hasRole(['SUPER_ADMIN', 'ADMIN_ORG', 'RESPONSABLE_QUALITE'])) {
+      return true;
+    }
+
+    const currentUserId = this.authService.getCurrentUser()?.id;
+    if (!currentUserId || !this.details) {
+      return false;
+    }
+
+    if (this.details.process.pilotUserId === currentUserId) {
+      return true;
+    }
+
+    return this.details.actors.some(
+      actor => actor.userId === currentUserId &&
+        (actor.actorType === 'PILOTE' || actor.actorType === 'COPILOTE')
+    );
+  }
+
+  loadAllAvailableDocs(): void {
+    if (this.allAvailableDocs.length > 0) return;
+    this.documentService.getDocuments({ pageSize: 500, pageNumber: 1 }).subscribe({
+      next: (res) => {
+        this.allAvailableDocs = res.items;
+      }
+    });
+  }
+
+  get filteredAvailableDocs(): DocumentListItemResponse[] {
+    const term = this.docSearchTerm.toLowerCase().trim();
+    const linkedIds = new Set(this.allDocuments.map(d => d.id));
+    return this.allAvailableDocs.filter(d =>
+      !linkedIds.has(d.id) &&
+      (!term || d.title.toLowerCase().includes(term) || d.code.toLowerCase().includes(term))
+    );
+  }
+
+  addDocumentLink(): void {
+    if (!this.selectedDocIdToLink) return;
+
+    const doc = this.allAvailableDocs.find(d => d.id === this.selectedDocIdToLink);
+    if (!doc) return;
+
+    const confirmed = window.confirm(
+      `Confirmer la liaison ?\n\nDocument : [${doc.code}] ${doc.title}\n\nCe document sera associé à ce processus.`
+    );
+    if (!confirmed) return;
+
+    this.linkingDoc = true;
+    this.processService.addDocumentLink(this.processId, this.selectedDocIdToLink).subscribe({
+      next: () => {
+        this.notificationService.showSuccess(`Document [${doc.code}] lié avec succès.`);
+        this.selectedDocIdToLink = null;
+        this.docSearchTerm = '';
+        this.loadData();
+        this.linkingDoc = false;
+      },
+      error: () => {
+        this.notificationService.showError('Impossible de lier le document.');
+        this.linkingDoc = false;
+      }
+    });
+  }
+
+  getSelectedDocCode(): string {
+    return this.allAvailableDocs.find(d => d.id === this.selectedDocIdToLink)?.code || '';
+  }
+
+  getSelectedDocTitle(): string {
+    return this.allAvailableDocs.find(d => d.id === this.selectedDocIdToLink)?.title || '';
+  }
+
+  removeDocumentLink(documentId: number): void {
+    const doc = this.allDocuments.find(d => d.id === documentId);
+    const label = doc ? `[${doc.code}] ${doc.title}` : `#${documentId}`;
+    const confirmed = window.confirm(
+      `Confirmer la déliaison ?\n\nDocument : ${label}\n\nCe document ne sera plus associé à ce processus.`
+    );
+    if (!confirmed) return;
+
+    this.processService.removeDocumentLink(this.processId, documentId).subscribe({
+      next: () => {
+        this.notificationService.showSuccess(`Document ${label} délié avec succès.`);
+        this.loadData();
+      },
+      error: () => {
+        this.notificationService.showError('Impossible de délier le document.');
+      }
+    });
   }
 }

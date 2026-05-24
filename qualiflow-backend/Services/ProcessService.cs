@@ -18,19 +18,22 @@ namespace DocApi.Services
         private readonly IUserRepository _userRepository;
         private readonly IProcessActionLogRepository _processActionLogRepository;
         private readonly IActionLogger _actionLogger;
+        private readonly IDocumentRepository _documentRepository;
 
         public ProcessService(
             IProcessRepository processRepository,
             IProcessActorRepository processActorRepository,
             IUserRepository userRepository,
             IProcessActionLogRepository processActionLogRepository,
-            IActionLogger actionLogger)
+            IActionLogger actionLogger,
+            IDocumentRepository documentRepository)
         {
             _processRepository = processRepository;
             _processActorRepository = processActorRepository;
             _userRepository = userRepository;
             _processActionLogRepository = processActionLogRepository;
             _actionLogger = actionLogger;
+            _documentRepository = documentRepository;
         }
 
         public async Task<PagedProcessResponse> GetProcessesAsync(ProcessListQueryParameters query, UserContext userContext)
@@ -265,7 +268,10 @@ namespace DocApi.Services
 
             var process = await GetProcessOrThrowAsync(id);
             EnsureProcessWriteAccess(userContext, process.OrganizationId);
-            await VerifyWritePermissionAsync(process, userContext);
+            if (!userContext.IsSuperAdmin && userContext.Role != UserRoles.ADMIN_ORG && userContext.Role != UserRoles.RESPONSABLE_QUALITE)
+            {
+                throw new ForbiddenException("Le pilote de processus n'est pas autorisé à supprimer un processus. Seuls les administrateurs ou les responsables qualité le peuvent.");
+            }
 
             var result = await _processRepository.DeleteAsync(id);
             if (result)
@@ -1099,6 +1105,60 @@ namespace DocApi.Services
             });
 
             await _processActorRepository.ReplaceActorsAsync(processId, organizationId, actorEntities);
+        }
+
+        public async Task<bool> AddDocumentLinkAsync(int processId, int documentId, UserContext userContext)
+        {
+            EnsureCanWrite(userContext);
+            var process = await GetProcessOrThrowAsync(processId);
+            EnsureProcessWriteAccess(userContext, process.OrganizationId);
+            await VerifyWritePermissionAsync(process, userContext);
+
+            var doc = await _documentRepository.GetByIdAsync(documentId);
+            if (doc == null || doc.OrganizationId != process.OrganizationId)
+            {
+                throw new NotFoundException("Document introuvable ou n'appartient pas à la même organisation.");
+            }
+
+            var result = await _documentRepository.AddProcessLinkAsync(documentId, processId);
+            if (result)
+            {
+                await LogProcessActionAsync(
+                    process,
+                    "DOCUMENT_LINKED",
+                    null,
+                    $"Doc ID: {documentId}",
+                    $"Document ID {documentId} lié au processus.",
+                    userContext.UserId);
+            }
+            return result;
+        }
+
+        public async Task<bool> RemoveDocumentLinkAsync(int processId, int documentId, UserContext userContext)
+        {
+            EnsureCanWrite(userContext);
+            var process = await GetProcessOrThrowAsync(processId);
+            EnsureProcessWriteAccess(userContext, process.OrganizationId);
+            await VerifyWritePermissionAsync(process, userContext);
+
+            var doc = await _documentRepository.GetByIdAsync(documentId);
+            if (doc == null || doc.OrganizationId != process.OrganizationId)
+            {
+                throw new NotFoundException("Document introuvable.");
+            }
+
+            var result = await _documentRepository.RemoveProcessLinkAsync(documentId, processId);
+            if (result)
+            {
+                await LogProcessActionAsync(
+                    process,
+                    "DOCUMENT_UNLINKED",
+                    $"Doc ID: {documentId}",
+                    null,
+                    $"Document ID {documentId} délié du processus.",
+                    userContext.UserId);
+            }
+            return result;
         }
     }
 }

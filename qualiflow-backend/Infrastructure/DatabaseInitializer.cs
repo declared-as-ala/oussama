@@ -176,7 +176,7 @@ namespace DocApi.Infrastructure
                     OrganizationId INTEGER NOT NULL REFERENCES Organizations(Id) ON DELETE CASCADE,
                     ProcessId INTEGER NOT NULL REFERENCES Processes(Id) ON DELETE CASCADE,
                     UserId INTEGER NOT NULL REFERENCES Users(Id) ON DELETE CASCADE,
-                    ActorType VARCHAR(30) NOT NULL CHECK (ActorType IN ('PILOTE', 'COPILOTE', 'CONTRIBUTEUR', 'OBSERVATEUR')),
+                    ActorType VARCHAR(30) NOT NULL CHECK (ActorType IN ('PILOTE', 'COPILOTE', 'CONTRIBUTEUR', 'OBSERVATEUR', 'PILOTE_PROCEDURE')),
                     AssignedAt TIMESTAMP NOT NULL DEFAULT NOW(),
                     CONSTRAINT uq_process_actors UNIQUE (ProcessId, UserId)
                 );
@@ -935,9 +935,37 @@ namespace DocApi.Infrastructure
                 CREATE INDEX IF NOT EXISTS idx_actionlogs_module ON ActionLogs(Module);
                 CREATE INDEX IF NOT EXISTS idx_actionlogs_action ON ActionLogs(ActionType);
                 CREATE INDEX IF NOT EXISTS idx_actionlogs_createdat ON ActionLogs(CreatedAt);
+
+                CREATE TABLE IF NOT EXISTS DocumentProcesses (
+                    DocumentId INTEGER NOT NULL REFERENCES Documents(Id) ON DELETE CASCADE,
+                    ProcessId INTEGER NOT NULL REFERENCES Processes(Id) ON DELETE CASCADE,
+                    PRIMARY KEY (DocumentId, ProcessId)
+                );
+                CREATE INDEX IF NOT EXISTS idx_documentprocesses_doc ON DocumentProcesses(DocumentId);
+                CREATE INDEX IF NOT EXISTS idx_documentprocesses_proc ON DocumentProcesses(ProcessId);
+
+                CREATE TABLE IF NOT EXISTS DocumentProcedures (
+                    DocumentId INTEGER NOT NULL REFERENCES Documents(Id) ON DELETE CASCADE,
+                    ProcedureId INTEGER NOT NULL REFERENCES Procedures(Id) ON DELETE CASCADE,
+                    PRIMARY KEY (DocumentId, ProcedureId)
+                );
+                CREATE INDEX IF NOT EXISTS idx_documentprocedures_doc ON DocumentProcedures(DocumentId);
+                CREATE INDEX IF NOT EXISTS idx_documentprocedures_proc ON DocumentProcedures(ProcedureId);
             ";
 
             await connection.ExecuteAsync(schemaSql);
+
+            await connection.ExecuteAsync(@"
+                INSERT INTO DocumentProcesses (DocumentId, ProcessId)
+                SELECT Id, ProcessId FROM Documents
+                WHERE ProcessId IS NOT NULL
+                ON CONFLICT (DocumentId, ProcessId) DO NOTHING;
+
+                INSERT INTO DocumentProcedures (DocumentId, ProcedureId)
+                SELECT Id, ProcedureId FROM Documents
+                WHERE ProcedureId IS NOT NULL
+                ON CONFLICT (DocumentId, ProcedureId) DO NOTHING;
+            ");
             await connection.ExecuteAsync(@"
                 DO $$
                 BEGIN
@@ -954,6 +982,25 @@ namespace DocApi.Infrastructure
 
                     ADD CONSTRAINT documentversions_status_check
                     CHECK (Status IN ('BROUILLON', 'EN_REVISION', 'APPROUVE', 'PUBLIE', 'REJETE', 'PERIME', 'ARCHIVE'));
+                EXCEPTION
+                    WHEN duplicate_object THEN NULL;
+                END $$;");
+
+            await connection.ExecuteAsync(@"
+                DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1
+                        FROM pg_constraint
+                        WHERE conname = 'processactors_actortype_check'
+                    ) THEN
+                        ALTER TABLE ProcessActors
+                        DROP CONSTRAINT processactors_actortype_check;
+                    END IF;
+
+                    ALTER TABLE ProcessActors
+                    ADD CONSTRAINT processactors_actortype_check
+                    CHECK (ActorType IN ('PILOTE', 'COPILOTE', 'CONTRIBUTEUR', 'OBSERVATEUR', 'PILOTE_PROCEDURE'));
                 EXCEPTION
                     WHEN duplicate_object THEN NULL;
                 END $$;");

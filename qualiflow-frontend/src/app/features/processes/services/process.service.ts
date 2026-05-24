@@ -80,4 +80,12 @@ export class ProcessService {
   deleteActionLog(processId: number, logId: number): Observable<void> {
     return this.apiService.delete<void>(`${this.endpoint}/${processId}/action-logs/${logId}`);
   }
+
+  addDocumentLink(processId: number, documentId: number): Observable<void> {
+    return this.apiService.post<void>(`${this.endpoint}/${processId}/documents/${documentId}`, {});
+  }
+
+  removeDocumentLink(processId: number, documentId: number): Observable<void> {
+    return this.apiService.delete<void>(`${this.endpoint}/${processId}/documents/${documentId}`);
+  }
 }

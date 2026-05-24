@@ -6,6 +6,8 @@ namespace DocApi.DTOs.Documents
     {
         public int? ProcessId { get; set; }
         public int? ProcedureId { get; set; }
+        public System.Collections.Generic.List<int>? ProcessIds { get; set; }
+        public System.Collections.Generic.List<int>? ProcedureIds { get; set; }
 
         [Required]
         [MaxLength(50)]

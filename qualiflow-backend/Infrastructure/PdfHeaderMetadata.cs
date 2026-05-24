@@ -7,8 +7,6 @@ namespace DocApi.Infrastructure
         public string OrganizationName { get; set; } = string.Empty;
         public string OrganizationCode { get; set; } = string.Empty;
         public string? OrganizationLogoPath { get; set; }
-        public string? OrganizationEmail { get; set; }
-        public string? OrganizationPhone { get; set; }
         public string ProcessCode { get; set; } = string.Empty;
         public string ProcedureCode { get; set; } = string.Empty;
         public string DocumentCode { get; set; } = string.Empty;

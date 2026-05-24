@@ -176,9 +176,12 @@ namespace DocApi.Services
                 }
             }
 
+            var processIds = (await _documentRepository.GetProcessIdsByDocumentIdAsync(id)).ToList();
+            var procedureIds = (await _documentRepository.GetProcedureIdsByDocumentIdAsync(id)).ToList();
+
             return new DocumentDetailsResponse
             {
-                Document = MapToDocumentResponse(details, currentVersion),
+                Document = MapToDocumentResponse(details, currentVersion, processIds, procedureIds),
                 CurrentVersion = currentVersion,
                 Versions = versions,
             };
@@ -187,13 +190,17 @@ namespace DocApi.Services
         public async Task<DocumentResponse> CreateAsync(CreateDocumentRequest request, UserContext userContext)
         {
             EnsureCanSubmit(userContext);
-            await VerifyDocumentWritePermissionAsync(request.ProcessId, userContext);
+
+            var primaryProcessId = request.ProcessIds?.FirstOrDefault() ?? request.ProcessId;
+            var primaryProcedureId = request.ProcedureIds?.FirstOrDefault() ?? request.ProcedureId;
+
+            await VerifyDocumentWritePermissionAsync(primaryProcessId, userContext);
 
             var organizationId = ResolveOrganizationScopeForWrite(userContext);
 
             await ValidateDocumentPayloadAsync(
-                request.ProcessId,
-                request.ProcedureId,
+                primaryProcessId,
+                primaryProcedureId,
                 request.Code,
                 request.Title,
                 request.Type,
@@ -204,8 +211,10 @@ namespace DocApi.Services
             var document = new Document
             {
                 OrganizationId = organizationId,
-                ProcessId = request.ProcessId,
-                ProcedureId = request.ProcedureId,
+                ProcessId = primaryProcessId,
+                ProcedureId = primaryProcedureId,
+                ProcessIds = request.ProcessIds ?? new List<int>(),
+                ProcedureIds = request.ProcedureIds ?? new List<int>(),
                 Code = request.Code.Trim(),
                 Title = request.Title.Trim(),
                 Type = request.Type.Trim().ToUpperInvariant(),
@@ -254,12 +263,13 @@ namespace DocApi.Services
                 $"Nouveau document : {created.Code}",
                 $"Le document '{created.Title}' a été créé.");
 
-            if (request.ProcedureId.HasValue)
+            var procId = request.ProcedureIds?.FirstOrDefault() ?? request.ProcedureId;
+            if (procId.HasValue)
             {
                 await _procedureActionLogRepository.CreateAsync(new ProcedureActionLog
                 {
                     OrganizationId = organizationId,
-                    ProcedureId = request.ProcedureId.Value,
+                    ProcedureId = procId.Value,
                     ActionType = "DOCUMENT_ADDED",
                     OldValue = null,
                     NewValue = created.Code,
@@ -269,7 +279,7 @@ namespace DocApi.Services
                 });
             }
 
-            return MapToDocumentResponse(details, null);
+            return MapToDocumentResponse(details, null, request.ProcessIds, request.ProcedureIds);
         }
 
         public async Task<DocumentResponse> UpdateAsync(int id, UpdateDocumentRequest request, UserContext userContext)
@@ -278,11 +288,15 @@ namespace DocApi.Services
 
             var document = await GetDocumentOrThrowAsync(id);
             EnsureDocumentWriteAccess(userContext, document.OrganizationId);
-            await VerifyDocumentWritePermissionAsync(request.ProcessId, userContext);
+
+            var primaryProcessId = request.ProcessIds?.FirstOrDefault() ?? request.ProcessId;
+            var primaryProcedureId = request.ProcedureIds?.FirstOrDefault() ?? request.ProcedureId;
+
+            await VerifyDocumentWritePermissionAsync(primaryProcessId, userContext);
 
             await ValidateDocumentPayloadAsync(
-                request.ProcessId,
-                request.ProcedureId,
+                primaryProcessId,
+                primaryProcedureId,
                 request.Code,
                 request.Title,
                 request.Type,
@@ -290,8 +304,10 @@ namespace DocApi.Services
                 document.OrganizationId,
                 id);
 
-            document.ProcessId = request.ProcessId;
-            document.ProcedureId = request.ProcedureId;
+            document.ProcessId = primaryProcessId;
+            document.ProcedureId = primaryProcedureId;
+            document.ProcessIds = request.ProcessIds ?? new List<int>();
+            document.ProcedureIds = request.ProcedureIds ?? new List<int>();
             document.Code = request.Code.Trim();
             document.Title = request.Title.Trim();
             document.Type = request.Type.Trim().ToUpperInvariant();
@@ -326,7 +342,7 @@ namespace DocApi.Services
                 currentVersion = currentVersionData == null ? null : MapToVersionResponse(currentVersionData);
             }
 
-            return MapToDocumentResponse(details, currentVersion);
+            return MapToDocumentResponse(details, currentVersion, request.ProcessIds, request.ProcedureIds);
         }
 
         public async Task<bool> DeleteAsync(int id, UserContext userContext)
@@ -468,7 +484,10 @@ namespace DocApi.Services
 
             var updatedCurrent = await _documentVersionRepository.GetCurrentByDocumentIdAsync(id);
             var currentVersion = updatedCurrent == null ? null : MapToVersionResponse(updatedCurrent);
-            return MapToDocumentResponse(details, currentVersion);
+
+            var processIds = (await _documentRepository.GetProcessIdsByDocumentIdAsync(id)).ToList();
+            var procedureIds = (await _documentRepository.GetProcedureIdsByDocumentIdAsync(id)).ToList();
+            return MapToDocumentResponse(details, currentVersion, processIds, procedureIds);
         }
 
         public async Task<DocumentResponse> ToggleStatusAsync(int id, UserContext userContext)
@@ -505,7 +524,9 @@ namespace DocApi.Services
                 currentVersion = currentVersionData == null ? null : MapToVersionResponse(currentVersionData);
             }
 
-            return MapToDocumentResponse(details, currentVersion);
+            var processIds = (await _documentRepository.GetProcessIdsByDocumentIdAsync(id)).ToList();
+            var procedureIds = (await _documentRepository.GetProcedureIdsByDocumentIdAsync(id)).ToList();
+            return MapToDocumentResponse(details, currentVersion, processIds, procedureIds);
         }
 
         public async Task<DocumentStatisticsResponse> GetStatisticsAsync(UserContext userContext)
@@ -1454,8 +1475,6 @@ namespace DocApi.Services
                 OrganizationName = organization?.Name ?? "Organisation",
                 OrganizationCode = organization?.Code ?? string.Empty,
                 OrganizationLogoPath = organization?.LogoPath,
-                OrganizationEmail = organization?.Email,
-                OrganizationPhone = organization?.Phone,
                 ProcessCode = process?.Code ?? "-",
                 ProcedureCode = procedure?.Code ?? "-",
                 DocumentCode = document.Code,
@@ -1692,6 +1711,8 @@ namespace DocApi.Services
                 ProcessName = item.ProcessName,
                 ProcedureId = item.ProcedureId,
                 ProcedureCode = item.ProcedureCode,
+                ProcessIds = item.ProcessId.HasValue ? new List<int> { item.ProcessId.Value } : new List<int>(),
+                ProcedureIds = item.ProcedureId.HasValue ? new List<int> { item.ProcedureId.Value } : new List<int>(),
                 Status = string.IsNullOrWhiteSpace(item.Status) ? DocumentConstants.StatusBrouillon : item.Status,
                 VersionNumber = item.VersionNumber,
                 ExpiryDate = item.ExpiryDate,
@@ -1707,7 +1728,7 @@ namespace DocApi.Services
             };
         }
 
-        private static DocumentResponse MapToDocumentResponse(DocumentDetailsData details, DocumentVersionResponse? currentVersion)
+        private static DocumentResponse MapToDocumentResponse(DocumentDetailsData details, DocumentVersionResponse? currentVersion, List<int>? processIds = null, List<int>? procedureIds = null)
         {
             return new DocumentResponse
             {
@@ -1719,6 +1740,8 @@ namespace DocApi.Services
                 ProcedureId = details.ProcedureId,
                 ProcedureCode = details.ProcedureCode,
                 ProcedureTitle = details.ProcedureTitle,
+                ProcessIds = processIds ?? new List<int>(),
+                ProcedureIds = procedureIds ?? new List<int>(),
                 Code = details.Code,
                 Title = details.Title,
                 Type = details.Type,

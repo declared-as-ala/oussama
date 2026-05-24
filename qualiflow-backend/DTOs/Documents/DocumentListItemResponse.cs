@@ -14,6 +14,8 @@ namespace DocApi.DTOs.Documents
         public string? ProcessName { get; set; }
         public int? ProcedureId { get; set; }
         public string? ProcedureCode { get; set; }
+        public System.Collections.Generic.List<int> ProcessIds { get; set; } = new();
+        public System.Collections.Generic.List<int> ProcedureIds { get; set; } = new();
         public string Status { get; set; } = "BROUILLON";
         public string? VersionNumber { get; set; }
         public DateTime? ExpiryDate { get; set; }

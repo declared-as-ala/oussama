@@ -31,6 +31,8 @@ export interface DocumentQueryParams {
 export interface CreateDocumentRequest {
   processId?: number | null;
   procedureId?: number | null;
+  processIds?: number[];
+  procedureIds?: number[];
   code: string;
   title: string;
   type: DocumentType;
@@ -69,6 +71,8 @@ export interface DocumentListItemResponse {
   processName?: string | null;
   procedureId?: number | null;
   procedureCode?: string | null;
+  processIds?: number[];
+  procedureIds?: number[];
   status: DocumentStatus;
   versionNumber?: string | null;
   expiryDate?: string | null;
@@ -92,6 +96,8 @@ export interface DocumentResponse {
   procedureId?: number | null;
   procedureCode?: string | null;
   procedureTitle?: string | null;
+  processIds?: number[];
+  procedureIds?: number[];
   code: string;
   title: string;
   type: DocumentType;

@@ -98,24 +98,27 @@
               <p>{{ model.document.description || ('detail.document.noDescription' | t) }}</p>
             </div>
             <div class="info-item">
-              <label>{{ 'detail.document.processLink' | t }}</label>
-              <div class="link-display" *ngIf="model.document.processId">
-                <mat-icon>hub</mat-icon>
-                <strong>{{ model.document.processCode }}</strong>
-                <span>{{ model.document.processName }}</span>
+              <label>Processus associés</label>
+              <div class="links-list" *ngIf="linkedProcesses.length > 0">
+                <div class="link-display" *ngFor="let p of linkedProcesses">
+                  <mat-icon>hub</mat-icon>
+                  <strong>{{ p.code }}</strong>
+                  <span>{{ p.name }}</span>
+                </div>
               </div>
-              <p *ngIf="!model.document.processId" class="text-muted italic">{{ 'detail.document.noProcessLinked' | t }}
-              </p>
+              <p *ngIf="linkedProcesses.length === 0" class="text-muted italic">{{ 'detail.document.noProcessLinked' | t }}</p>
             </div>
+
             <div class="info-item">
-              <label>{{ 'detail.document.procedureLink' | t }}</label>
-              <div class="link-display" *ngIf="model.document.procedureId">
-                <mat-icon>assignment</mat-icon>
-                <strong>{{ model.document.procedureCode }}</strong>
-                <span>{{ model.document.procedureTitle }}</span>
+              <label>Procédures liées</label>
+              <div class="links-list" *ngIf="linkedProcedures.length > 0">
+                <div class="link-display" *ngFor="let proc of linkedProcedures">
+                  <mat-icon>assignment</mat-icon>
+                  <strong>{{ proc.code }}</strong>
+                  <span>{{ proc.title }}</span>
+                </div>
               </div>
-              <p *ngIf="!model.document.procedureId" class="text-muted italic">{{ 'detail.document.noProcedureLinked' |
-                t }}</p>
+              <p *ngIf="linkedProcedures.length === 0" class="text-muted italic">{{ 'detail.document.noProcedureLinked' | t }}</p>
             </div>
             <div class="info-item">
               <label>{{ 'detail.document.keywords' | t }}</label>
@@ -150,13 +153,16 @@
             <table mat-table [dataSource]="model.versions" class="modern-table-compact">
               <ng-container matColumnDef="version">
                 <th mat-header-cell *matHeaderCellDef>{{ 'list.documents.revision' | t }}</th>
-                <td mat-cell *matCellDef="let row"><strong>{{ row.versionNumber }}</strong></td>
+                <td mat-cell *matCellDef="let row">
+                  <span class="revision-pill">{{ row.versionNumber }}</span>
+                </td>
               </ng-container>
 
               <ng-container matColumnDef="status">
                 <th mat-header-cell *matHeaderCellDef>{{ 'list.nonconformities.state' | t }}</th>
                 <td mat-cell *matCellDef="let row">
                   <span class="tag-status mini" [ngClass]="row.status.toLowerCase()">
+                    <span class="status-dot"></span>
                     {{ getStatusLabel(row.status) }}
                   </span>
                 </td>
@@ -164,51 +170,103 @@
 
               <ng-container matColumnDef="file">
                 <th mat-header-cell *matHeaderCellDef>Fichier</th>
-                <td mat-cell *matCellDef="let row" class="text-truncate" style="max-width: 170px;">
-                  {{ row.originalFileName || row.fileName || '-' }}
+                <td mat-cell *matCellDef="let row">
+                  <div class="file-pill-col">
+                    <div class="file-icon-wrapper" [ngClass]="getFileIconAndColor(row.originalFileName || row.fileName).colorClass">
+                      <mat-icon>{{ getFileIconAndColor(row.originalFileName || row.fileName).icon }}</mat-icon>
+                    </div>
+                    <div class="file-pill-info">
+                      <span class="file-name" [matTooltip]="row.originalFileName || row.fileName || '-'">
+                        {{ row.originalFileName || row.fileName || '-' }}
+                      </span>
+                      <span class="file-size" *ngIf="row.fileSize">
+                        {{ row.fileSize / 1024 | number:'1.0-1' }} KB
+                      </span>
+                    </div>
+                  </div>
                 </td>
               </ng-container>
 
               <ng-container matColumnDef="date">
                 <th mat-header-cell *matHeaderCellDef>{{ 'detail.document.date' | t }}</th>
-                <td mat-cell *matCellDef="let row">{{ row.createdAt | date: 'dd/MM/yy' }}</td>
+                <td mat-cell *matCellDef="let row">
+                  <div class="date-display">
+                    <mat-icon class="date-icon">calendar_today</mat-icon>
+                    <span>{{ row.createdAt | date: 'dd/MM/yyyy' }}</span>
+                  </div>
+                </td>
               </ng-container>
 
               <ng-container matColumnDef="author">
                 <th mat-header-cell *matHeaderCellDef>{{ 'detail.document.author' | t }}</th>
-                <td mat-cell *matCellDef="let row" class="text-truncate" style="max-width: 120px;">
-                  {{ row.establishedByUser || ('detail.document.system' | t) }}
+                <td mat-cell *matCellDef="let row">
+                  <div class="user-pill-col">
+                    <div class="user-avatar author-av">
+                      {{ getOwnerInitials(row.establishedByUser) }}
+                    </div>
+                    <div class="user-pill-info">
+                      <span class="user-name" [matTooltip]="row.establishedByUser || ('detail.document.system' | t)">
+                        {{ row.establishedByUser || ('detail.document.system' | t) }}
+                      </span>
+                    </div>
+                  </div>
                 </td>
               </ng-container>
 
               <ng-container matColumnDef="verifiedBy">
                 <th mat-header-cell *matHeaderCellDef>Vérifié par</th>
-                <td mat-cell *matCellDef="let row" class="text-truncate" style="max-width: 120px;">
-                  {{ row.verifiedByUser || '-' }}
-                  <small *ngIf="row.verifiedAt" style="display: block; font-size: 10px; color: #64748b;">
-                    ({{ row.verifiedAt | date: 'dd/MM/yy' }})
-                  </small>
+                <td mat-cell *matCellDef="let row">
+                  <div class="user-pill-col" *ngIf="row.verifiedByUser; else pendingVerification">
+                    <div class="user-avatar verifier-av">
+                      {{ getOwnerInitials(row.verifiedByUser) }}
+                    </div>
+                    <div class="user-pill-info">
+                      <span class="user-name" [matTooltip]="row.verifiedByUser">
+                        {{ row.verifiedByUser }}
+                      </span>
+                      <span class="user-date" *ngIf="row.verifiedAt">le {{ row.verifiedAt | date: 'dd/MM/yyyy' }}</span>
+                    </div>
+                  </div>
+                  <ng-template #pendingVerification>
+                    <span class="empty-badge">
+                      <mat-icon>hourglass_empty</mat-icon>
+                      En attente
+                    </span>
+                  </ng-template>
                 </td>
               </ng-container>
 
               <ng-container matColumnDef="validatedBy">
                 <th mat-header-cell *matHeaderCellDef>Approuvé par</th>
-                <td mat-cell *matCellDef="let row" class="text-truncate" style="max-width: 120px;">
-                  {{ row.validatedByUser || '-' }}
-                  <small *ngIf="row.validatedAt" style="display: block; font-size: 10px; color: #64748b;">
-                    ({{ row.validatedAt | date: 'dd/MM/yy' }})
-                  </small>
+                <td mat-cell *matCellDef="let row">
+                  <div class="user-pill-col" *ngIf="row.validatedByUser; else pendingValidation">
+                    <div class="user-avatar validator-av">
+                      {{ getOwnerInitials(row.validatedByUser) }}
+                    </div>
+                    <div class="user-pill-info">
+                      <span class="user-name" [matTooltip]="row.validatedByUser">
+                        {{ row.validatedByUser }}
+                      </span>
+                      <span class="user-date" *ngIf="row.validatedAt">le {{ row.validatedAt | date: 'dd/MM/yyyy' }}</span>
+                    </div>
+                  </div>
+                  <ng-template #pendingValidation>
+                    <span class="empty-badge">
+                      <mat-icon>hourglass_empty</mat-icon>
+                      En attente
+                    </span>
+                  </ng-template>
                 </td>
               </ng-container>
 
               <ng-container matColumnDef="actions">
                 <th mat-header-cell *matHeaderCellDef></th>
-                <td mat-cell *matCellDef="let row" style="display: flex; gap: 4px; justify-content: flex-end; align-items: center;">
-                  <button mat-icon-button class="action-btn-mini" (click)="downloadVersion(row)"
+                <td mat-cell *matCellDef="let row" style="display: flex; gap: 6px; justify-content: flex-end; align-items: center; min-height: 48px;">
+                  <button mat-icon-button class="action-btn-mini download" (click)="downloadVersion(row)"
                     [matTooltip]="'detail.document.downloadVersion' | t">
                     <mat-icon>download</mat-icon>
                   </button>
-                  <button *ngIf="canWrite" mat-icon-button class="action-btn-mini" color="primary" (click)="updateVersionStatus(row)"
+                  <button *ngIf="canWrite" mat-icon-button class="action-btn-mini edit" (click)="updateVersionStatus(row)"
                     [matTooltip]="'Mettre à jour le statut' | t">
                     <mat-icon>edit_note</mat-icon>
                   </button>

@@ -342,6 +342,60 @@ namespace DocApi.Controllers
             }
         }
 
+        [HttpPost("{id:int}/documents/{documentId:int}")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
+        public async Task<IActionResult> AddDocumentLink(int id, int documentId)
+        {
+            try
+            {
+                var success = await _processService.AddDocumentLinkAsync(id, documentId, GetUserContext());
+                if (!success)
+                {
+                    return BadRequest(new { message = "Impossible de lier le document au processus." });
+                }
+                return NoContent();
+            }
+            catch (ForbiddenException)
+            {
+                return Forbid();
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ServiceException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpDelete("{id:int}/documents/{documentId:int}")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
+        public async Task<IActionResult> RemoveDocumentLink(int id, int documentId)
+        {
+            try
+            {
+                var success = await _processService.RemoveDocumentLinkAsync(id, documentId, GetUserContext());
+                if (!success)
+                {
+                    return BadRequest(new { message = "Impossible de délier le document du processus." });
+                }
+                return NoContent();
+            }
+            catch (ForbiddenException)
+            {
+                return Forbid();
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ServiceException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         private UserContext GetUserContext()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
