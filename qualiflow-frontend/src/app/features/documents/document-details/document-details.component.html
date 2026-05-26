@@ -82,6 +82,13 @@
         <mat-icon>timeline</mat-icon>
         <span>3. Journal d'actions</span>
       </button>
+      <button type="button" class="tab-button" [class.active]="activeTab === 3" (click)="setActiveTab(3)">
+        <mat-icon>hub</mat-icon>
+        <span>4. Éléments Liés</span>
+        <span class="tab-badge" *ngIf="linkedProcesses.length + linkedProcedures.length > 0">
+          {{ linkedProcesses.length + linkedProcedures.length }}
+        </span>
+      </button>
     </div>
 
     <!-- TAB 0: GENERAL INFO & CONTEXT -->
@@ -100,11 +107,11 @@
             <div class="info-item">
               <label>Processus associés</label>
               <div class="links-list" *ngIf="linkedProcesses.length > 0">
-                <div class="link-display" *ngFor="let p of linkedProcesses">
+                <a [routerLink]="['/processes', p.id]" class="link-display" *ngFor="let p of linkedProcesses" style="text-decoration: none; cursor: pointer;">
                   <mat-icon>hub</mat-icon>
                   <strong>{{ p.code }}</strong>
-                  <span>{{ p.name }}</span>
-                </div>
+                  <span style="color: var(--text-secondary);">{{ p.name }}</span>
+                </a>
               </div>
               <p *ngIf="linkedProcesses.length === 0" class="text-muted italic">{{ 'detail.document.noProcessLinked' | t }}</p>
             </div>
@@ -112,11 +119,11 @@
             <div class="info-item">
               <label>Procédures liées</label>
               <div class="links-list" *ngIf="linkedProcedures.length > 0">
-                <div class="link-display" *ngFor="let proc of linkedProcedures">
+                <a [routerLink]="['/procedures', proc.id]" class="link-display" *ngFor="let proc of linkedProcedures" style="text-decoration: none; cursor: pointer;">
                   <mat-icon>assignment</mat-icon>
                   <strong>{{ proc.code }}</strong>
-                  <span>{{ proc.title }}</span>
-                </div>
+                  <span style="color: var(--text-secondary);">{{ proc.title }}</span>
+                </a>
               </div>
               <p *ngIf="linkedProcedures.length === 0" class="text-muted italic">{{ 'detail.document.noProcedureLinked' | t }}</p>
             </div>
@@ -407,6 +414,69 @@
           </div>
         </div>
       </mat-card>
+    </div>
+
+    <!-- TAB 3: LINKED ELEMENTS -->
+    <div class="tab-content-container" *ngIf="activeTab === 3">
+      <div class="linked-elements-grid">
+        
+        <!-- Processes Section -->
+        <mat-card class="info-card">
+          <div class="card-header-clean">
+            <h2>Processus associés ({{ linkedProcesses.length }})</h2>
+            <mat-icon>hub</mat-icon>
+          </div>
+          <div class="linked-items-list" *ngIf="linkedProcesses.length > 0">
+            <div class="linked-item-card" *ngFor="let p of linkedProcesses" [routerLink]="['/processes', p.id]">
+              <div class="item-icon-wrapper process-icon">
+                <mat-icon>hub</mat-icon>
+              </div>
+              <div class="item-details">
+                <span class="item-code">{{ p.code }}</span>
+                <h4 class="item-name">{{ p.name }}</h4>
+              </div>
+              <div class="item-actions">
+                <button mat-icon-button color="primary" matTooltip="Voir le processus">
+                  <mat-icon style="color: var(--xl-green-mid);">visibility</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="empty-state-mid" *ngIf="linkedProcesses.length === 0" style="min-height: 150px;">
+            <mat-icon>hub</mat-icon>
+            <p>Aucun processus associé à ce document.</p>
+          </div>
+        </mat-card>
+
+        <!-- Procedures Section -->
+        <mat-card class="info-card">
+          <div class="card-header-clean">
+            <h2>Procédures liées ({{ linkedProcedures.length }})</h2>
+            <mat-icon>assignment</mat-icon>
+          </div>
+          <div class="linked-items-list" *ngIf="linkedProcedures.length > 0">
+            <div class="linked-item-card" *ngFor="let proc of linkedProcedures" [routerLink]="['/procedures', proc.id]">
+              <div class="item-icon-wrapper procedure-icon">
+                <mat-icon>assignment</mat-icon>
+              </div>
+              <div class="item-details">
+                <span class="item-code">{{ proc.code }}</span>
+                <h4 class="item-name">{{ proc.title }}</h4>
+              </div>
+              <div class="item-actions">
+                <button mat-icon-button color="primary" matTooltip="Voir la procédure">
+                  <mat-icon style="color: var(--xl-green-mid);">visibility</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="empty-state-mid" *ngIf="linkedProcedures.length === 0" style="min-height: 150px;">
+            <mat-icon>assignment</mat-icon>
+            <p>Aucune procédure liée à ce document.</p>
+          </div>
+        </mat-card>
+
+      </div>
     </div>
   </ng-container>
 </section>

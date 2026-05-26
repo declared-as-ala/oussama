@@ -22,7 +22,8 @@ import {
   PROCESS_STATUS_OPTIONS,
   PROCESS_TYPE_OPTIONS,
   ProcessDetailsResponse,
-  ProcessType
+  ProcessType,
+  ProcessActorResponse
 } from '../models/process.models';
 import { ProcessService } from '../services/process.service';
 import { PagedProcedureResponse, ProcedureListItemResponse } from '../../procedures/models/procedure.models';
@@ -31,6 +32,8 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { ProcessActorsComponent } from '../process-actors/process-actors.component';
 import { ProcessHistoryComponent } from '../process-history/process-history.component';
 import { ProcessDocumentsComponent } from '../process-documents/process-documents.component';
+import { IndicatorService } from '../../indicators/services/indicator.service';
+import { IndicatorListItemResponse } from '../../indicators/models/indicator.models';
 
 @Component({
   selector: 'app-process-details',
@@ -63,6 +66,7 @@ export class ProcessDetailsComponent implements OnInit {
   details: ProcessDetailsResponse | null = null;
   users: UserResponse[] = [];
   procedures: ProcedureListItemResponse[] = [];
+  indicators: IndicatorListItemResponse[] = [];
 
   // Procedure Popper state
   allAvailableProcedures: ProcedureListItemResponse[] = [];
@@ -75,6 +79,7 @@ export class ProcessDetailsComponent implements OnInit {
     private readonly router: Router,
     private readonly processService: ProcessService,
     private readonly procedureService: ProcedureService,
+    private readonly indicatorService: IndicatorService,
     private readonly userService: UserService,
     private readonly authService: AuthService,
     private readonly notificationService: NotificationService,
@@ -110,7 +115,7 @@ export class ProcessDetailsComponent implements OnInit {
     }
 
     return this.details.actors.some(
-      actor => actor.userId === currentUserId &&
+      (actor: ProcessActorResponse) => actor.userId === currentUserId &&
         (actor.actorType === 'PILOTE' || actor.actorType === 'COPILOTE')
     );
   }
@@ -127,12 +132,14 @@ export class ProcessDetailsComponent implements OnInit {
     forkJoin({
       details: this.processService.getProcessById(this.processId),
       users: this.userService.getAll(1, 300),
-      procedures: this.procedureService.getProceduresByProcess(this.processId)
+      procedures: this.procedureService.getProceduresByProcess(this.processId),
+      indicators: this.indicatorService.getIndicatorsByProcess(this.processId)
     }).subscribe({
-      next: ({ details, users, procedures }) => {
+      next: ({ details, users, procedures, indicators }) => {
         this.details = details;
         this.users = users.items;
         this.procedures = procedures;
+        this.indicators = indicators;
         this.loading = false;
       },
       error: () => {
@@ -283,14 +290,14 @@ export class ProcessDetailsComponent implements OnInit {
   }
 
   getTypeLabel(type: ProcessType): string {
-    return PROCESS_TYPE_OPTIONS.find(option => option.value === type)?.label ?? type;
+    return PROCESS_TYPE_OPTIONS.find((option: any) => option.value === type)?.label ?? type;
   }
 
   getStatusLabel(status: string): string {
-    return PROCESS_STATUS_OPTIONS.find(option => option.value === status)?.label ?? status;
+    return PROCESS_STATUS_OPTIONS.find((option: any) => option.value === status)?.label ?? status;
   }
 
   getActorTypeLabel(actorType: string): string {
-    return PROCESS_ACTOR_TYPE_OPTIONS.find(option => option.value === actorType)?.label ?? actorType;
+    return PROCESS_ACTOR_TYPE_OPTIONS.find((option: any) => option.value === actorType)?.label ?? actorType;
   }
 }

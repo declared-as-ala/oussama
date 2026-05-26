@@ -67,6 +67,24 @@ export class IndicatorFormComponent implements OnInit {
   isEdit = false;
   indicatorId: number | null = null;
 
+  activeTab = 0;
+
+  setActiveTab(index: number): void {
+    this.activeTab = index;
+  }
+
+  nextTab(): void {
+    if (this.activeTab < 1) {
+      this.activeTab++;
+    }
+  }
+
+  prevTab(): void {
+    if (this.activeTab > 0) {
+      this.activeTab--;
+    }
+  }
+
   processes: ProcessListItemResponse[] = [];
   users: UserResponse[] = [];
 
@@ -85,6 +103,17 @@ export class IndicatorFormComponent implements OnInit {
     this.indicatorId = idParam ? Number(idParam) : null;
     this.isEdit = this.indicatorId !== null && !Number.isNaN(this.indicatorId);
     this.loadData();
+
+    // Listen to processId changes to auto-select pilotUserId as responsibleUserId
+    this.form.get('processId')?.valueChanges.subscribe(val => {
+      if (val) {
+        const processId = Number(val);
+        const selectedProcess = this.processes.find(p => p.id === processId);
+        if (selectedProcess && selectedProcess.pilotUserId) {
+          this.form.patchValue({ responsibleUserId: selectedProcess.pilotUserId });
+        }
+      }
+    });
   }
 
   get title(): string {
@@ -172,6 +201,14 @@ export class IndicatorFormComponent implements OnInit {
         this.processes = processes.items;
         this.users = users.items.filter(user => user.isActive);
         this.loading = false;
+
+        const qProcessId = this.route.snapshot.queryParamMap.get('processId');
+        if (qProcessId) {
+          const parsed = Number(qProcessId);
+          if (!Number.isNaN(parsed)) {
+            this.form.patchValue({ processId: parsed });
+          }
+        }
       },
       error: () => {
         this.loading = false;
@@ -205,7 +242,7 @@ export class IndicatorFormComponent implements OnInit {
       measurementFrequency: indicator.measurementFrequency,
       responsibleUserId: indicator.responsibleUserId,
       status: indicator.status
-    });
+    }, { emitEvent: false });
   }
 
   private buildCreatePayload(): CreateIndicatorRequest {

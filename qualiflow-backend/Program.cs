@@ -13,10 +13,11 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using RabbitMQ.Client;
 
-// Load environment variables from .env file before builder
-DotNetEnv.Env.Load();
+// Load environment variables from .env files before builder.
+LoadEnvironmentFiles();
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddInMemoryCollection(BuildLegacyFirebaseConfiguration());
 
 // Use console logging to avoid Windows EventLog permission issues in local dev.
 builder.Logging.ClearProviders();
@@ -34,7 +35,7 @@ var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSetting
 // Configure Email settings
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 builder.Services.Configure<RabbitMqSettings>(builder.Configuration.GetSection("RabbitMqSettings"));
-builder.Services.Configure<OneSignalSettings>(builder.Configuration.GetSection("OneSignal"));
+builder.Services.Configure<FirebaseSettings>(builder.Configuration.GetSection("Firebase"));
 builder.Services.Configure<OpenRouterSettings>(builder.Configuration.GetSection("OpenRouter"));
 builder.Services.Configure<SupportAssistantSettings>(builder.Configuration.GetSection("SupportAssistant"));
 builder.Services.Configure<SubscriptionMonitorSettings>(builder.Configuration.GetSection("SubscriptionMonitor"));
@@ -141,6 +142,7 @@ builder.Services.AddScoped<IIndicatorRepository, IndicatorRepository>();
 builder.Services.AddScoped<IIndicatorValueRepository, IndicatorValueRepository>();
 builder.Services.AddScoped<IIndicatorAlertRepository, IndicatorAlertRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<IUserDeviceRepository, UserDeviceRepository>();
 builder.Services.AddScoped<IWebPushSubscriptionRepository, WebPushSubscriptionRepository>();
 builder.Services.AddScoped<IDocumentNotificationRepository, DocumentNotificationRepository>();
 builder.Services.AddScoped<INotificationRuleRepository, NotificationRuleRepository>();
@@ -170,6 +172,7 @@ builder.Services.AddScoped<ICorrectiveActionService, CorrectiveActionService>();
 builder.Services.AddScoped<IIndicatorService, IndicatorService>();
 builder.Services.AddScoped<IActionLogger, ActionLogger>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IDeviceTokenService, DeviceTokenService>();
 
 builder.Services.AddScoped<INotificationRecipientService, NotificationRecipientService>();
 builder.Services.AddScoped<INotificationEventPublisher, NotificationEventPublisher>();
@@ -181,7 +184,6 @@ builder.Services.AddScoped<INotificationDispatcher, NotificationDispatcher>();
 builder.Services.AddScoped<IPushNotificationService, PushNotificationService>();
 builder.Services.AddScoped<ISupportService, SupportService>();
 builder.Services.AddScoped<IPublicService, PublicService>();
-builder.Services.AddHttpClient<IOneSignalService, OneSignalService>();
 builder.Services.AddHttpClient<IOpenRouterService, OpenRouterService>((sp, client) =>
 {
     var settings = sp.GetRequiredService<IOptions<OpenRouterSettings>>().Value;
@@ -293,6 +295,52 @@ app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.Run();
+
+static void LoadEnvironmentFiles()
+{
+    var visitedDirectories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    var startDirectories = new[]
+    {
+        Directory.GetCurrentDirectory(),
+        AppContext.BaseDirectory
+    };
+
+    foreach (var startDirectory in startDirectories)
+    {
+        var directory = new DirectoryInfo(startDirectory);
+        while (directory != null && visitedDirectories.Add(directory.FullName))
+        {
+            var envPath = Path.Combine(directory.FullName, ".env");
+            if (File.Exists(envPath))
+            {
+                DotNetEnv.Env.Load(envPath);
+            }
+
+            directory = directory.Parent;
+        }
+    }
+}
+
+static Dictionary<string, string?> BuildLegacyFirebaseConfiguration()
+{
+    var configuration = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+
+    AddIfPresent("FIREBASE_ENABLED", "Firebase:Enabled");
+    AddIfPresent("FIREBASE_SERVICE_ACCOUNT_PATH", "Firebase:ServiceAccountPath");
+    AddIfPresent("FIREBASE_SERVICE_ACCOUNT_JSON", "Firebase:ServiceAccountJson");
+    AddIfPresent("FIREBASE_PROJECT_ID", "Firebase:ProjectId");
+
+    return configuration;
+
+    void AddIfPresent(string environmentVariableName, string configurationKey)
+    {
+        var value = Environment.GetEnvironmentVariable(environmentVariableName);
+        if (value != null)
+        {
+            configuration[configurationKey] = value;
+        }
+    }
+}
 
 static bool IsAllowedFrontendOrigin(
     string? origin,

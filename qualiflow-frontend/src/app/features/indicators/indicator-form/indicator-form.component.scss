@@ -205,3 +205,119 @@
     justify-content: center;
     z-index: 10;
 }
+
+/* ── FORM TABS SYSTEM ── */
+.form-tabs-container {
+  display: flex;
+  justify-content: flex-start;
+  gap: 12px;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  border-radius: 14px;
+  padding: 8px 16px;
+  margin: 0 auto 24px;
+  max-width: 800px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  flex-wrap: wrap;
+
+  .tab-button {
+    background: transparent;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-muted, #78909c);
+    cursor: pointer;
+    border-radius: 10px;
+    transition: all 0.2s ease-in-out;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: #94a3b8;
+      transition: color 0.2s;
+    }
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.02);
+      color: #111;
+    }
+
+    &.active {
+      background: rgba(16, 185, 129, 0.08);
+      color: var(--xl-green-mid, #10b981);
+
+      mat-icon {
+        color: var(--xl-green-mid, #10b981);
+      }
+    }
+  }
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    padding: 8px;
+    
+    .tab-button {
+      width: 100%;
+      justify-content: flex-start;
+    }
+  }
+}
+
+/* ── FORM ACTIONS BAR ── */
+.form-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  margin-top: 12px;
+
+  .spacer {
+    flex-grow: 1;
+  }
+
+  button {
+    height: 42px;
+    padding: 0 20px;
+    border-radius: var(--radius);
+    font-weight: 700;
+    font-size: 13.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+
+    &.btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+
+      &:hover {
+        background: var(--bg-raised);
+        color: var(--text-primary);
+      }
+    }
+  }
+
+  .submit-btn {
+    background: var(--xl-green-mid);
+    color: white;
+
+    &:hover:not(:disabled) {
+      background: var(--xl-green);
+      box-shadow: 0 4px 12px rgba(0, 135, 90, 0.2);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}

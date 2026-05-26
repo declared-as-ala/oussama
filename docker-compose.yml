@@ -104,12 +104,11 @@ services:
       OpenRouter__Temperature: ${OPENROUTER_TEMPERATURE:-0.2}
       OpenRouter__MaxOutputTokens: ${OPENROUTER_MAX_OUTPUT_TOKENS:-1024}
 
-      # OneSignal push (optional)
-      OneSignal__Enabled: ${ONESIGNAL_ENABLED:-false}
-      OneSignal__AppId: ${ONESIGNAL_APP_ID:-}
-      OneSignal__RestApiKey: ${ONESIGNAL_API_KEY:-}
-      OneSignal__ApiBaseUrl: ${ONESIGNAL_API_BASE_URL:-https://api.onesignal.com}
-      OneSignal__DefaultLanguage: ${ONESIGNAL_DEFAULT_LANGUAGE:-fr}
+      # Firebase Cloud Messaging push
+      Firebase__Enabled: ${FIREBASE_ENABLED:-false}
+      Firebase__ServiceAccountPath: ${FIREBASE_SERVICE_ACCOUNT_PATH:-firebase-admin.json}
+      Firebase__ServiceAccountJson: ${FIREBASE_SERVICE_ACCOUNT_JSON:-}
+      Firebase__ProjectId: ${FIREBASE_PROJECT_ID:-}
 
       # Notifications / subscription monitor
       NotificationSettings__RealtimeEnabled: ${NOTIFICATION_REALTIME_ENABLED:-true}

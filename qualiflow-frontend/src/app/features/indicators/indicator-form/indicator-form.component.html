@@ -17,8 +17,20 @@
             <mat-spinner diameter="40"></mat-spinner>
         </div>
 
+        <!-- WIZARD STEPPERS/TABS -->
+        <div class="form-tabs-container" *ngIf="!loading">
+            <button type="button" class="tab-button" [class.active]="activeTab === 0" (click)="setActiveTab(0)">
+                <mat-icon>info_outline</mat-icon>
+                <span>1. Identification & Contexte</span>
+            </button>
+            <button type="button" class="tab-button" [class.active]="activeTab === 1" (click)="setActiveTab(1)">
+                <mat-icon>trending_up</mat-icon>
+                <span>2. Objectifs & Suivi</span>
+            </button>
+        </div>
+
         <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="submit()" class="flat-form">
-            <div class="form-section">
+            <div class="form-section" *ngIf="activeTab === 0">
                 <div class="form-section-title">{{ 'form.indicator.generalInfo' | t }}</div>
                 <div class="form-grid">
                     <div class="form-group">
@@ -49,7 +61,7 @@
                 </div>
             </div>
 
-            <div class="form-section">
+            <div class="form-section" *ngIf="activeTab === 1">
                 <div class="form-section-title">{{ 'form.indicator.pilotObjectives' | t }}</div>
                 <div class="form-grid">
                     <div class="form-group">
@@ -87,11 +99,20 @@
                 </div>
             </div>
 
-            <div class="sticky-footer">
-                <button type="button" class="btn btn-ghost" (click)="goBack()" [disabled]="saving">{{ 'common.cancel' | t }}</button>
-                <button type="submit" class="btn btn-primary" [disabled]="saving || form.invalid">
-                    <mat-spinner radius="10" *ngIf="saving" diameter="18"></mat-spinner>
-                    {{ isEdit ? ('form.document.saveChanges' | t) : ('form.indicator.create' | t) }}
+            <div class="form-actions-bar">
+                <button type="button" class="btn btn-ghost" (click)="goBack()" [disabled]="saving" *ngIf="activeTab === 0">{{ 'common.cancel' | t }}</button>
+                <button type="button" class="btn btn-ghost" (click)="prevTab()" [disabled]="saving" *ngIf="activeTab > 0">
+                    <mat-icon>navigate_before</mat-icon> Précédent
+                </button>
+                <div class="spacer"></div>
+                <button type="button" class="btn btn-primary submit-btn" (click)="nextTab()" *ngIf="activeTab < 1">
+                    <span>Suivant</span>
+                    <mat-icon>navigate_next</mat-icon>
+                </button>
+                <button type="submit" class="btn btn-primary submit-btn" [disabled]="saving || form.invalid" *ngIf="activeTab === 1">
+                    <mat-spinner *ngIf="saving" diameter="18" style="margin-right: 8px;"></mat-spinner>
+                    <mat-icon *ngIf="!saving">check_circle</mat-icon>
+                    <span>{{ isEdit ? ('form.document.saveChanges' | t) : ('form.indicator.create' | t) }}</span>
                 </button>
             </div>
         </form>

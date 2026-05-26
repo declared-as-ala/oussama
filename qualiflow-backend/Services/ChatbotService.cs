@@ -21,7 +21,7 @@ namespace DocApi.Services
         private const string ProjectAndIsoKnowledge = """
             BASE DE CONNAISSANCES QUALIFLOW ET ISO:
             - QualiFlow est une plateforme de management qualite et GED pour piloter les documents, processus, procedures, non-conformites, actions correctives, indicateurs, notifications, utilisateurs et organisations.
-            - Le backend utilise ASP.NET Core Web API (.NET 8), PostgreSQL, Dapper/Npgsql, JWT, SignalR, RabbitMQ, Swagger, SMTP, OneSignal et Groq.
+            - Le backend utilise ASP.NET Core Web API (.NET 8), PostgreSQL, Dapper/Npgsql, JWT, SignalR, RabbitMQ, Swagger, SMTP, Firebase Cloud Messaging et Groq.
             - Le frontend web utilise Angular 17, Angular Material et TypeScript. Le mobile utilise Ionic/Angular et Capacitor.
             - Roles principaux: SUPER_ADMIN, ADMIN_ORG, RESPONSABLE_QUALITE, UTILISATEUR.
             - Workflow documentaire typique: creation du document, ajout d'une version, statut EN_REVISION, verification/approbation, publication, consultation, archivage ou gestion de peremption.

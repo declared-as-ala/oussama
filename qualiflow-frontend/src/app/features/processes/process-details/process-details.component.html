@@ -54,6 +54,10 @@
         <mat-icon>description</mat-icon>
         <span>4. Procédures <span *ngIf="procedures.length > 0" class="tab-badge">{{ procedures.length }}</span></span>
       </button>
+      <button type="button" class="tab-button" [class.active]="activeTab === 4" (click)="setActiveTab(4)">
+        <mat-icon>trending_up</mat-icon>
+        <span>5. Indicateurs KPI <span *ngIf="indicators.length > 0" class="tab-badge">{{ indicators.length }}</span></span>
+      </button>
     </div>
 
     <div class="details-body" *ngIf="activeTab === 0">
@@ -274,6 +278,109 @@
                   <button *ngIf="canWrite" mat-icon-button color="warn" (click)="removeProcedureLink(proc.id)" matTooltip="Délier">
                     <mat-icon>link_off</mat-icon>
                   </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- INDICATORS KPI TAB -->
+    <div class="tab-content-container procedures-tab" *ngIf="activeTab === 4">
+
+      <!-- HEADER BAR -->
+      <div class="proc-tab-header">
+        <div class="proc-tab-title">
+          <div class="proc-tab-icon" style="background: var(--xl-green-xlight) !important;">
+            <mat-icon style="color: var(--xl-green-mid) !important;">trending_up</mat-icon>
+          </div>
+          <div>
+            <h2>Indicateurs KPI du processus</h2>
+            <p>{{ indicators.length }} indicateur{{ indicators.length > 1 ? 's' : '' }} KPI associé{{ indicators.length > 1 ? 's' : '' }}</p>
+          </div>
+        </div>
+        <div *ngIf="canWrite" class="proc-tab-actions">
+          <!-- Créer KPI button -->
+          <a [routerLink]="['/indicators/new']" [queryParams]="{ processId: processId }" mat-flat-button color="primary" class="proc-tab-submit-btn">
+            <mat-icon>add</mat-icon>
+            <span>Créer un Indicateur</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- EMPTY STATE -->
+      <div class="proc-tab-empty" *ngIf="indicators.length === 0">
+        <mat-icon style="color: #cbd5e1;">trending_up</mat-icon>
+        <h3>Aucun indicateur KPI lié</h3>
+        <p>Ce processus n'a pas encore d'indicateurs KPI associés.<br *ngIf="canWrite"> <span *ngIf="canWrite">Cliquez sur le bouton ci-dessus pour en créer un.</span></p>
+      </div>
+
+      <!-- INDICATORS LIST TABLE -->
+      <div class="table-wrap" *ngIf="indicators.length > 0" style="background: white; border-radius: 12px; border: 1px solid rgba(0,0,0,0.05); overflow-hidden: auto;">
+        <table class="details-word-table">
+          <thead>
+            <tr>
+              <th>Indicateur KPI</th>
+              <th>Cible</th>
+              <th>Dernière Valeur</th>
+              <th>Responsable</th>
+              <th style="width: 140px;">Statut</th>
+              <th style="width: 100px; text-align: center;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let ind of indicators">
+              <td>
+                <div class="pilote-cell">
+                  <div class="pilote-avatar" [style.background]="ind.isInAlert ? 'linear-gradient(135deg, #ef5350 0%, #c62828 100%)' : 'linear-gradient(135deg, var(--xl-green-mid) 0%, #1b5e20 100%)'">
+                    {{ ind.code.charAt(0).toUpperCase() }}
+                  </div>
+                  <div class="proc-text-container">
+                    <span class="proc-code-cell" [style.color]="ind.isInAlert ? '#c62828' : 'var(--xl-green-mid)'" [style.background]="ind.isInAlert ? 'rgba(239, 83, 80, 0.1)' : 'var(--xl-green-xlight)'" style="border: 1px solid rgba(0,0,0,0.05); border-radius: 6px; font-size: 11px; font-weight: 800; padding: 2px 8px; text-transform: uppercase; margin-right: 8px;">{{ ind.code }}</span>
+                    <span class="proc-title-cell" style="font-weight: 600; color: #222;">{{ ind.name }}</span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span style="font-weight: 700; color: #1e293b;">
+                  {{ ind.targetValue }}
+                  <span *ngIf="ind.unit" class="muted" style="font-size: 12px; color: #94a3b8; font-weight: 500; margin-left: 2px;">{{ ind.unit }}</span>
+                </span>
+              </td>
+              <td>
+                <span *ngIf="ind.latestValue !== null && ind.latestValue !== undefined" [style.color]="ind.isInAlert ? '#ef5350' : '#2e7d32'" style="font-weight: 700;">
+                  {{ ind.latestValue }}
+                  <span *ngIf="ind.unit" style="font-size: 12px; font-weight: 500; margin-left: 2px;">{{ ind.unit }}</span>
+                  <span *ngIf="ind.isInAlert" matTooltip="Seuil d'alerte dépassé !" style="color: #ef5350; margin-left: 6px; cursor: pointer; vertical-align: middle; display: inline-block;">
+                    <mat-icon style="font-size: 16px; width: 16px; height: 16px; margin: 0; vertical-align: middle;">warning</mat-icon>
+                  </span>
+                </span>
+                <span *ngIf="ind.latestValue === null || ind.latestValue === undefined" class="muted" style="color: #94a3b8; font-style: italic; font-size: 13px;">
+                  Aucune mesure
+                </span>
+              </td>
+              <td>
+                <span *ngIf="ind.responsibleFullName" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 500; color: #546e7a;">
+                  <mat-icon style="font-size: 16px; width: 16px; height: 16px; color: #94a3b8; margin: 0; vertical-align: middle;">person</mat-icon>
+                  {{ ind.responsibleFullName }}
+                </span>
+                <span *ngIf="!ind.responsibleFullName" class="muted" style="color: #94a3b8; font-style: italic;">
+                  Non assigné
+                </span>
+              </td>
+              <td>
+                <span class="tag conforme" *ngIf="ind.status === 'ACTIF'">Actif</span>
+                <span class="tag perime" *ngIf="ind.status !== 'ACTIF'">Inactif</span>
+              </td>
+              <td style="text-align: center;">
+                <div style="display: inline-flex; gap: 4px; justify-content: center; align-items: center;">
+                  <a [routerLink]="['/indicators', ind.id]" mat-icon-button color="primary" matTooltip="Voir le détail" style="color: var(--xl-green-mid) !important;">
+                    <mat-icon>visibility</mat-icon>
+                  </a>
+                  <a *ngIf="canWrite" [routerLink]="['/indicators', ind.id, 'edit']" mat-icon-button color="primary" matTooltip="Modifier" style="color: #475569;">
+                    <mat-icon>edit</mat-icon>
+                  </a>
                 </div>
               </td>
             </tr>

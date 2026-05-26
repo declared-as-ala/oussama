@@ -20,7 +20,7 @@ namespace DocApi.Controllers
     public class NotificationsController : ControllerBase
     {
         private readonly INotificationService _notificationService;
-        private readonly IOneSignalService _oneSignalService;
+        private readonly IPushNotificationService _pushNotificationService;
         private readonly INotificationRepository _notificationRepository;
         private readonly INotificationPreferenceRepository _notificationPreferenceRepository;
 
@@ -37,12 +37,12 @@ namespace DocApi.Controllers
 
         public NotificationsController(
             INotificationService notificationService,
-            IOneSignalService oneSignalService,
+            IPushNotificationService pushNotificationService,
             INotificationRepository notificationRepository,
             INotificationPreferenceRepository notificationPreferenceRepository)
         {
             _notificationService = notificationService;
-            _oneSignalService = oneSignalService;
+            _pushNotificationService = pushNotificationService;
             _notificationRepository = notificationRepository;
             _notificationPreferenceRepository = notificationPreferenceRepository;
         }
@@ -381,7 +381,7 @@ namespace DocApi.Controllers
 
         [HttpPost("send-test")]
         [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE")]
-        public async Task<ActionResult<object>> SendTest([FromBody] SendOneSignalNotificationRequest request)
+        public async Task<ActionResult<object>> SendTest([FromBody] SendPushNotificationRequest request)
         {
             try
             {
@@ -394,102 +394,96 @@ namespace DocApi.Controllers
                     ? (request.DocumentId.HasValue ? $"/documents/{request.DocumentId.Value}" : "/notifications")
                     : request.RedirectUrl.Trim();
 
-                var data = new Dictionary<string, string>
+                var userIds = new List<int>();
+                if (request.UserId.HasValue && request.UserId.Value > 0)
                 {
-                    ["redirectUrl"] = redirectUrl,
-                    ["type"] = string.IsNullOrWhiteSpace(request.Type) ? "ALERT" : request.Type.Trim().ToUpperInvariant(),
-                    ["documentId"] = request.DocumentId?.ToString() ?? string.Empty
-                };
+                    userIds.Add(request.UserId.Value);
+                }
 
-                if (!string.IsNullOrWhiteSpace(request.ExternalId) || (request.ExternalIds?.Count ?? 0) > 0)
+                if (request.UserIds != null && request.UserIds.Count > 0)
                 {
-                    var externalIds = new List<string>();
-                    if (!string.IsNullOrWhiteSpace(request.ExternalId))
-                    {
-                        externalIds.Add(request.ExternalId.Trim());
-                    }
+                    userIds.AddRange(request.UserIds.Where(id => id > 0));
+                }
 
-                    if (request.ExternalIds != null && request.ExternalIds.Count > 0)
-                    {
-                        externalIds.AddRange(request.ExternalIds);
-                    }
+                if (!string.IsNullOrWhiteSpace(request.ExternalId)
+                    && int.TryParse(request.ExternalId, out var legacyUserId)
+                    && legacyUserId > 0)
+                {
+                    userIds.Add(legacyUserId);
+                }
 
-                    var sendResult = await _oneSignalService.SendToExternalIdsAsync(
-                        externalIds,
-                        request.Title.Trim(),
-                        request.Message.Trim(),
-                        data);
-
-                    if (!sendResult.IsSuccess)
-                    {
-                        return BadRequest(new { message = sendResult.Error ?? "Echec envoi OneSignal." });
-                    }
-
-                    foreach (var externalId in externalIds)
+                if (request.ExternalIds != null && request.ExternalIds.Count > 0)
+                {
+                    foreach (var externalId in request.ExternalIds)
                     {
                         if (!int.TryParse(externalId, out var userId) || userId <= 0)
                         {
                             continue;
                         }
 
-                        await _notificationRepository.CreateAsync(new Notification
-                        {
-                            OrganizationId = request.OrganizationId,
-                            UserId = userId,
-                            SenderId = GetUserContext().UserId,
-                            Type = string.IsNullOrWhiteSpace(request.Type) ? "ALERT" : request.Type.Trim().ToUpperInvariant(),
-                            Category = NotificationConstants.CategoryInfo,
-                            Title = request.Title.Trim(),
-                            Message = request.Message.Trim(),
-                            Priority = NotificationConstants.PriorityMedium,
-                            IsRead = false,
-                            IsPushSent = true,
-                            IsArchived = false,
-                            Channel = "PUSH",
-                            ExternalProviderId = sendResult.NotificationId,
-                            DocumentId = request.DocumentId,
-                            ActionUrl = redirectUrl,
-                            RedirectUrl = redirectUrl,
-                            CreatedAt = DateTime.UtcNow
-                        });
+                        userIds.Add(userId);
                     }
+                }
 
-                    return Ok(new
+                var distinctUserIds = userIds.Distinct().ToArray();
+                if (distinctUserIds.Length == 0)
+                {
+                    return BadRequest(new { message = "Au moins un UserId est obligatoire pour envoyer un test FCM." });
+                }
+
+                var sender = GetUserContext();
+                var sentCount = 0;
+                var providerIds = new List<string>();
+
+                foreach (var userId in distinctUserIds)
+                {
+                    var notification = new Notification
                     {
-                        success = true,
-                        provider = "OneSignal",
-                        externalProviderId = sendResult.NotificationId
-                    });
-                }
+                        OrganizationId = request.OrganizationId,
+                        UserId = userId,
+                        SenderId = sender.UserId,
+                        Type = string.IsNullOrWhiteSpace(request.Type) ? "ALERT" : request.Type.Trim().ToUpperInvariant(),
+                        Category = NotificationConstants.CategoryInfo,
+                        Title = request.Title.Trim(),
+                        Message = request.Message.Trim(),
+                        Priority = NotificationConstants.PriorityMedium,
+                        IsRead = false,
+                        IsPushSent = false,
+                        IsArchived = false,
+                        DocumentId = request.DocumentId,
+                        ActionUrl = redirectUrl,
+                        RedirectUrl = redirectUrl,
+                        CreatedAt = DateTime.UtcNow
+                    };
 
-                var tags = new Dictionary<string, string>();
-                if (!string.IsNullOrWhiteSpace(request.Role))
-                {
-                    tags["role"] = request.Role.Trim();
-                }
+                    notification.Id = await _notificationRepository.CreateAsync(notification);
+                    var pushDispatch = await _pushNotificationService.SendAsync(notification);
 
-                if (request.OrganizationId.HasValue)
-                {
-                    tags["organizationId"] = request.OrganizationId.Value.ToString();
-                }
+                    if (pushDispatch.IsSent)
+                    {
+                        sentCount++;
+                        notification.IsPushSent = true;
+                        notification.Channel = pushDispatch.Channel;
+                        notification.ExternalProviderId = pushDispatch.ExternalProviderId;
+                        await _notificationRepository.MarkPushSentAsync(
+                            notification.Id,
+                            pushDispatch.ExternalProviderId,
+                            pushDispatch.Channel);
 
-                var tagsResult = await _oneSignalService.SendByTagsAsync(
-                    tags,
-                    request.Title.Trim(),
-                    request.Message.Trim(),
-                    data);
-
-                if (!tagsResult.IsSuccess)
-                {
-                    return BadRequest(new { message = tagsResult.Error ?? "Echec envoi OneSignal." });
+                        if (!string.IsNullOrWhiteSpace(pushDispatch.ExternalProviderId))
+                        {
+                            providerIds.Add(pushDispatch.ExternalProviderId);
+                        }
+                    }
                 }
 
                 return Ok(new
                 {
-                    success = true,
-                    provider = "OneSignal",
-                    externalProviderId = tagsResult.NotificationId,
-                    tags
+                    success = sentCount > 0,
+                    provider = "FCM",
+                    sentCount,
+                    requestedUsers = distinctUserIds.Length,
+                    externalProviderIds = providerIds
                 });
             }
             catch (ServiceException ex)
