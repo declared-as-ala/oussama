@@ -12,9 +12,13 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using RabbitMQ.Client;
+using PdfSharpCore.Fonts;
 
 // Load environment variables from .env files before builder.
 LoadEnvironmentFiles();
+
+// Register the custom cross-platform font resolver for PDF generation
+GlobalFontSettings.FontResolver = new CustomFontResolver();
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddInMemoryCollection(BuildEnvironmentConfiguration());

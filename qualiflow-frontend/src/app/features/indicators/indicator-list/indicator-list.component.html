@@ -23,7 +23,10 @@
           {{ 'list.indicators.dashboard' | t }}
         </button>
 
-
+        <button *ngIf="canWrite" mat-flat-button class="btn-create" (click)="create()">
+          <mat-icon>add</mat-icon>
+          Nouveau KPI
+        </button>
       </div>
     </div>
 
@@ -83,7 +86,10 @@
         <mat-icon>inbox</mat-icon>
         <h3>{{ 'list.indicators.emptyTitle' | t }}</h3>
         <p>{{ 'list.indicators.emptyText' | t }}</p>
-
+        <button *ngIf="canWrite" mat-flat-button class="btn-create" (click)="create()" style="margin-top: 16px;">
+          <mat-icon>add</mat-icon>
+          Créer un indicateur
+        </button>
       </div>
 
       <div class="content-view-wrapper" *ngIf="items.length > 0">
