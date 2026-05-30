@@ -77,7 +77,37 @@ export class BrowserNotificationService {
     }));
   }
 
+  isSystemNotificationsEnabled(): boolean {
+    if (typeof localStorage === 'undefined') {
+      return true;
+    }
+    return localStorage.getItem('sys_notifications_enabled') !== 'false';
+  }
+
+  setSystemNotificationsEnabled(enabled: boolean): void {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('sys_notifications_enabled', String(enabled));
+    }
+  }
+
+  isSoundEnabled(): boolean {
+    if (typeof localStorage === 'undefined') {
+      return true;
+    }
+    return localStorage.getItem('notification_sound_enabled') !== 'false';
+  }
+
+  setSoundEnabled(enabled: boolean): void {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('notification_sound_enabled', String(enabled));
+    }
+  }
+
   async playNotificationSound(): Promise<void> {
+    if (!this.isSoundEnabled()) {
+      return;
+    }
+
     const now = Date.now();
     if (now - this.lastSoundAt < 600) {
       return;
@@ -115,6 +145,10 @@ export class BrowserNotificationService {
   }
 
   async showSystemNotification(payload: NotificationSignalRMessage): Promise<void> {
+    if (!this.isSystemNotificationsEnabled()) {
+      return;
+    }
+
     if (!('Notification' in window) || Notification.permission !== 'granted') {
       return;
     }
@@ -132,7 +166,8 @@ export class BrowserNotificationService {
         icon: '/assets/logo.png',
         badge: '/assets/logo.png',
         data,
-        tag: `qualityflow-${payload.id}`
+        tag: `qualityflow-${payload.id}`,
+        silent: true // Prevents double sound since we manually play notification.mp3
       });
       return;
     }
@@ -140,7 +175,8 @@ export class BrowserNotificationService {
     const browserNotification = new Notification(payload.title, {
       body: payload.message,
       icon: '/assets/logo.png',
-      data
+      data,
+      silent: true // Prevents double sound since we manually play notification.mp3
     });
 
     browserNotification.onclick = () => {
@@ -148,6 +184,32 @@ export class BrowserNotificationService {
       window.location.href = targetUrl;
       browserNotification.close();
     };
+  }
+
+  async testSystemNotificationAndSound(): Promise<NotificationPermission> {
+    const permission = await this.requestBrowserPermission();
+
+    if (this.isSoundEnabled()) {
+      void this.playNotificationSound();
+    }
+
+    if (permission === 'granted' && this.isSystemNotificationsEnabled()) {
+      const testMessage: NotificationSignalRMessage = {
+        id: 0,
+        title: 'QualiFlow - Test réussi !',
+        message: 'Vos notifications Windows et effets sonores sont maintenant activés et fonctionnent correctement.',
+        category: 'INFO',
+        type: 'SYSTEM_ALERT',
+        priority: 'MEDIUM',
+        isRead: false,
+        isArchived: false,
+        createdAt: new Date().toISOString(),
+        userId: 0
+      };
+      void this.showSystemNotification(testMessage);
+    }
+
+    return permission;
   }
 
   isDocumentHidden(): boolean {

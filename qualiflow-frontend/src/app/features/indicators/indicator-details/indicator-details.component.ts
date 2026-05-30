@@ -7,6 +7,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatTableModule } from '@angular/material/table';
+import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { AuthService } from '../../../core/services/auth.service';
@@ -17,13 +19,14 @@ import {
   IndicatorDetailsResponse,
   IndicatorStatus,
   INDICATOR_FREQUENCY_OPTIONS,
-  INDICATOR_STATUS_OPTIONS
+  INDICATOR_STATUS_OPTIONS,
+  IndicatorActionLogResponse
 } from '../models/indicator.models';
 import { IndicatorService } from '../services/indicator.service';
 import { IndicatorValuesComponent } from '../indicator-values/indicator-values.component';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 
-type IndicatorTab = 'overview' | 'chart' | 'values';
+type IndicatorTab = 'overview' | 'chart' | 'values' | 'logs';
 
 @Component({
   selector: 'app-indicator-details',
@@ -31,12 +34,14 @@ type IndicatorTab = 'overview' | 'chart' | 'values';
   imports: [
     CommonModule,
     RouterModule,
+    FormsModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
     MatDialogModule,
+    MatTableModule,
     IndicatorValuesComponent,
     TranslatePipe,
     NgApexchartsModule
@@ -53,6 +58,11 @@ export class IndicatorDetailsComponent implements OnInit {
   details: IndicatorDetailsResponse | null = null;
   chart: IndicatorChartResponse | null = null;
   activeTab: IndicatorTab = 'overview';
+  actionLogs: IndicatorActionLogResponse[] = [];
+  filteredActionLogs: IndicatorActionLogResponse[] = [];
+  selectedCategory: string = 'ALL';
+  searchText: string = '';
+  displayedActionLogColumns: string[] = ['action', 'user', 'date', 'comment', 'actions'];
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -75,8 +85,8 @@ export class IndicatorDetailsComponent implements OnInit {
 
     this.indicatorId = parsedId;
     const tabParam = (this.route.snapshot.queryParamMap.get('tab') || '').toLowerCase();
-    if (tabParam === 'chart' || tabParam === 'values') {
-      this.activeTab = tabParam;
+    if (tabParam === 'chart' || tabParam === 'values' || tabParam === 'logs') {
+      this.activeTab = tabParam as IndicatorTab;
     }
 
     this.loadData();
@@ -84,6 +94,14 @@ export class IndicatorDetailsComponent implements OnInit {
 
   get canWrite(): boolean {
     return this.authService.hasRole(['ADMIN_ORG', 'RESPONSABLE_QUALITE']);
+  }
+
+  get isResponsible(): boolean {
+    const user = this.authService.getCurrentUser();
+    if (!user || !this.details) {
+      return false;
+    }
+    return user.id === this.details.responsible.id;
   }
 
   get statusLabel(): string {
@@ -167,12 +185,128 @@ export class IndicatorDetailsComponent implements OnInit {
         this.details = details;
         this.chart = chart;
         this.updateChartOptions();
-        this.loading = false;
+        
+        if (this.canWrite || this.isResponsible) {
+          this.loadActionLogs();
+        } else {
+          this.loading = false;
+        }
       },
       error: () => {
         this.loading = false;
         this.notificationService.showError('Impossible de charger cet indicateur.');
         this.router.navigate(['/indicators']);
+      }
+    });
+  }
+
+  loadActionLogs(): void {
+    this.indicatorService.getIndicatorActionLogs(this.indicatorId).subscribe({
+      next: (logs) => {
+        this.actionLogs = logs || [];
+        this.applyFilters();
+        this.loading = false;
+      },
+      error: () => {
+        this.loading = false;
+        this.notificationService.showError("Impossible de charger le journal d'actions.");
+      }
+    });
+  }
+
+  applyFilters(): void {
+    let filtered = [...this.actionLogs];
+
+    if (this.selectedCategory !== 'ALL') {
+      filtered = filtered.filter(log => {
+        const type = log.actionType.toUpperCase();
+        if (this.selectedCategory === 'PILOTAGE') {
+          return type.includes('RESPONSIBLE') || type.includes('PILOT');
+        }
+        if (this.selectedCategory === 'MODIFICATION') {
+          return type.includes('UPDATED') || type.includes('VALUE');
+        }
+        if (this.selectedCategory === 'CREATION') {
+          return type.includes('CREATED');
+        }
+        if (this.selectedCategory === 'STATUS') {
+          return type.includes('STATUS') || type.includes('TOGGLED');
+        }
+        return true;
+      });
+    }
+
+    if (this.searchText.trim()) {
+      const search = this.searchText.toLowerCase().trim();
+      filtered = filtered.filter(log => 
+        (log.comment && log.comment.toLowerCase().includes(search)) ||
+        (log.performedByFullName && log.performedByFullName.toLowerCase().includes(search)) ||
+        log.actionType.toLowerCase().includes(search)
+      );
+    }
+
+    this.filteredActionLogs = filtered;
+  }
+
+  getCategoryCount(category: string): number {
+    if (category === 'ALL') {
+      return this.actionLogs.length;
+    }
+    return this.actionLogs.filter(log => {
+      const type = log.actionType.toUpperCase();
+      if (category === 'PILOTAGE') {
+        return type.includes('RESPONSIBLE') || type.includes('PILOT');
+      }
+      if (category === 'MODIFICATION') {
+        return type.includes('UPDATED') || type.includes('VALUE');
+      }
+      if (category === 'CREATION') {
+        return type.includes('CREATED');
+      }
+      if (category === 'STATUS') {
+        return type.includes('STATUS') || type.includes('TOGGLED');
+      }
+      return true;
+    }).length;
+  }
+
+  getActionIcon(actionType: string): string {
+    const type = actionType.toUpperCase();
+    if (type.includes('CREATED')) return 'add_circle';
+    if (type.includes('UPDATED')) return 'edit';
+    if (type.includes('TOGGLED') || type.includes('STATUS')) return 'published_with_changes';
+    if (type.includes('ADDED') || type.includes('VALUE_ADDED')) return 'playlist_add';
+    if (type.includes('DELETED')) return 'delete_forever';
+    return 'info';
+  }
+
+  getActionLabel(actionType: string): string {
+    const type = actionType.toUpperCase();
+    if (type === 'INDICATOR_CREATED') return 'Création Indicateur';
+    if (type === 'INDICATOR_UPDATED') return 'Configuration Modifiée';
+    if (type === 'STATUS_TOGGLED') return 'Statut Modifié';
+    if (type === 'VALUE_ADDED') return 'Valeur Enregistrée';
+    if (type === 'VALUE_UPDATED') return 'Valeur Modifiée';
+    if (type === 'VALUE_DELETED') return 'Valeur Supprimée';
+    return actionType;
+  }
+
+  selectLog(log: any): void {
+    const detailsList = [
+      `Action : ${this.getActionLabel(log.actionType)}`,
+      `Effectuée par : ${log.performedByFullName || 'Système'}`,
+      `Le : ${new Date(log.performedAt).toLocaleString()}`,
+      `Commentaire : ${log.comment || 'Aucun commentaire'}`
+    ];
+    if (log.oldValue) detailsList.push(`Ancienne valeur : ${log.oldValue}`);
+    if (log.newValue) detailsList.push(`Nouvelle valeur : ${log.newValue}`);
+
+    this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: "Détails de l'action",
+        message: detailsList.join('\n'),
+        confirmText: 'Fermer',
+        cancelText: ''
       }
     });
   }

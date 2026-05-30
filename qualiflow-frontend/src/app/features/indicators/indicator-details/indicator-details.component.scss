@@ -446,3 +446,51 @@
     font-weight: 600;
 }
 
+.category-pill-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1.5px solid rgba(226, 232, 240, 0.9);
+    background: white;
+    font-weight: 700;
+    font-size: 0.82rem;
+    cursor: pointer;
+    color: #475569;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+
+    &:hover {
+        border-color: #cbd5e1;
+        background: #f8fafc;
+        transform: translateY(-1px);
+    }
+
+    &.active {
+        border-color: #10b981;
+        background: #ecfdf5;
+        color: #047857;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08);
+
+        span {
+            color: #047857;
+        }
+
+        span:last-child {
+            background: #10b981;
+            color: white;
+        }
+    }
+
+    span:last-child {
+        font-size: 0.72rem;
+        padding: 1px 6px;
+        border-radius: 10px;
+        background: #f1f5f9;
+        color: #475569;
+        font-weight: 800;
+        transition: all 0.2s;
+    }
+}
+

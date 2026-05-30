@@ -737,6 +737,23 @@ namespace DocApi.Infrastructure
                 CREATE INDEX IF NOT EXISTS idx_indicatoralerts_resolved ON IndicatorAlerts(IsResolved);
                 CREATE INDEX IF NOT EXISTS idx_indicatoralerts_createdat ON IndicatorAlerts(CreatedAt);
 
+                CREATE TABLE IF NOT EXISTS IndicatorActionLogs (
+                    Id SERIAL PRIMARY KEY,
+                    OrganizationId INTEGER NOT NULL REFERENCES Organizations(Id) ON DELETE CASCADE,
+                    IndicatorId INTEGER NOT NULL REFERENCES Indicators(Id) ON DELETE CASCADE,
+                    ActionType VARCHAR(50) NOT NULL,
+                    OldValue TEXT NULL,
+                    NewValue TEXT NULL,
+                    Comment TEXT NULL,
+                    PerformedByUserId INTEGER NOT NULL REFERENCES Users(Id) ON DELETE RESTRICT,
+                    PerformedAt TIMESTAMP NOT NULL DEFAULT NOW()
+                );
+
+                CREATE INDEX IF NOT EXISTS idx_indicatoractionlogs_org ON IndicatorActionLogs(OrganizationId);
+                CREATE INDEX IF NOT EXISTS idx_indicatoractionlogs_indicator ON IndicatorActionLogs(IndicatorId);
+                CREATE INDEX IF NOT EXISTS idx_indicatoractionlogs_action ON IndicatorActionLogs(ActionType);
+                CREATE INDEX IF NOT EXISTS idx_indicatoractionlogs_performedat ON IndicatorActionLogs(PerformedAt);
+
                 CREATE TABLE IF NOT EXISTS Notifications (
                     Id SERIAL PRIMARY KEY,
                     PublicId UUID NULL,

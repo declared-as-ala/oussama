@@ -18,6 +18,8 @@ namespace DocApi.Services
         private readonly IProcessRepository _processRepository;
         private readonly IUserRepository _userRepository;
         private readonly INotificationEventPublisher _notificationEventPublisher;
+        private readonly IIndicatorActionLogRepository _indicatorActionLogRepository;
+        private readonly IActionLogger _actionLogger;
 
         public IndicatorService(
             IIndicatorRepository indicatorRepository,
@@ -25,7 +27,9 @@ namespace DocApi.Services
             IIndicatorAlertRepository indicatorAlertRepository,
             IProcessRepository processRepository,
             IUserRepository userRepository,
-            INotificationEventPublisher notificationEventPublisher)
+            INotificationEventPublisher notificationEventPublisher,
+            IIndicatorActionLogRepository indicatorActionLogRepository,
+            IActionLogger actionLogger)
         {
             _indicatorRepository = indicatorRepository;
             _indicatorValueRepository = indicatorValueRepository;
@@ -33,6 +37,8 @@ namespace DocApi.Services
             _processRepository = processRepository;
             _userRepository = userRepository;
             _notificationEventPublisher = notificationEventPublisher;
+            _indicatorActionLogRepository = indicatorActionLogRepository;
+            _actionLogger = actionLogger;
         }
 
         public async Task<PagedIndicatorResponse> GetIndicatorsAsync(GetIndicatorsQueryRequest query, UserContext userContext)
@@ -110,6 +116,13 @@ namespace DocApi.Services
             EnsureCanWrite(userContext);
             var organizationId = ResolveOrganizationScope(userContext);
 
+            // Automatically set the responsible of the indicator to the pilot of the process if set
+            var process = await _processRepository.GetByIdAsync(request.ProcessId);
+            if (process != null && process.PilotUserId.HasValue)
+            {
+                request.ResponsibleUserId = process.PilotUserId.Value;
+            }
+
             var payload = await ValidateIndicatorPayloadAsync(
                 request.ProcessId,
                 request.Code,
@@ -144,6 +157,15 @@ namespace DocApi.Services
 
             var id = await _indicatorRepository.CreateAsync(entity);
 
+            entity.Id = id;
+            await LogIndicatorActionAsync(
+                entity,
+                "INDICATOR_CREATED",
+                null,
+                entity.Name,
+                $"L'indicateur '{entity.Name}' a été créé.",
+                userContext.UserId);
+
             var created = await _indicatorRepository.GetDetailsByIdAsync(id, organizationId);
             if (created == null)
             {
@@ -155,11 +177,16 @@ namespace DocApi.Services
 
         public async Task<IndicatorResponse> UpdateAsync(int id, UpdateIndicatorRequest request, UserContext userContext)
         {
-            EnsureCanWrite(userContext);
             var organizationId = ResolveOrganizationScope(userContext);
 
             var current = await GetIndicatorOrThrowAsync(id);
             EnsureAccessToOrganization(current, organizationId);
+            EnsureCanWriteIndicator(current, userContext);
+
+            var oldName = current.Name;
+            var oldCode = current.Code;
+            var oldTarget = current.TargetValue;
+            var oldThreshold = current.AlertThreshold;
 
             var payload = await ValidateIndicatorPayloadAsync(
                 request.ProcessId,
@@ -192,6 +219,17 @@ namespace DocApi.Services
             await _indicatorRepository.UpdateAsync(current);
             await ReevaluateAlertStateAsync(current, organizationId, userContext.UserId);
 
+            var comment = $"Configuration de l'indicateur mise à jour par l'utilisateur.";
+            await LogIndicatorActionAsync(
+                current,
+                "INDICATOR_UPDATED",
+                $"Nom: {oldName}, Code: {oldCode}, Cible: {oldTarget}, Seuil: {oldThreshold}",
+                $"Nom: {current.Name}, Code: {current.Code}, Cible: {current.TargetValue}, Seuil: {current.AlertThreshold}",
+                comment,
+                userContext.UserId);
+
+            await NotifyQualityManagerIfResponsibleModifiedAsync(current, comment, userContext);
+
             var updated = await _indicatorRepository.GetDetailsByIdAsync(id, organizationId);
             if (updated == null)
             {
@@ -219,18 +257,30 @@ namespace DocApi.Services
 
         public async Task<IndicatorResponse> ToggleStatusAsync(int id, UserContext userContext)
         {
-            EnsureCanWrite(userContext);
             var organizationId = ResolveOrganizationScope(userContext);
 
             var entity = await GetIndicatorOrThrowAsync(id);
             EnsureAccessToOrganization(entity, organizationId);
+            EnsureCanWriteIndicator(entity, userContext);
 
+            var oldStatus = entity.Status;
             var currentStatus = IndicatorConstants.NormalizeStatus(entity.Status) ?? IndicatorConstants.StatusActive;
             var nextStatus = string.Equals(currentStatus, IndicatorConstants.StatusActive, StringComparison.OrdinalIgnoreCase)
                 ? IndicatorConstants.StatusInactive
                 : IndicatorConstants.StatusActive;
 
             await _indicatorRepository.ToggleStatusAsync(id, organizationId, nextStatus, DateTime.UtcNow);
+
+            var comment = $"Le statut de l'indicateur a été changé de '{oldStatus}' à '{nextStatus}'.";
+            await LogIndicatorActionAsync(
+                entity,
+                "STATUS_TOGGLED",
+                oldStatus,
+                nextStatus,
+                comment,
+                userContext.UserId);
+
+            await NotifyQualityManagerIfResponsibleModifiedAsync(entity, comment, userContext);
 
             var updated = await _indicatorRepository.GetDetailsByIdAsync(id, organizationId);
             if (updated == null)
@@ -348,11 +398,11 @@ namespace DocApi.Services
 
         public async Task<IndicatorValueResponse> CreateValueAsync(int indicatorId, CreateIndicatorValueRequest request, UserContext userContext)
         {
-            EnsureCanWrite(userContext);
             var organizationId = ResolveOrganizationScope(userContext);
 
             var indicator = await GetIndicatorOrThrowAsync(indicatorId);
             EnsureAccessToOrganization(indicator, organizationId);
+            EnsureCanWriteIndicator(indicator, userContext);
 
             var payload = await ValidateValuePayloadAsync(
                 indicatorId,
@@ -378,6 +428,17 @@ namespace DocApi.Services
             var valueId = await _indicatorValueRepository.CreateAsync(entity);
             await ReevaluateAlertStateAsync(indicator, organizationId, userContext.UserId);
 
+            var comment = $"Valeur mesurée de {payload.MeasuredValue} ajoutée pour la période '{payload.PeriodLabel}'.";
+            await LogIndicatorActionAsync(
+                indicator,
+                "VALUE_ADDED",
+                null,
+                payload.MeasuredValue.ToString(),
+                comment,
+                userContext.UserId);
+
+            await NotifyQualityManagerIfResponsibleModifiedAsync(indicator, comment, userContext);
+
             var created = await _indicatorValueRepository.GetByIdAsync(valueId);
             if (created == null)
             {
@@ -389,11 +450,11 @@ namespace DocApi.Services
 
         public async Task<IndicatorValueResponse> UpdateValueAsync(int indicatorId, int valueId, UpdateIndicatorValueRequest request, UserContext userContext)
         {
-            EnsureCanWrite(userContext);
             var organizationId = ResolveOrganizationScope(userContext);
 
             var indicator = await GetIndicatorOrThrowAsync(indicatorId);
             EnsureAccessToOrganization(indicator, organizationId);
+            EnsureCanWriteIndicator(indicator, userContext);
 
             var existing = await _indicatorValueRepository.GetByIdAsync(valueId);
             if (existing == null || existing.OrganizationId != organizationId || existing.IndicatorId != indicatorId)
@@ -426,6 +487,17 @@ namespace DocApi.Services
             await _indicatorValueRepository.UpdateAsync(entity);
             await ReevaluateAlertStateAsync(indicator, organizationId, userContext.UserId);
 
+            var comment = $"Valeur mesurée pour la période '{existing.PeriodLabel}' mise à jour de {existing.MeasuredValue} à {payload.MeasuredValue}.";
+            await LogIndicatorActionAsync(
+                indicator,
+                "VALUE_UPDATED",
+                existing.MeasuredValue.ToString(),
+                payload.MeasuredValue.ToString(),
+                comment,
+                userContext.UserId);
+
+            await NotifyQualityManagerIfResponsibleModifiedAsync(indicator, comment, userContext);
+
             var updated = await _indicatorValueRepository.GetByIdAsync(valueId);
             if (updated == null)
             {
@@ -437,11 +509,11 @@ namespace DocApi.Services
 
         public async Task<bool> DeleteValueAsync(int indicatorId, int valueId, UserContext userContext)
         {
-            EnsureCanWrite(userContext);
             var organizationId = ResolveOrganizationScope(userContext);
 
             var indicator = await GetIndicatorOrThrowAsync(indicatorId);
             EnsureAccessToOrganization(indicator, organizationId);
+            EnsureCanWriteIndicator(indicator, userContext);
 
             var existing = await _indicatorValueRepository.GetByIdAsync(valueId);
             if (existing == null || existing.OrganizationId != organizationId || existing.IndicatorId != indicatorId)
@@ -453,6 +525,17 @@ namespace DocApi.Services
             if (deleted)
             {
                 await ReevaluateAlertStateAsync(indicator, organizationId, userContext.UserId);
+
+                var comment = $"Valeur mesurée de {existing.MeasuredValue} pour la période '{existing.PeriodLabel}' a été supprimée.";
+                await LogIndicatorActionAsync(
+                    indicator,
+                    "VALUE_DELETED",
+                    existing.MeasuredValue.ToString(),
+                    null,
+                    comment,
+                    userContext.UserId);
+
+                await NotifyQualityManagerIfResponsibleModifiedAsync(indicator, comment, userContext);
             }
 
             return deleted;
@@ -523,6 +606,137 @@ namespace DocApi.Services
             }
 
             await _indicatorAlertRepository.ResolveOpenByIndicatorAsync(indicator.Id, organizationId, DateTime.UtcNow);
+        }
+
+        private void EnsureCanWriteIndicator(Indicator indicator, UserContext userContext)
+        {
+            var isResponsible = indicator.ResponsibleUserId == userContext.UserId;
+            var hasGlobalWrite = userContext.CanWriteIndicators;
+
+            if (!hasGlobalWrite && !isResponsible)
+            {
+                throw new ForbiddenException("Vous n'avez pas les droits de modification sur cet indicateur.");
+            }
+        }
+
+        private async Task NotifyQualityManagerIfResponsibleModifiedAsync(Indicator indicator, string actionDescription, UserContext userContext)
+        {
+            if (userContext.UserId == indicator.ResponsibleUserId)
+            {
+                var organizationId = indicator.OrganizationId;
+                var message = $"Le responsable de l'indicateur '{indicator.Name}' ({userContext.FirstName} {userContext.LastName}) a effectué l'action suivante : {actionDescription}";
+                await _notificationEventPublisher.PublishToRolesAsync(
+                    organizationId,
+                    new[] { UserRoles.RESPONSABLE_QUALITE },
+                    NotificationConstants.TypeSystemAlert,
+                    NotificationConstants.CategoryInfo,
+                    $"Modification de l'indicateur {indicator.Code}",
+                    message,
+                    NotificationConstants.PriorityMedium,
+                    "INDICATOR",
+                    indicator.Id.ToString(),
+                    $"/indicators/{indicator.Id}",
+                    userContext.UserId);
+            }
+        }
+
+        private async Task LogIndicatorActionAsync(
+            Indicator indicator,
+            string actionType,
+            string? oldValue,
+            string? newValue,
+            string? comment,
+            int performedByUserId)
+        {
+            await _indicatorActionLogRepository.CreateAsync(new IndicatorActionLog
+            {
+                OrganizationId = indicator.OrganizationId,
+                IndicatorId = indicator.Id,
+                ActionType = actionType,
+                OldValue = oldValue,
+                NewValue = newValue,
+                Comment = comment,
+                PerformedByUserId = performedByUserId,
+                PerformedAt = DateTime.UtcNow
+            });
+
+            try
+            {
+                var user = await _userRepository.GetByIdAsync(performedByUserId);
+                var actorName = user != null ? $"{user.FirstName} {user.LastName}".Trim() : "Système";
+                await _actionLogger.LogActionAsync(
+                    indicator.OrganizationId,
+                    performedByUserId,
+                    actorName,
+                    "INDICATOR",
+                    actionType.Replace("INDICATOR_", ""),
+                    $"Indicateur {indicator.Code} : {actionType}",
+                    comment ?? $"Action {actionType} effectuée sur l'indicateur '{indicator.Name}'.");
+            }
+            catch
+            {
+                // Ignored to avoid breaking primary database operations if logger fails
+            }
+        }
+
+        private static IndicatorActionLogResponse MapToActionLogResponse(IndicatorActionLogData log)
+        {
+            return new IndicatorActionLogResponse
+            {
+                Id = log.Id,
+                OrganizationId = log.OrganizationId,
+                IndicatorId = log.IndicatorId,
+                ActionType = log.ActionType,
+                OldValue = log.OldValue,
+                NewValue = log.NewValue,
+                Comment = log.Comment,
+                PerformedByUserId = log.PerformedByUserId,
+                PerformedByFullName = log.PerformedByFullName,
+                PerformedAt = log.PerformedAt
+            };
+        }
+
+        public async Task<List<IndicatorActionLogResponse>> GetActionLogsAsync(int indicatorId, UserContext userContext)
+        {
+            EnsureCanRead(userContext);
+            var organizationId = ResolveOrganizationScope(userContext);
+
+            var indicator = await GetIndicatorOrThrowAsync(indicatorId);
+            EnsureAccessToOrganization(indicator, organizationId);
+
+            // Access control: only ADMIN_ORG, RESPONSABLE_QUALITE, or the indicator's Responsible user can view the action log
+            var isResponsible = indicator.ResponsibleUserId == userContext.UserId;
+            var isQualityManagerOrAdmin = userContext.Role == UserRoles.ADMIN_ORG || userContext.Role == UserRoles.RESPONSABLE_QUALITE;
+
+            if (!isQualityManagerOrAdmin && !isResponsible)
+            {
+                throw new ForbiddenException("Vous n'avez pas l'autorisation d'accéder au journal d'actions de cet indicateur.");
+            }
+
+            var logs = await _indicatorActionLogRepository.GetByIndicatorIdAsync(indicatorId, organizationId);
+            return logs.Select(MapToActionLogResponse).ToList();
+        }
+
+        public async Task<bool> DeleteActionLogAsync(int logId, UserContext userContext)
+        {
+            EnsureCanWrite(userContext);
+
+            if (!userContext.OrganizationId.HasValue)
+            {
+                throw new ForbiddenException("Organisation introuvable dans le token utilisateur.");
+            }
+
+            var log = await _indicatorActionLogRepository.GetByIdAsync(logId, userContext.OrganizationId.Value);
+            if (log == null)
+            {
+                throw new NotFoundException("Journal d'actions introuvable.");
+            }
+
+            var indicator = await GetIndicatorOrThrowAsync(log.IndicatorId);
+            EnsureAccessToOrganization(indicator, userContext.OrganizationId.Value);
+            EnsureCanWriteIndicator(indicator, userContext);
+
+            return await _indicatorActionLogRepository.DeleteAsync(logId, userContext.OrganizationId.Value);
         }
 
         private async Task<IndicatorValidatedPayload> ValidateIndicatorPayloadAsync(

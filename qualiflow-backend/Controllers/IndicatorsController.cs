@@ -167,7 +167,7 @@ namespace DocApi.Controllers
         }
 
         [HttpPut("{id:int}")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<IndicatorResponse>> Update(int id, [FromBody] UpdateIndicatorRequest request)
         {
             try
@@ -218,7 +218,7 @@ namespace DocApi.Controllers
         }
 
         [HttpPatch("{id:int}/toggle-status")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<IndicatorResponse>> ToggleStatus(int id)
         {
             try
@@ -264,7 +264,7 @@ namespace DocApi.Controllers
         }
 
         [HttpPost("{indicatorId:int}/values")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<IndicatorValueResponse>> CreateValue(int indicatorId, [FromBody] CreateIndicatorValueRequest request)
         {
             try
@@ -287,7 +287,7 @@ namespace DocApi.Controllers
         }
 
         [HttpPut("{indicatorId:int}/values/{valueId:int}")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<ActionResult<IndicatorValueResponse>> UpdateValue(int indicatorId, int valueId, [FromBody] UpdateIndicatorValueRequest request)
         {
             try
@@ -310,7 +310,7 @@ namespace DocApi.Controllers
         }
 
         [HttpDelete("{indicatorId:int}/values/{valueId:int}")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
         public async Task<IActionResult> DeleteValue(int indicatorId, int valueId)
         {
             try
@@ -319,6 +319,57 @@ namespace DocApi.Controllers
                 if (!deleted)
                 {
                     return NotFound(new { message = "Valeur indicateur introuvable." });
+                }
+
+                return NoContent();
+            }
+            catch (ForbiddenException)
+            {
+                return Forbid();
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ServiceException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("{id:int}/action-logs")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
+        public async Task<ActionResult<List<IndicatorActionLogResponse>>> GetActionLogs(int id)
+        {
+            try
+            {
+                var result = await _indicatorService.GetActionLogsAsync(id, GetUserContext());
+                return Ok(result);
+            }
+            catch (ForbiddenException)
+            {
+                return Forbid();
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ServiceException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpDelete("{id:int}/action-logs/{logId:int}")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE")]
+        public async Task<IActionResult> DeleteActionLog(int id, int logId)
+        {
+            try
+            {
+                var deleted = await _indicatorService.DeleteActionLogAsync(logId, GetUserContext());
+                if (!deleted)
+                {
+                    return NotFound(new { message = "Journal d'actions introuvable." });
                 }
 
                 return NoContent();

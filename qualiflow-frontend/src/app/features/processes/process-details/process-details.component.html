@@ -300,20 +300,13 @@
             <p>{{ indicators.length }} indicateur{{ indicators.length > 1 ? 's' : '' }} KPI associé{{ indicators.length > 1 ? 's' : '' }}</p>
           </div>
         </div>
-        <div *ngIf="canWrite" class="proc-tab-actions">
-          <!-- Créer KPI button -->
-          <a [routerLink]="['/indicators/new']" [queryParams]="{ processId: processId }" mat-flat-button color="primary" class="proc-tab-submit-btn">
-            <mat-icon>add</mat-icon>
-            <span>Créer un Indicateur</span>
-          </a>
-        </div>
       </div>
 
       <!-- EMPTY STATE -->
       <div class="proc-tab-empty" *ngIf="indicators.length === 0">
         <mat-icon style="color: #cbd5e1;">trending_up</mat-icon>
         <h3>Aucun indicateur KPI lié</h3>
-        <p>Ce processus n'a pas encore d'indicateurs KPI associés.<br *ngIf="canWrite"> <span *ngIf="canWrite">Cliquez sur le bouton ci-dessus pour en créer un.</span></p>
+        <p>Ce processus n'a pas encore d'indicateurs KPI associés.</p>
       </div>
 
       <!-- INDICATORS LIST TABLE -->

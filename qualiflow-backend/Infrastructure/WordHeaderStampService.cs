@@ -85,6 +85,7 @@ namespace DocApi.Infrastructure
         {
             var org = string.IsNullOrWhiteSpace(metadata.OrganizationName) ? "Organisation" : metadata.OrganizationName.Trim();
             var code = string.IsNullOrWhiteSpace(metadata.DocumentCode) ? "-" : metadata.DocumentCode.Trim();
+            var title = string.IsNullOrWhiteSpace(metadata.DocumentTitle) ? "Document" : metadata.DocumentTitle.Trim();
             var version = string.IsNullOrWhiteSpace(metadata.VersionNumber) ? "-" : metadata.VersionNumber.Trim();
             var process = string.IsNullOrWhiteSpace(metadata.ProcessCode) ? "-" : metadata.ProcessCode.Trim();
             var procedure = string.IsNullOrWhiteSpace(metadata.ProcedureCode) ? "-" : metadata.ProcedureCode.Trim();
@@ -98,70 +99,68 @@ namespace DocApi.Infrastructure
                         new BottomBorder { Val = BorderValues.Single, Size = 8U, Color = "D1D5DB" },
                         new LeftBorder { Val = BorderValues.Single, Size = 8U, Color = "D1D5DB" },
                         new RightBorder { Val = BorderValues.Single, Size = 8U, Color = "D1D5DB" },
-                        new InsideHorizontalBorder { Val = BorderValues.Single, Size = 8U, Color = "E5E7EB" },
-                        new InsideVerticalBorder { Val = BorderValues.Single, Size = 8U, Color = "E5E7EB" })),
+                        new InsideHorizontalBorder { Val = BorderValues.Single, Size = 6U, Color = "E5E7EB" },
+                        new InsideVerticalBorder { Val = BorderValues.Single, Size = 6U, Color = "E5E7EB" })),
                 new TableGrid(
-                    new GridColumn { Width = "1440" },
-                    new GridColumn { Width = "1440" },
-                    new GridColumn { Width = "1440" },
-                    new GridColumn { Width = "1440" },
-                    new GridColumn { Width = "1440" },
-                    new GridColumn { Width = "1440" }));
+                    new GridColumn { Width = "2500" },
+                    new GridColumn { Width = "2500" },
+                    new GridColumn { Width = "2500" },
+                    new GridColumn { Width = "2500" }));
 
-            var labels = new TableRow(
-                CreateHeaderCell("Organisation"),
-                CreateHeaderCell("Document"),
-                CreateHeaderCell("Version"),
-                CreateHeaderCell("Processus"),
-                CreateHeaderCell("Procedure"),
-                CreateHeaderCell("Genere le"));
+            // Row 1: Organisation (Span 1), Titre (Span 2), Référence (Span 1)
+            var row1 = new TableRow(
+                CreateBlockCell("Organisation", org, 1),
+                CreateBlockCell("Titre du Document", title, 2),
+                CreateBlockCell("Référence", code, 1));
 
-            var values = new TableRow(
-                CreateValueCell(org),
-                CreateValueCell(code),
-                CreateValueCell(version),
-                CreateValueCell(process),
-                CreateValueCell(procedure),
-                CreateValueCell(generated));
+            // Row 2: Processus (Span 1), Procédure (Span 1), Version (Span 1), Date de génération (Span 1)
+            var row2 = new TableRow(
+                CreateBlockCell("Processus", process, 1),
+                CreateBlockCell("Procédure", procedure, 1),
+                CreateBlockCell("Version", version, 1),
+                CreateBlockCell("Généré le", generated, 1));
 
-            table.Append(labels, values);
+            table.Append(row1, row2);
             return table;
         }
 
-        private static TableCell CreateHeaderCell(string text)
+        private static TableCell CreateBlockCell(string label, string value, int gridSpan = 1)
         {
-            return new TableCell(
-                new TableCellProperties(
-                    new TableCellVerticalAlignment { Val = TableVerticalAlignmentValues.Center },
-                    new Shading { Fill = "F9FAFB", Val = ShadingPatternValues.Clear }),
-                new Paragraph(
-                    new ParagraphProperties(
-                        new Justification { Val = JustificationValues.Center },
-                        new SpacingBetweenLines { Before = "0", After = "0", Line = "200", LineRule = LineSpacingRuleValues.Auto }),
-                    new Run(
-                        new RunProperties(
-                            new Bold(),
-                            new Color { Val = "374151" },
-                            new FontSize { Val = "16" },
-                            new NoProof()),
-                        new Text(text))));
-        }
+            var cellProperties = new TableCellProperties(
+                new TableCellVerticalAlignment { Val = TableVerticalAlignmentValues.Center },
+                new Shading { Fill = "F9FAFB", Val = ShadingPatternValues.Clear }
+            );
 
-        private static TableCell CreateValueCell(string text)
-        {
-            return new TableCell(
-                new TableCellProperties(
-                    new TableCellVerticalAlignment { Val = TableVerticalAlignmentValues.Center }),
-                new Paragraph(
-                    new ParagraphProperties(
-                        new Justification { Val = JustificationValues.Center },
-                        new SpacingBetweenLines { Before = "0", After = "0", Line = "220", LineRule = LineSpacingRuleValues.Auto }),
-                    new Run(
-                        new RunProperties(
-                            new Color { Val = "111827" },
-                            new FontSize { Val = "18" },
-                            new NoProof()),
-                        new Text(text))));
+            if (gridSpan > 1)
+            {
+                cellProperties.Append(new GridSpan { Val = gridSpan });
+            }
+
+            var pLabel = new Paragraph(
+                new ParagraphProperties(
+                    new Justification { Val = JustificationValues.Left },
+                    new SpacingBetweenLines { Before = "80", After = "20", Line = "180", LineRule = LineSpacingRuleValues.Auto }),
+                new Run(
+                    new RunProperties(
+                        new Bold(),
+                        new Color { Val = "6B7280" },
+                        new FontSize { Val = "14" },
+                        new NoProof()),
+                    new Text(label.ToUpperInvariant())));
+
+            var pValue = new Paragraph(
+                new ParagraphProperties(
+                    new Justification { Val = JustificationValues.Left },
+                    new SpacingBetweenLines { Before = "0", After = "80", Line = "200", LineRule = LineSpacingRuleValues.Auto }),
+                new Run(
+                    new RunProperties(
+                        new Bold(),
+                        new Color { Val = "111827" },
+                        new FontSize { Val = "18" },
+                        new NoProof()),
+                    new Text(value)));
+
+            return new TableCell(cellProperties, pLabel, pValue);
         }
     }
 }

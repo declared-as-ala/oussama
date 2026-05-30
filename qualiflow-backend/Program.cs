@@ -17,7 +17,7 @@ using RabbitMQ.Client;
 LoadEnvironmentFiles();
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Configuration.AddInMemoryCollection(BuildLegacyFirebaseConfiguration());
+builder.Configuration.AddInMemoryCollection(BuildEnvironmentConfiguration());
 
 // Use console logging to avoid Windows EventLog permission issues in local dev.
 builder.Logging.ClearProviders();
@@ -37,11 +37,6 @@ builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpS
 builder.Services.Configure<RabbitMqSettings>(builder.Configuration.GetSection("RabbitMqSettings"));
 builder.Services.Configure<FirebaseSettings>(builder.Configuration.GetSection("Firebase"));
 builder.Services.Configure<OpenRouterSettings>(builder.Configuration.GetSection("OpenRouter"));
-builder.Services.Configure<SupportAssistantSettings>(builder.Configuration.GetSection("SupportAssistant"));
-builder.Services.Configure<SubscriptionMonitorSettings>(builder.Configuration.GetSection("SubscriptionMonitor"));
-var rabbitMqSettings = builder.Configuration.GetSection("RabbitMqSettings").Get<RabbitMqSettings>() ?? new RabbitMqSettings();
-
-// Configure JWT Authentication
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -115,6 +110,10 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+builder.Services.Configure<SupportAssistantSettings>(builder.Configuration.GetSection("SupportAssistant"));
+builder.Services.Configure<SubscriptionMonitorSettings>(builder.Configuration.GetSection("SubscriptionMonitor"));
+var rabbitMqSettings = builder.Configuration.GetSection("RabbitMqSettings").Get<RabbitMqSettings>() ?? new RabbitMqSettings();
+
 // Register Infrastructure
 builder.Services.AddScoped<IDbConnectionFactory, DbConnectionFactory>();
 
@@ -141,6 +140,7 @@ builder.Services.AddScoped<ICorrectiveActionActionLogRepository, CorrectiveActio
 builder.Services.AddScoped<IIndicatorRepository, IndicatorRepository>();
 builder.Services.AddScoped<IIndicatorValueRepository, IndicatorValueRepository>();
 builder.Services.AddScoped<IIndicatorAlertRepository, IndicatorAlertRepository>();
+builder.Services.AddScoped<IIndicatorActionLogRepository, IndicatorActionLogRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IUserDeviceRepository, UserDeviceRepository>();
 builder.Services.AddScoped<IWebPushSubscriptionRepository, WebPushSubscriptionRepository>();
@@ -321,14 +321,52 @@ static void LoadEnvironmentFiles()
     }
 }
 
-static Dictionary<string, string?> BuildLegacyFirebaseConfiguration()
+static Dictionary<string, string?> BuildEnvironmentConfiguration()
 {
     var configuration = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
 
+    // Database Connection String (built from POSTGRES_*)
+    var pgHost = Environment.GetEnvironmentVariable("POSTGRES_HOST") ?? "localhost";
+    var pgPort = Environment.GetEnvironmentVariable("POSTGRES_PORT") ?? "5432";
+    var pgDb = Environment.GetEnvironmentVariable("POSTGRES_DB") ?? "qualiflowdb";
+    var pgUser = Environment.GetEnvironmentVariable("POSTGRES_USER") ?? "postgres";
+    var pgPass = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD") ?? "root";
+    configuration["ConnectionStrings:DefaultConnection"] = $"Host={pgHost};Port={pgPort};Database={pgDb};Username={pgUser};Password={pgPass};SSL Mode=Disable;";
+
+    // JWT Settings
+    AddIfPresent("JWT_SECRET", "JwtSettings:SecretKey");
+    AddIfPresent("JWT_ISSUER", "JwtSettings:Issuer");
+    AddIfPresent("JWT_AUDIENCE", "JwtSettings:Audience");
+    AddIfPresent("JWT_EXPIRY", "JwtSettings:ExpirationInMinutes");
+
+    // SMTP Settings
+    AddIfPresent("SMTP_ENABLED", "SmtpSettings:Enabled");
+    AddIfPresent("SMTP_HOST", "SmtpSettings:Host");
+    AddIfPresent("SMTP_PORT", "SmtpSettings:Port");
+    AddIfPresent("SMTP_USER", "SmtpSettings:Username");
+    AddIfPresent("SMTP_PASS", "SmtpSettings:Password");
+    AddIfPresent("SMTP_FROM", "SmtpSettings:FromEmail");
+
+    // RabbitMQ Settings
+    AddIfPresent("RABBITMQ_ENABLED", "RabbitMqSettings:Enabled");
+    AddIfPresent("RABBITMQ_URI", "RabbitMqSettings:Uri");
+    AddIfPresent("RABBITMQ_HOST", "RabbitMqSettings:HostName");
+    AddIfPresent("RABBITMQ_PORT", "RabbitMqSettings:Port");
+    AddIfPresent("RABBITMQ_USER", "RabbitMqSettings:UserName");
+    AddIfPresent("RABBITMQ_PASS", "RabbitMqSettings:Password");
+    AddIfPresent("RABBITMQ_VIRTUAL_HOST", "RabbitMqSettings:VirtualHost");
+    AddIfPresent("RABBITMQ_QUEUE", "RabbitMqSettings:QueueName");
+
+    // Firebase Settings
     AddIfPresent("FIREBASE_ENABLED", "Firebase:Enabled");
     AddIfPresent("FIREBASE_SERVICE_ACCOUNT_PATH", "Firebase:ServiceAccountPath");
     AddIfPresent("FIREBASE_SERVICE_ACCOUNT_JSON", "Firebase:ServiceAccountJson");
     AddIfPresent("FIREBASE_PROJECT_ID", "Firebase:ProjectId");
+
+    // OpenRouter / Groq Settings
+    AddIfPresent("OPENROUTER_API_KEY", "OpenRouter:ApiKey");
+    AddIfPresent("OPENROUTER_MODEL", "OpenRouter:Model");
+    AddIfPresent("OPENROUTER_URL", "OpenRouter:ApiBaseUrl");
 
     return configuration;
 

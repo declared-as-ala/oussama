@@ -11,11 +11,11 @@
             </div>
         </div>
         <div class="ph-actions">
-            <button class="btn btn-secondary" (click)="toggleStatus()">
+            <button class="btn btn-secondary" (click)="toggleStatus()" *ngIf="canWrite || isResponsible">
                 <mat-icon>{{ details.indicator.status === 'ACTIF' ? 'pause' : 'play_arrow' }}</mat-icon>
                 {{ details.indicator.status === 'ACTIF' ? ('detail.indicator.deactivate' | t) : ('detail.indicator.activate' | t) }}
             </button>
-            <button class="btn btn-primary" (click)="edit()" *ngIf="canWrite">
+            <button class="btn btn-primary" (click)="edit()" *ngIf="canWrite || isResponsible">
                 <mat-icon>edit</mat-icon>
                 {{ 'common.edit' | t }}
             </button>
@@ -76,6 +76,8 @@
                 (click)="selectTab('chart')">{{ 'detail.indicator.chart' | t }}</button>
             <button class="tab-btn" [class.active]="activeTab === 'values'"
                 (click)="selectTab('values')">{{ 'detail.indicator.history' | t }}</button>
+            <button class="tab-btn" [class.active]="activeTab === 'logs'" *ngIf="canWrite || isResponsible"
+                (click)="selectTab('logs')">Journal d'actions</button>
         </div>
 
         <div class="tab-content">
@@ -166,9 +168,135 @@
 
             <!-- VALUES -->
             <div class="values-container-flat glass-card" *ngIf="activeTab === 'values'">
-                <app-indicator-values [indicatorId]="indicatorId" [canWrite]="canWrite"
+                <app-indicator-values [indicatorId]="indicatorId" [canWrite]="canWrite || isResponsible"
                     (valuesChanged)="onValuesChanged()">
                 </app-indicator-values>
+            </div>
+
+            <!-- ACTION JOURNAL -->
+            <div class="values-container-flat glass-card" *ngIf="activeTab === 'logs' && (canWrite || isResponsible)" style="padding: 24px;">
+                <div class="panel-section">
+                    <div class="section-header" style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(0,0,0,0.06); padding-bottom: 12px; margin-bottom: 20px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <mat-icon style="color: #10b981;">history</mat-icon>
+                            <div class="section-title" style="font-weight: 800; font-size: 1.15rem; color: #0f172a; margin: 0;">Journal d'actions de l'indicateur</div>
+                        </div>
+                        <span style="font-size: 0.78rem; font-weight: 800; color: #64748b; background: #f1f5f9; padding: 2px 10px; border-radius: 20px;">
+                            {{ filteredActionLogs.length }} correspondants
+                        </span>
+                    </div>
+
+                    <!-- SEARCH & FILTER INTERFACES -->
+                    <div style="display: flex; flex-direction: column; gap: 16px; margin: 20px 0;">
+                        <!-- Category Tabs (Pills) -->
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            <button type="button" class="category-pill-btn" [class.active]="selectedCategory === 'ALL'" (click)="selectedCategory = 'ALL'; applyFilters()" style="display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; border: 1.5px solid #e2e8f0; background: white; font-weight: 700; font-size: 0.82rem; cursor: pointer; color: #475569; transition: all 0.2s;">
+                                <mat-icon style="font-size: 16px; width: 16px; height: 16px; margin: 0;">clear_all</mat-icon>
+                                <span>Tous</span>
+                                <span style="font-size: 0.72rem; padding: 1px 6px; border-radius: 10px; background: #e2e8f0; color: #475569;">{{ getCategoryCount('ALL') }}</span>
+                            </button>
+                            <button type="button" class="category-pill-btn" [class.active]="selectedCategory === 'PILOTAGE'" (click)="selectedCategory = 'PILOTAGE'; applyFilters()" style="display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; border: 1.5px solid #e2e8f0; background: white; font-weight: 700; font-size: 0.82rem; cursor: pointer; color: #475569; transition: all 0.2s;">
+                                <mat-icon style="font-size: 16px; width: 16px; height: 16px; margin: 0;">assignment_ind</mat-icon>
+                                <span>Rôles & Responsable</span>
+                                <span style="font-size: 0.72rem; padding: 1px 6px; border-radius: 10px; background: #e2e8f0; color: #475569;">{{ getCategoryCount('PILOTAGE') }}</span>
+                            </button>
+                            <button type="button" class="category-pill-btn" [class.active]="selectedCategory === 'MODIFICATION'" (click)="selectedCategory = 'MODIFICATION'; applyFilters()" style="display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; border: 1.5px solid #e2e8f0; background: white; font-weight: 700; font-size: 0.82rem; cursor: pointer; color: #475569; transition: all 0.2s;">
+                                <mat-icon style="font-size: 16px; width: 16px; height: 16px; margin: 0;">edit_note</mat-icon>
+                                <span>Valeurs & Modifications</span>
+                                <span style="font-size: 0.72rem; padding: 1px 6px; border-radius: 10px; background: #e2e8f0; color: #475569;">{{ getCategoryCount('MODIFICATION') }}</span>
+                            </button>
+                            <button type="button" class="category-pill-btn" [class.active]="selectedCategory === 'STATUS'" (click)="selectedCategory = 'STATUS'; applyFilters()" style="display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; border: 1.5px solid #e2e8f0; background: white; font-weight: 700; font-size: 0.82rem; cursor: pointer; color: #475569; transition: all 0.2s;">
+                                <mat-icon style="font-size: 16px; width: 16px; height: 16px; margin: 0;">published_with_changes</mat-icon>
+                                <span>Situation</span>
+                                <span style="font-size: 0.72rem; padding: 1px 6px; border-radius: 10px; background: #e2e8f0; color: #475569;">{{ getCategoryCount('STATUS') }}</span>
+                            </button>
+                        </div>
+
+                        <!-- Search Bar -->
+                        <div style="position: relative; width: 100%; max-width: 450px;">
+                            <mat-icon style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 20px; width: 20px; height: 20px;">search</mat-icon>
+                            <input 
+                                type="text" 
+                                [(ngModel)]="searchText"
+                                (input)="applyFilters()"
+                                placeholder="Rechercher une action, un auteur, ou un commentaire..."
+                                style="width: 100%; height: 40px; padding: 0 16px 0 46px; border: 1.5px solid rgba(226, 232, 240, 0.9); border-radius: 12px; font-size: 0.9rem; font-weight: 600; color: #1e293b; background: #f8fafc; outline: none; transition: all 0.2s;"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- EMPTY SEARCH RESULTS STATE -->
+                    <div *ngIf="actionLogs.length > 0 && filteredActionLogs.length === 0" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; text-align: center; background: #f8fafc; border-radius: 16px; border: 2.5px dashed #e2e8f0; color: #64748b; margin-top: 16px;">
+                        <mat-icon style="font-size: 44px; width: 44px; height: 44px; margin-bottom: 12px; color: #cbd5e1;">filter_alt_off</mat-icon>
+                        <h3 style="margin: 0 0 6px 0; font-weight: 800; color: #0f172a; margin: 0;">Aucune action correspondante</h3>
+                        <p style="margin: 6px 0 0 0; font-size: 0.85rem; font-weight: 500; color: #94a3b8;">Modifiez votre recherche ou filtre pour voir plus de logs.</p>
+                    </div>
+
+                    <!-- EMPTY LOGS STATE -->
+                    <div *ngIf="actionLogs.length === 0" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; text-align: center; background: #f8fafc; border-radius: 16px; border: 2.5px dashed #e2e8f0; color: #64748b; margin-top: 16px;">
+                        <mat-icon style="font-size: 44px; width: 44px; height: 44px; margin-bottom: 12px; color: #cbd5e1;">history_toggle_off</mat-icon>
+                        <h3 style="margin: 0 0 6px 0; font-weight: 800; color: #0f172a; margin: 0;">Aucun log disponible</h3>
+                        <p style="margin: 6px 0 0 0; font-size: 0.85rem; font-weight: 500; color: #94a3b8;">Aucun événement n'a été enregistré pour cet indicateur pour l'instant.</p>
+                    </div>
+
+                    <!-- LOGS TABLE -->
+                    <div class="table-wrap" style="overflow-x: auto; border: 1px solid rgba(226, 232, 240, 0.8); border-radius: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.01); margin-top: 16px;" *ngIf="filteredActionLogs.length > 0">
+                        <table mat-table [dataSource]="filteredActionLogs" style="width: 100%; border-collapse: collapse;">
+                            
+                            <ng-container matColumnDef="action">
+                                <th mat-header-cell *matHeaderCellDef style="font-weight: 800; color: #475569; padding: 12px 16px; border-bottom: 1px solid rgba(226, 232, 240, 0.8); background: #f8fafc; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.05em;">Action</th>
+                                <td mat-cell *matCellDef="let log" style="padding: 12px 16px; border-bottom: 1px solid rgba(226, 232, 240, 0.8);">
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <div style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: #e0f2fe; color: #0369a1;">
+                                            <mat-icon style="font-size: 18px; width: 18px; height: 18px;">{{ getActionIcon(log.actionType) }}</mat-icon>
+                                        </div>
+                                        <span style="font-weight: 800; color: #0f172a; font-size: 0.88rem;">{{ getActionLabel(log.actionType) }}</span>
+                                    </div>
+                                </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="user">
+                                <th mat-header-cell *matHeaderCellDef style="font-weight: 800; color: #475569; padding: 12px 16px; border-bottom: 1px solid rgba(226, 232, 240, 0.8); background: #f8fafc; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.05em;">Auteur</th>
+                                <td mat-cell *matCellDef="let log" style="padding: 12px 16px; border-bottom: 1px solid rgba(226, 232, 240, 0.8); color: #1e293b; font-size: 0.85rem; font-weight: 700;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="width: 24px; height: 24px; border-radius: 6px; background: #e2e8f0; color: #475569; font-weight: 800; font-size: 0.72rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                            {{ (log.performedByFullName || 'S').charAt(0) }}
+                                        </div>
+                                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">{{ log.performedByFullName || 'Système' }}</span>
+                                    </div>
+                                </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="date">
+                                <th mat-header-cell *matHeaderCellDef style="font-weight: 800; color: #475569; padding: 12px 16px; border-bottom: 1px solid rgba(226, 232, 240, 0.8); background: #f8fafc; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.05em;">Date</th>
+                                <td mat-cell *matCellDef="let log" style="padding: 12px 16px; border-bottom: 1px solid rgba(226, 232, 240, 0.8); color: #64748b; font-size: 0.82rem; font-weight: 600; white-space: nowrap;">
+                                    {{ log.performedAt | date: 'dd/MM/yyyy HH:mm' }}
+                                </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="comment">
+                                <th mat-header-cell *matHeaderCellDef style="font-weight: 800; color: #475569; padding: 12px 16px; border-bottom: 1px solid rgba(226, 232, 240, 0.8); background: #f8fafc; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.05em;">Résumé</th>
+                                <td mat-cell *matCellDef="let log" style="padding: 12px 16px; border-bottom: 1px solid rgba(226, 232, 240, 0.8); color: #475569; font-size: 0.82rem; font-weight: 600;">
+                                    <div style="max-width: 350px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        {{ log.comment || '-' }}
+                                    </div>
+                                </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="actions">
+                                <th mat-header-cell *matHeaderCellDef style="font-weight: 800; color: #475569; padding: 12px 16px; border-bottom: 1px solid rgba(226, 232, 240, 0.8); background: #f8fafc; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.05em; text-align: center;">Détails</th>
+                                <td mat-cell *matCellDef="let log" style="padding: 12px 16px; border-bottom: 1px solid rgba(226, 232, 240, 0.8); text-align: center;">
+                                    <button mat-icon-button color="primary" matTooltip="Voir Détails" (click)="selectLog(log); $event.stopPropagation();" style="color: #3b82f6; background: none; border: none; cursor: pointer;">
+                                        <mat-icon style="font-size: 18px; width: 18px; height: 18px;">visibility</mat-icon>
+                                    </button>
+                                </td>
+                            </ng-container>
+
+                            <tr mat-header-row *matHeaderRowDef="displayedActionLogColumns"></tr>
+                            <tr mat-row *matRowDef="let row; columns: displayedActionLogColumns" (click)="selectLog(row)" style="cursor: pointer; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'"></tr>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

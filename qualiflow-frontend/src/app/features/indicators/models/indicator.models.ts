@@ -154,3 +154,16 @@ export const INDICATOR_FREQUENCY_OPTIONS: Array<{ value: MeasurementFrequency; l
   { value: 'TRIMESTRIEL', label: 'Trimestriel' },
   { value: 'ANNUEL', label: 'Annuel' }
 ];
+
+export interface IndicatorActionLogResponse {
+  id: number;
+  organizationId: number;
+  indicatorId: number;
+  actionType: string;
+  oldValue?: string | null;
+  newValue?: string | null;
+  comment?: string | null;
+  performedByUserId: number;
+  performedByFullName?: string | null;
+  performedAt: string;
+}

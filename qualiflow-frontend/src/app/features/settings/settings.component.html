@@ -1,4 +1,4 @@
-﻿<section class="settings-page">
+<section class="settings-page">
   <!-- SETTINGS HEADER BANNER -->
   <div class="dashboard-header-card">
     <div class="header-content">
@@ -86,11 +86,45 @@
             </mat-slide-toggle>
           </div>
 
-          <div class="notification-pref-actions">
+          <!-- SYSTEM & WINDOWS NOTIFICATIONS -->
+          <div class="system-notification-settings" style="margin-top: 2rem; border-top: 1px dashed rgba(0,0,0,0.1); padding-top: 1.5rem;">
+            <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; color: var(--primary-color, #1976d2); display: flex; align-items: center; gap: 0.5rem;">
+              <mat-icon>settings_suggest</mat-icon> Paramètres Navigateur & Système (Windows)
+            </h3>
+            
+            <div class="notification-pref-row" style="border-bottom: none; padding-bottom: 0.5rem;">
+              <div class="item-info">
+                <strong>Notifications Windows / OS</strong>
+                <p>Afficher des alertes système de bureau Windows en temps réel (même en arrière-plan).</p>
+              </div>
+              <mat-slide-toggle [checked]="sysNotificationsEnabled" (change)="toggleSysNotifications($event.checked)" color="primary">
+              </mat-slide-toggle>
+              <div style="width: 40px;"></div> <!-- placeholder to align with email column -->
+            </div>
+
+            <div class="notification-pref-row" style="border-bottom: none; padding-bottom: 1.5rem;">
+              <div class="item-info">
+                <strong>Effets sonores (Son)</strong>
+                <p>Jouer une alerte sonore moderne lors de la réception d'une notification.</p>
+              </div>
+              <mat-slide-toggle [checked]="notificationSoundEnabled" (change)="toggleSound($event.checked)" color="primary">
+              </mat-slide-toggle>
+              <div style="width: 40px;"></div> <!-- placeholder to align with email column -->
+            </div>
+            
+            <div style="margin-bottom: 1.5rem; display: flex; justify-content: flex-start;">
+              <button mat-stroked-button color="accent" type="button" (click)="testNotifications()" style="border-color: #e91e63; color: #e91e63;">
+                <mat-icon>notification_important</mat-icon>
+                Tester les notifications Windows et le son
+              </button>
+            </div>
+          </div>
+
+          <div class="notification-pref-actions" style="border-top: 1px solid rgba(0,0,0,0.1); padding-top: 1.5rem;">
             <button mat-flat-button color="primary" type="button" (click)="saveNotificationPreferences()"
               [disabled]="notificationPreferencesSaving">
               <mat-icon>save</mat-icon>
-              {{ notificationPreferencesSaving ? 'Enregistrement...' : 'Enregistrer les notifications' }}
+              {{ notificationPreferencesSaving ? 'Enregistrement...' : 'Enregistrer les types d\'alertes' }}
             </button>
           </div>
         </div>

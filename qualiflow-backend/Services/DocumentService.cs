@@ -854,8 +854,8 @@ namespace DocApi.Services
                 Signature = request.Signature,
                 EstablishedByUserId = userContext.UserId,
                 EstablishedAt = now,
-                VerifiedByUserId = normalizedStatus == DocumentConstants.StatusEnRevision ? userContext.UserId : null,
-                VerifiedAt = normalizedStatus == DocumentConstants.StatusEnRevision ? now : null,
+                VerifiedByUserId = isApproved ? userContext.UserId : null,
+                VerifiedAt = isApproved ? now : null,
                 ValidatedByUserId = isApproved ? userContext.UserId : null,
                 ValidatedAt = isApproved ? now : null,
                 EffectiveDate = request.EffectiveDate,
@@ -925,18 +925,26 @@ namespace DocApi.Services
 
             if (normalizedStatus == DocumentConstants.StatusEnRevision)
             {
-                verifiedByUserId = userContext.UserId;
-                verifiedAt = DateTime.UtcNow;
+                // Placing a document back to revision means it is awaiting new verification/validation.
+                // We keep it as unverified (no verifiedByUserId / verifiedAt assigned).
             }
 
             if (normalizedStatus == DocumentConstants.StatusApprouve)
             {
+                verifiedByUserId = userContext.UserId;
+                verifiedAt = DateTime.UtcNow;
                 validatedByUserId = userContext.UserId;
                 validatedAt = DateTime.UtcNow;
             }
 
             if (normalizedStatus == DocumentConstants.StatusPublie)
             {
+                if (!version.VerifiedByUserId.HasValue)
+                {
+                    verifiedByUserId = userContext.UserId;
+                    verifiedAt = DateTime.UtcNow;
+                }
+
                 if (!version.ValidatedByUserId.HasValue)
                 {
                     validatedByUserId = userContext.UserId;

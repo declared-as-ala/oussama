@@ -17,6 +17,7 @@ import { SupportService } from './services/support.service';
 import { SupportContactInfoResponse } from './models/support.models';
 import { NotificationSettingsService } from './services/notification-settings.service';
 import { NotificationPreferenceResponse } from './models/notification-preference.models';
+import { BrowserNotificationService } from '../notifications/services/browser-notification.service';
 
 @Component({
   selector: 'app-settings',
@@ -97,6 +98,9 @@ export class SettingsComponent {
   notificationPreferencesLoading = false;
   notificationPreferencesSaving = false;
 
+  sysNotificationsEnabled = true;
+  notificationSoundEnabled = true;
+
   readonly supportForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email, Validators.maxLength(200)]],
     organizationName: ['', [Validators.required, Validators.maxLength(200)]],
@@ -122,8 +126,12 @@ export class SettingsComponent {
     private readonly authService: AuthService,
     private readonly notificationService: NotificationService,
     private readonly supportService: SupportService,
-    private readonly notificationSettingsService: NotificationSettingsService
+    private readonly notificationSettingsService: NotificationSettingsService,
+    private readonly browserNotificationService: BrowserNotificationService
   ) {
+    this.sysNotificationsEnabled = this.browserNotificationService.isSystemNotificationsEnabled();
+    this.notificationSoundEnabled = this.browserNotificationService.isSoundEnabled();
+
     const userLang = this.authService.getCurrentUser()?.preferredLanguage;
     const savedLang = localStorage.getItem('language');
     this.selectedLanguage = this.normalizeLanguage(userLang ?? savedLang);
@@ -285,5 +293,39 @@ export class SettingsComponent {
     document.documentElement.lang = language;
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
     localStorage.setItem('language', language);
+  }
+
+  toggleSysNotifications(enabled: boolean): void {
+    this.sysNotificationsEnabled = enabled;
+    this.browserNotificationService.setSystemNotificationsEnabled(enabled);
+    if (enabled) {
+      void this.browserNotificationService.requestBrowserPermission().then(permission => {
+        if (permission === 'denied') {
+          this.notificationService.showWarning('Les notifications sont bloquées dans votre navigateur. Veuillez les autoriser dans les paramètres du site.');
+        } else if (permission === 'granted') {
+          this.notificationService.showSuccess('Notifications système activées !');
+        }
+      });
+    } else {
+      this.notificationService.showSuccess('Notifications système désactivées.');
+    }
+  }
+
+  toggleSound(enabled: boolean): void {
+    this.notificationSoundEnabled = enabled;
+    this.browserNotificationService.setSoundEnabled(enabled);
+    this.notificationService.showSuccess(enabled ? 'Effets sonores activés.' : 'Effets sonores désactivés.');
+  }
+
+  testNotifications(): void {
+    void this.browserNotificationService.testSystemNotificationAndSound().then(permission => {
+      if (permission === 'denied') {
+        this.notificationService.showError('Les notifications système sont bloquées par votre navigateur.');
+      } else if (permission === 'default') {
+        this.notificationService.showWarning('Veuillez accepter la demande d\'autorisation pour les notifications.');
+      } else {
+        this.notificationService.showSuccess('Notification de test envoyée avec succès !');
+      }
+    });
   }
 }

@@ -23,10 +23,7 @@
           {{ 'list.indicators.dashboard' | t }}
         </button>
 
-        <button *ngIf="canWrite" mat-flat-button color="primary" class="btn-create" (click)="create()">
-          <mat-icon>add</mat-icon>
-          {{ 'list.indicators.new' | t }}
-        </button>
+
       </div>
     </div>
 
@@ -86,9 +83,7 @@
         <mat-icon>inbox</mat-icon>
         <h3>{{ 'list.indicators.emptyTitle' | t }}</h3>
         <p>{{ 'list.indicators.emptyText' | t }}</p>
-        <button *ngIf="canWrite" mat-flat-button color="primary" (click)="create()">
-          {{ 'list.indicators.new' | t }}
-        </button>
+
       </div>
 
       <div class="content-view-wrapper" *ngIf="items.length > 0">
@@ -150,13 +145,7 @@
             </div>
           </div>
 
-          <!-- ADD PLACEHOLDER -->
-          <div class="indicator-add-placeholder" (click)="create()" *ngIf="canWrite">
-            <div class="add-circle">
-              <mat-icon>add</mat-icon>
-            </div>
-            <span class="add-text">{{ 'list.indicators.new' | t }}</span>
-          </div>
+
         </div>
 
         <!-- TABLE VIEW -->

@@ -21,5 +21,7 @@ namespace DocApi.Services.Interfaces
         Task<IndicatorValueResponse> CreateValueAsync(int indicatorId, CreateIndicatorValueRequest request, UserContext userContext);
         Task<IndicatorValueResponse> UpdateValueAsync(int indicatorId, int valueId, UpdateIndicatorValueRequest request, UserContext userContext);
         Task<bool> DeleteValueAsync(int indicatorId, int valueId, UserContext userContext);
+        Task<List<IndicatorActionLogResponse>> GetActionLogsAsync(int indicatorId, UserContext userContext);
+        Task<bool> DeleteActionLogAsync(int logId, UserContext userContext);
     }
 }

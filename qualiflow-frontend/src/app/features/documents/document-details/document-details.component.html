@@ -268,15 +268,17 @@
 
               <ng-container matColumnDef="actions">
                 <th mat-header-cell *matHeaderCellDef></th>
-                <td mat-cell *matCellDef="let row" style="display: flex; gap: 6px; justify-content: flex-end; align-items: center; min-height: 48px;">
-                  <button mat-icon-button class="action-btn-mini download" (click)="downloadVersion(row)"
-                    [matTooltip]="'detail.document.downloadVersion' | t">
-                    <mat-icon>download</mat-icon>
-                  </button>
-                  <button *ngIf="canWrite" mat-icon-button class="action-btn-mini edit" (click)="updateVersionStatus(row)"
-                    [matTooltip]="'Mettre à jour le statut' | t">
-                    <mat-icon>edit_note</mat-icon>
-                  </button>
+                <td mat-cell *matCellDef="let row">
+                  <div class="actions-wrapper">
+                    <button mat-icon-button class="action-btn-mini download" (click)="downloadVersion(row)"
+                      [matTooltip]="'detail.document.downloadVersion' | t">
+                      <mat-icon>download</mat-icon>
+                    </button>
+                    <button *ngIf="canWrite" mat-icon-button class="action-btn-mini edit" (click)="updateVersionStatus(row)"
+                      [matTooltip]="'Mettre à jour le statut' | t">
+                      <mat-icon>edit_note</mat-icon>
+                    </button>
+                  </div>
                 </td>
               </ng-container>
 
@@ -296,8 +298,7 @@
     <!-- TAB 2: ACTION LOGS -->
     <div class="tab-content-container" *ngIf="activeTab === 2">
       <!-- MILESTONE / HIGHLIGHT CARDS FOR DOCUMENT -->
-      <div class="summary-cards"
-        style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;">
+      <div class="summary-cards highlight-cards">
         <!-- Card 1: Création -->
         <div class="summary-card"
           style="background: white; border-radius: 12px; padding: 16px 20px; border: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.01);">

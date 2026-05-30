@@ -14,7 +14,8 @@ import {
   IndicatorValueResponse,
   PagedIndicatorResponse,
   UpdateIndicatorRequest,
-  UpdateIndicatorValueRequest
+  UpdateIndicatorValueRequest,
+  IndicatorActionLogResponse
 } from '../models/indicator.models';
 
 @Injectable({
@@ -79,5 +80,13 @@ export class IndicatorService {
 
   deleteValue(indicatorId: number, valueId: number): Observable<void> {
     return this.apiService.delete<void>(`${this.endpoint}/${indicatorId}/values/${valueId}`);
+  }
+
+  getIndicatorActionLogs(id: number): Observable<IndicatorActionLogResponse[]> {
+    return this.apiService.get<IndicatorActionLogResponse[]>(`${this.endpoint}/${id}/action-logs`);
+  }
+
+  deleteIndicatorActionLog(indicatorId: number, logId: number): Observable<void> {
+    return this.apiService.delete<void>(`${this.endpoint}/${indicatorId}/action-logs/${logId}`);
   }
 }
