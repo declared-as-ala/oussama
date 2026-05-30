@@ -325,14 +325,6 @@ static Dictionary<string, string?> BuildEnvironmentConfiguration()
 {
     var configuration = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
 
-    // Database Connection String (built from POSTGRES_*)
-    var pgHost = Environment.GetEnvironmentVariable("POSTGRES_HOST") ?? "localhost";
-    var pgPort = Environment.GetEnvironmentVariable("POSTGRES_PORT") ?? "5432";
-    var pgDb = Environment.GetEnvironmentVariable("POSTGRES_DB") ?? "qualiflowdb";
-    var pgUser = Environment.GetEnvironmentVariable("POSTGRES_USER") ?? "postgres";
-    var pgPass = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD") ?? "root";
-    configuration["ConnectionStrings:DefaultConnection"] = $"Host={pgHost};Port={pgPort};Database={pgDb};Username={pgUser};Password={pgPass};SSL Mode=Disable;";
-
     // JWT Settings
     AddIfPresent("JWT_SECRET", "JwtSettings:SecretKey");
     AddIfPresent("JWT_ISSUER", "JwtSettings:Issuer");

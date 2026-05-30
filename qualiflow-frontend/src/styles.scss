@@ -173,14 +173,193 @@
     margin: 0;
     padding: 0;
 }
+/* QualiFlow Styles - Based on Excel Modern Green Theme */
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+
+:root {
+    /* Excel Modern Green */
+    --xl-green: #185C37;
+    --xl-green-mid: #217346;
+    --xl-green-light: #1E8449;
+    --xl-green-xlight: #E9F5EE;
+    --xl-green-hover: #D5EAE0;
+    --xl-green-dark: #124B2C;
+
+    /* Gris froid Office 365 */
+    --bg-body: #F5F6F7;
+    --bg-white: #FFFFFF;
+    --bg-sidebar: #F0F1F2;
+    --bg-raised: #F8F9FA;
+    --border: #E1E3E5;
+    --border-mid: #C8CDD0;
+
+    /* Texte */
+    --text-primary: #1A1A1A;
+    --text-secondary: #505860;
+    --text-muted: #8F959C;
+
+    /* Statuts */
+    --s-green: #107C41;
+    --s-green-bg: #EAF5EE;
+    --s-green-border: #A8D5B8;
+    --s-yellow: #7D6608;
+    --s-yellow-bg: #FEF9E7;
+    --s-yellow-border: #F0D060;
+    --s-red: #9B1C1C;
+    --s-red-bg: #FEF2F2;
+    --s-red-border: #F4AAAA;
+
+    /* Remplacement du Bleu par un Vert Foncé ou Gris pour la neutralité */
+    --s-neutral: #444B52;
+    --s-neutral-bg: #F1F3F5;
+    --s-neutral-border: #D1D5DB;
+
+    --topbar-h: 56px;
+    --sidebar-w: 220px;
+    --shadow: 0 1px 4px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.06);
+    --radius: 2px;
+}
+
+.dark-theme {
+    --bg-body: #0d1117;
+    --bg-white: #161b22;
+    --bg-sidebar: #010409;
+    --bg-raised: #21262d;
+    --border: #30363d;
+    --border-mid: #484f58;
+
+    --text-primary: #f0f6fc;
+    --text-secondary: #8b949e;
+    --text-muted: #6e7681;
+
+    --xl-green-mid: #2ea043;
+    --xl-green: #238636;
+    --xl-green-xlight: rgba(46, 160, 67, 0.1);
+    --xl-green-hover: rgba(46, 160, 67, 0.15);
+
+    /* Statuts en mode sombre */
+    --s-green: #3fb950;
+    --s-green-bg: rgba(63, 185, 80, 0.1);
+    --s-yellow: #d29922;
+    --s-yellow-bg: rgba(210, 153, 34, 0.1);
+    --s-red: #f85149;
+    --s-red-bg: rgba(248, 81, 73, 0.1);
+
+    .glass-header,
+    .panel-card,
+    .kpi-card,
+    .module-card,
+    mat-card,
+    .modal {
+        background-color: var(--bg-white) !important;
+        border-color: var(--border) !important;
+        color: var(--text-primary) !important;
+    }
+
+    body {
+        background: var(--bg-body);
+        color: var(--text-primary);
+    }
+
+    .word-table th {
+        background: var(--bg-raised);
+    }
+
+    /* Global list/table readability in dark mode */
+    .catalog-content-card,
+    .table-container,
+    .mat-mdc-card {
+        background: var(--bg-white) !important;
+        border-color: var(--border) !important;
+    }
+
+    .mat-mdc-table,
+    table.mat-mdc-table,
+    .mdc-data-table__table {
+        background: var(--bg-white) !important;
+    }
+
+    .mat-mdc-header-row,
+    .mdc-data-table__header-row {
+        background: var(--bg-raised) !important;
+    }
+
+    .mat-mdc-row,
+    .mdc-data-table__row {
+        background: var(--bg-white) !important;
+    }
+
+    .mat-mdc-header-cell,
+    .mdc-data-table__header-cell {
+        color: var(--text-secondary) !important;
+        border-bottom-color: var(--border) !important;
+    }
+
+    .mat-mdc-cell,
+    .mdc-data-table__cell {
+        color: var(--text-primary) !important;
+        border-bottom-color: var(--border) !important;
+    }
+
+    .mat-mdc-row:hover .mat-mdc-cell,
+    .mdc-data-table__row:hover .mdc-data-table__cell {
+        background: var(--xl-green-xlight) !important;
+    }
+
+    .mat-mdc-paginator {
+        background: var(--bg-raised) !important;
+        color: var(--text-primary) !important;
+        border-top-color: var(--border) !important;
+    }
+
+    .mat-mdc-paginator .mat-mdc-select-value,
+    .mat-mdc-paginator .mat-mdc-paginator-range-label,
+    .mat-mdc-paginator .mat-mdc-icon-button {
+        color: var(--text-primary) !important;
+    }
+
+    .mat-mdc-form-field {
+        --mdc-filled-text-field-container-color: var(--bg-raised);
+        --mdc-outlined-text-field-outline-color: var(--border-mid);
+        --mdc-outlined-text-field-label-text-color: var(--text-secondary);
+        --mdc-outlined-text-field-input-text-color: var(--text-primary);
+        --mat-select-enabled-trigger-text-color: var(--text-primary);
+        --mat-select-enabled-arrow-color: var(--text-secondary);
+    }
+
+    .mat-mdc-form-field .mdc-text-field--outlined {
+        background: var(--bg-raised) !important;
+    }
+
+    .mat-mdc-form-field input,
+    .mat-mdc-form-field textarea,
+    .mat-mdc-form-field .mat-mdc-select-value-text {
+        color: var(--text-primary) !important;
+    }
+
+    .mat-mdc-form-field .mat-mdc-floating-label,
+    .mat-mdc-form-field mat-label {
+        color: var(--text-secondary) !important;
+    }
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
 
 html,
 body {
     height: 100%;
 }
 
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', 'Inter', sans-serif;
+}
+
 body {
-    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
     background: var(--bg-body);
     color: var(--text-primary);
     min-height: 100vh;
