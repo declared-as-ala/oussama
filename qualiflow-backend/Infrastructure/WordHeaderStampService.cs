@@ -95,12 +95,12 @@ namespace DocApi.Infrastructure
                 new TableProperties(
                     new TableWidth { Type = TableWidthUnitValues.Pct, Width = "5000" },
                     new TableBorders(
-                        new TopBorder { Val = BorderValues.Single, Size = 8U, Color = "D1D5DB" },
-                        new BottomBorder { Val = BorderValues.Single, Size = 8U, Color = "D1D5DB" },
-                        new LeftBorder { Val = BorderValues.Single, Size = 8U, Color = "D1D5DB" },
-                        new RightBorder { Val = BorderValues.Single, Size = 8U, Color = "D1D5DB" },
-                        new InsideHorizontalBorder { Val = BorderValues.Single, Size = 6U, Color = "E5E7EB" },
-                        new InsideVerticalBorder { Val = BorderValues.Single, Size = 6U, Color = "E5E7EB" })),
+                        new TopBorder { Val = BorderValues.Single, Size = 8U, Color = "000000" },
+                        new BottomBorder { Val = BorderValues.Single, Size = 8U, Color = "000000" },
+                        new LeftBorder { Val = BorderValues.Single, Size = 8U, Color = "000000" },
+                        new RightBorder { Val = BorderValues.Single, Size = 8U, Color = "000000" },
+                        new InsideHorizontalBorder { Val = BorderValues.Single, Size = 6U, Color = "000000" },
+                        new InsideVerticalBorder { Val = BorderValues.Single, Size = 6U, Color = "000000" })),
                 new TableGrid(
                     new GridColumn { Width = "2500" },
                     new GridColumn { Width = "2500" },

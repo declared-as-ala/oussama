@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using DocApi.Common;
+using Dapper;
+using DocApi.Infrastructure;
 
 namespace DocApi.Controllers
 {
@@ -41,6 +43,43 @@ namespace DocApi.Controllers
             {
                 success = true,
                 removed
+            });
+        }
+
+        [HttpGet("list-devices")]
+        [AllowAnonymous]
+        public async Task<ActionResult> ListDevices([FromServices] IDbConnectionFactory connectionFactory)
+        {
+            using var connection = connectionFactory.CreateConnection();
+            var devices = await connection.QueryAsync<object>("SELECT * FROM UserDevices ORDER BY LastSeenAt DESC;");
+            return Ok(devices);
+        }
+
+        [HttpGet("test-push-user")]
+        [AllowAnonymous]
+        public async Task<ActionResult> TestPushUser([FromQuery] int userId, [FromServices] IPushNotificationService pushNotificationService)
+        {
+            if (userId <= 0)
+            {
+                return BadRequest("Veuillez fournir un userId valide.");
+            }
+
+            var notification = new DocApi.Domain.Entities.Notification
+            {
+                UserId = userId,
+                Title = "Test FCM QualiFlow",
+                Message = "Félicitations ! Vos notifications push FCM fonctionnent parfaitement sur votre Infinix.",
+                RedirectUrl = "/notifications",
+                CreatedAt = System.DateTime.UtcNow
+            };
+
+            var result = await pushNotificationService.SendAsync(notification);
+            return Ok(new
+            {
+                success = result.IsSent,
+                channel = result.Channel,
+                providerId = result.ExternalProviderId,
+                message = result.IsSent ? "Notification envoyee avec succes !" : "Echec de l'envoi de la notification. Verifiez que l'appareil a enregistre son token et que Firebase est active."
             });
         }
 
