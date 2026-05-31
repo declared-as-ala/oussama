@@ -67,6 +67,8 @@ namespace DocApi.Controllers
             var notification = new DocApi.Domain.Entities.Notification
             {
                 UserId = userId,
+                Type = NotificationConstants.TypeSystemAlert,
+                Category = NotificationConstants.CategoryInfo,
                 Title = "Test FCM QualiFlow",
                 Message = "Félicitations ! Vos notifications push FCM fonctionnent parfaitement sur votre Infinix.",
                 RedirectUrl = "/notifications",
