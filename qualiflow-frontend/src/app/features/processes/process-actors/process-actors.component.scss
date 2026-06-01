@@ -240,4 +240,52 @@
     font-weight: 600;
     border: 1px solid rgba(0,0,0,0.04);
   }
+
+  // ── Actor role badges
+  .actor-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    border: 1px solid transparent;
+
+    &.badge-pilote {
+      background: linear-gradient(135deg, #fff8e1, #fff3cd);
+      color: #a07000;
+      border-color: rgba(160, 112, 0, 0.2);
+    }
+
+    &.badge-pilote-proc {
+      background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+      color: #1565c0;
+      border-color: rgba(21, 101, 192, 0.2);
+    }
+
+    &.badge-resp-ind {
+      background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+      color: #2e7d32;
+      border-color: rgba(46, 125, 50, 0.2);
+    }
+
+    &.badge-copilote {
+      background: linear-gradient(135deg, #f3e5f5, #e1bee7);
+      color: #6a1b9a;
+      border-color: rgba(106, 27, 154, 0.2);
+    }
+
+    &.badge-contrib {
+      background: linear-gradient(135deg, #fce4ec, #f8bbd0);
+      color: #880e4f;
+      border-color: rgba(136, 14, 79, 0.2);
+    }
+
+    &.badge-obs {
+      background: #f1f3f4;
+      color: #455a64;
+      border-color: rgba(0,0,0,0.04);
+    }
+  }
 }

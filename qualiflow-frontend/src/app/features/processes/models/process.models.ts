@@ -1,6 +1,6 @@
 export type ProcessType = 'PILOTAGE' | 'REALISATION' | 'SUPPORT';
 export type ProcessStatus = 'ACTIF' | 'INACTIF';
-export type ProcessActorType = 'PILOTE' | 'PILOTE_PROCEDURE' | 'COPILOTE' | 'CONTRIBUTEUR' | 'OBSERVATEUR';
+export type ProcessActorType = 'PILOTE' | 'PILOTE_PROCEDURE' | 'RESPONSABLE_INDICATEUR' | 'COPILOTE' | 'CONTRIBUTEUR' | 'OBSERVATEUR';
 
 export interface ProcessQueryParams {
   pageNumber?: number;
@@ -128,12 +128,13 @@ export const PROCESS_STATUS_OPTIONS: Array<{ value: ProcessStatus; label: string
   { value: 'INACTIF', label: 'Inactif' }
 ];
 
-export const PROCESS_ACTOR_TYPE_OPTIONS: Array<{ value: ProcessActorType; label: string }> = [
-  { value: 'PILOTE', label: 'Pilote' },
-  { value: 'PILOTE_PROCEDURE', label: 'Pilote procédure' },
-  { value: 'COPILOTE', label: 'Copilote' },
-  { value: 'CONTRIBUTEUR', label: 'Contributeur' },
-  { value: 'OBSERVATEUR', label: 'Observateur' }
+export const PROCESS_ACTOR_TYPE_OPTIONS: Array<{ value: ProcessActorType; label: string; icon?: string }> = [
+  { value: 'PILOTE', label: 'Pilote', icon: 'stars' },
+  { value: 'PILOTE_PROCEDURE', label: 'Pilote procédure', icon: 'description' },
+  { value: 'RESPONSABLE_INDICATEUR', label: 'Responsable indicateur', icon: 'trending_up' },
+  { value: 'COPILOTE', label: 'Copilote', icon: 'supervisor_account' },
+  { value: 'CONTRIBUTEUR', label: 'Contributeur', icon: 'person' },
+  { value: 'OBSERVATEUR', label: 'Observateur', icon: 'visibility' }
 ];
 
 export interface ProcessActionLogResponse {

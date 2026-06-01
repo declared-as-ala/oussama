@@ -34,6 +34,35 @@ export class OrganizationAuditLogComponent implements OnInit {
   selectedModule = 'ALL';
   expandedIndex: number | null = null;
 
+  private readonly mojibakeReplacements: Array<[RegExp, string]> = [
+    [/ProcÃƒÂ©dure/g, 'Procédure'],
+    [/procÃƒÂ©dure/g, 'procédure'],
+    [/crÃƒÂ©ÃƒÂ©e/g, 'créée'],
+    [/CrÃƒÂ©ation/g, 'Création'],
+    [/crÃƒÂ©ation/g, 'création'],
+    [/MÃƒÂ©tadonnÃƒÂ©es/g, 'Métadonnées'],
+    [/mÃƒÂ©tadonnÃƒÂ©es/g, 'métadonnées'],
+    [/modifiÃƒÂ©es/g, 'modifiées'],
+    [/modifiÃƒÂ©e/g, 'modifiée'],
+    [/supprimÃƒÂ©e/g, 'supprimée'],
+    [/changÃƒÂ©/g, 'changé'],
+    [/ajoutÃƒÂ©e/g, 'ajoutée'],
+    [/effectuÃƒÂ©e/g, 'effectuée'],
+    [/SystÃƒÂ¨me/g, 'Système'],
+    [/liÃƒÂ©e/g, 'liée'],
+    [/dÃƒÂ©liÃƒÂ©e/g, 'déliée'],
+    [/ÃƒÂ /g, 'à'],
+    [/ÃƒÂ©/g, 'é'],
+    [/ÃƒÂ¨/g, 'è'],
+    [/ÃƒÂª/g, 'ê'],
+    [/ÃƒÂ´/g, 'ô'],
+    [/ÃƒÂ§/g, 'ç'],
+    [/Ã¢â€ â€™/g, '→'],
+    [/Ã¢â‚¬â„¢/g, '’'],
+    [/â€™/g, '’'],
+    [/â€œ|â€/g, '"']
+  ];
+
   constructor(private readonly auditService: OrganizationAuditService) {}
 
   ngOnInit(): void {
@@ -63,9 +92,9 @@ export class OrganizationAuditLogComponent implements OnInit {
     if (this.searchTerm && this.searchTerm.trim()) {
       const term = this.searchTerm.toLowerCase();
       result = result.filter(a => 
-        (a.title && a.title.toLowerCase().includes(term)) ||
-        (a.description && a.description.toLowerCase().includes(term)) ||
-        (a.actorName && a.actorName.toLowerCase().includes(term)) ||
+        this.getActivityTitle(a).toLowerCase().includes(term) ||
+        this.displayText(a.description).toLowerCase().includes(term) ||
+        this.displayText(a.actorName).toLowerCase().includes(term) ||
         (a.type && a.type.toLowerCase().includes(term))
       );
     }
@@ -180,6 +209,47 @@ export class OrganizationAuditLogComponent implements OnInit {
     if (m === 'NC' || m === 'NONCONFORMITY') return 'Non-Conformité';
     if (m === 'CORRECTIVE_ACTION') return 'Action Corrective';
     return module.charAt(0).toUpperCase() + module.slice(1).toLowerCase();
+  }
+
+  getActionLabel(actionType?: string | null): string {
+    const act = (actionType || '').toUpperCase();
+    if (act === 'CREATE' || act === 'CREATED') return 'Création';
+    if (act === 'UPDATE' || act === 'UPDATED') return 'Modification';
+    if (act === 'DELETE' || act === 'DELETED') return 'Suppression';
+    if (act === 'ROLE_CHANGE') return 'Changement de rôle';
+    if (act === 'ACTIVATE') return 'Activation';
+    if (act === 'DEACTIVATE') return 'Désactivation';
+    if (act === 'STATUS_TOGGLED') return 'Statut modifié';
+    if (act === 'INSTRUCTION_ADDED') return 'Instruction ajoutée';
+    if (act === 'INSTRUCTION_UPDATED') return 'Instruction modifiée';
+    if (act === 'INSTRUCTION_DELETED') return 'Instruction supprimée';
+    if (act === 'LOGIN') return 'Connexion';
+    if (act === 'UPLOAD') return 'Import';
+    if (act === 'SUBMIT') return 'Soumission';
+    if (act === 'APPROVE') return 'Approbation';
+    if (act === 'REJECT') return 'Rejet';
+    if (act === 'ARCHIVE') return 'Archivage';
+    return this.displayText(actionType || 'Action');
+  }
+
+  getActivityTitle(activity: OrganizationActivityResponse): string {
+    return this.displayText(activity.title)
+      .replace(/\bPROCEDURE_UPDATED\b/g, 'procédure modifiée')
+      .replace(/\bPROCEDURE_CREATED\b/g, 'procédure créée')
+      .replace(/\bPROCEDURE_DELETED\b/g, 'procédure supprimée')
+      .replace(/\bROLE_CHANGE\b/g, 'changement de rôle')
+      .replace(/\bUSER_MANAGEMENT\b/g, 'gestion utilisateur');
+  }
+
+  displayText(value?: string | null): string {
+    if (!value) return '';
+
+    let text = value;
+    for (const [pattern, replacement] of this.mojibakeReplacements) {
+      text = text.replace(pattern, replacement);
+    }
+
+    return text;
   }
 
   getActionBadgeClass(actionType?: string | null): string {

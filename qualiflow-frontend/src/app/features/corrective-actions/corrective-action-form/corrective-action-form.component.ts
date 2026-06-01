@@ -16,6 +16,7 @@ import { DocumentListItemResponse } from '../../documents/models/document.models
 import { DocumentService } from '../../documents/services/document.service';
 import { NonConformityListItemResponse } from '../../non-conformities/models/nonconformity.models';
 import { NonConformityService } from '../../non-conformities/services/nonconformity.service';
+import { ProcessService } from '../../processes/services/process.service';
 import {
   CORRECTIVE_ACTION_STATUS_OPTIONS,
   CORRECTIVE_ACTION_TYPE_OPTIONS,
@@ -72,8 +73,26 @@ export class CorrectiveActionFormComponent implements OnInit {
   proofRecords: DocumentListItemResponse[] = [];
   existingAttachments: CorrectiveActionAttachmentResponse[] = [];
   selectedFiles: File[] = [];
+  processActors: { userId: number; fullName: string }[] = [];
+  loadingActors = false;
   readonly acceptedAttachmentTypes = '.png,.jpg,.jpeg,.webp,.gif,.pdf,.doc,.docx,.xls,.xlsx';
   readonly allowedAttachmentFormatsLabel = 'images, PDF, Word ou Excel';
+
+  /** Returns actors of the NC's linked process, or all users if no process is linked. */
+  get responsibleUsers(): UserResponse[] {
+    if (this.processActors.length === 0) {
+      return this.users;
+    }
+    const actorIds = new Set(this.processActors.map(a => a.userId));
+    return this.users.filter(u => actorIds.has(u.id));
+  }
+
+  get selectedNcProcessCode(): string | null {
+    const ncId = this.form.getRawValue().nonConformityId;
+    if (!ncId) return null;
+    const nc = this.nonConformities.find(n => n.id === ncId);
+    return nc?.processCode ?? null;
+  }
 
   constructor(
     private readonly fb: FormBuilder,
@@ -83,7 +102,8 @@ export class CorrectiveActionFormComponent implements OnInit {
     private readonly userService: CoreUserService,
     private readonly nonConformityService: NonConformityService,
     private readonly documentService: DocumentService,
-    private readonly correctiveActionService: CorrectiveActionService
+    private readonly correctiveActionService: CorrectiveActionService,
+    private readonly processService: ProcessService
   ) { }
 
   ngOnInit(): void {
@@ -92,6 +112,37 @@ export class CorrectiveActionFormComponent implements OnInit {
     this.isEdit = this.correctiveActionId !== null && !Number.isNaN(this.correctiveActionId);
 
     this.loadData();
+
+    // When NC changes, load its linked process actors to filter the responsible dropdown
+    this.form.get('nonConformityId')?.valueChanges.subscribe(val => {
+      const ncId = val ? Number(val) : null;
+      if (!ncId) {
+        this.processActors = [];
+        return;
+      }
+      const nc = this.nonConformities.find(n => n.id === ncId);
+      if (nc?.processId) {
+        this.loadingActors = true;
+        this.processService.getActors(nc.processId).subscribe({
+          next: (actors) => {
+            this.processActors = actors.map(a => ({ userId: a.userId, fullName: a.fullName }));
+            // Reset responsible if no longer in new actor list
+            const currentResp = this.form.getRawValue().responsibleUserId;
+            const actorIds = new Set(this.processActors.map(a => a.userId));
+            if (currentResp && !actorIds.has(currentResp)) {
+              this.form.patchValue({ responsibleUserId: null }, { emitEvent: false });
+            }
+            this.loadingActors = false;
+          },
+          error: () => {
+            this.processActors = [];
+            this.loadingActors = false;
+          }
+        });
+      } else {
+        this.processActors = [];
+      }
+    });
   }
 
   get title(): string {

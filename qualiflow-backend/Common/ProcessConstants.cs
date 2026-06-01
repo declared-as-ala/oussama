@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 namespace DocApi.Common
 {
@@ -13,6 +13,7 @@ namespace DocApi.Common
 
         public const string ActorPilote = "PILOTE";
         public const string ActorPiloteProcedure = "PILOTE_PROCEDURE";
+        public const string ActorResponsableIndicateur = "RESPONSABLE_INDICATEUR";
         public const string ActorCopilote = "COPILOTE";
         public const string ActorContributeur = "CONTRIBUTEUR";
         public const string ActorObservateur = "OBSERVATEUR";
@@ -34,6 +35,7 @@ namespace DocApi.Common
         {
             ActorPilote,
             ActorPiloteProcedure,
+            ActorResponsableIndicateur,
             ActorCopilote,
             ActorContributeur,
             ActorObservateur

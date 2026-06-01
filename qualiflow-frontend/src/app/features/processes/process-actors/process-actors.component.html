@@ -31,7 +31,7 @@
           </div>
         </div>
 
-        <form *ngIf="canWrite" [formGroup]="actorForm" class="quick-actor-form" (ngSubmit)="addActor()">
+        <form *ngIf="canWrite" [formGroup]="actorForm" #formDirective="ngForm" class="quick-actor-form" (ngSubmit)="addActor(formDirective)">
           <mat-form-field appearance="outline">
             <mat-label>Collaborateur</mat-label>
             <mat-select formControlName="userId">
@@ -86,7 +86,13 @@
             <ng-container matColumnDef="actorType">
               <th mat-header-cell *matHeaderCellDef>Rôle</th>
               <td mat-cell *matCellDef="let actor">
-                <span class="tag gray">
+                <span class="actor-badge"
+                  [class.badge-pilote]="actor.actorType === 'PILOTE'"
+                  [class.badge-pilote-proc]="actor.actorType === 'PILOTE_PROCEDURE'"
+                  [class.badge-resp-ind]="actor.actorType === 'RESPONSABLE_INDICATEUR'"
+                  [class.badge-copilote]="actor.actorType === 'COPILOTE'"
+                  [class.badge-contrib]="actor.actorType === 'CONTRIBUTEUR'"
+                  [class.badge-obs]="actor.actorType === 'OBSERVATEUR'">
                   {{ getActorTypeLabel(actor.actorType) }}
                 </span>
               </td>
@@ -100,9 +106,19 @@
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef style="width: 60px;"></th>
               <td mat-cell *matCellDef="let actor" style="text-align: center;">
-                <button *ngIf="canWrite && actor.actorType !== 'PILOTE' && actor.actorType !== 'PILOTE_PROCEDURE'" mat-icon-button color="warn" type="button" (click)="removeActor(actor)" matTooltip="Retirer cet acteur">
-                  <mat-icon>delete_outline</mat-icon>
-                </button>
+                <ng-container *ngIf="actor.actorType === 'PILOTE' || actor.actorType === 'PILOTE_PROCEDURE' || actor.actorType === 'RESPONSABLE_INDICATEUR'; else canRemoveBtn">
+                  <button mat-icon-button disabled
+                    [matTooltip]="actor.actorType === 'PILOTE' ? 'Le pilote ne peut pas être retiré ici'
+                      : actor.actorType === 'PILOTE_PROCEDURE' ? 'Lié à une procédure — non supprimable'
+                      : 'Lié à un indicateur — non supprimable'">
+                    <mat-icon style="color: #ccc;">lock_outline</mat-icon>
+                  </button>
+                </ng-container>
+                <ng-template #canRemoveBtn>
+                  <button *ngIf="canWrite" mat-icon-button color="warn" type="button" (click)="removeActor(actor)" matTooltip="Retirer cet acteur">
+                    <mat-icon>delete_outline</mat-icon>
+                  </button>
+                </ng-template>
               </td>
             </ng-container>
 

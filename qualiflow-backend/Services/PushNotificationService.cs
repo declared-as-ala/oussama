@@ -73,6 +73,7 @@ namespace DocApi.Services
             var data = new Dictionary<string, string>
             {
                 ["redirectUrl"] = notification.RedirectUrl ?? notification.ActionUrl ?? string.Empty,
+                ["click_action"] = "FCM_PLUGIN_ACTIVITY",
                 ["entityId"] = notification.EntityId?.ToString() ?? notification.ReferenceId ?? string.Empty,
                 ["entityType"] = notification.EntityType ?? notification.ReferenceType ?? string.Empty,
                 ["notificationId"] = notification.Id.ToString(),
@@ -93,8 +94,8 @@ namespace DocApi.Services
                     Priority = Priority.High,
                     Notification = new AndroidNotification
                     {
-                        ChannelId = "qualiflow_alerts",
-                        Sound = "default"
+                        ChannelId = "qualiflow_alerts_v2",
+                        Sound = "notification"
                     }
                 }
             };
@@ -108,6 +109,28 @@ namespace DocApi.Services
                     response.SuccessCount,
                     response.FailureCount);
 
+                for (var i = 0; i < response.Responses.Count && i < tokens.Length; i++)
+                {
+                    var sendResponse = response.Responses[i];
+                    if (sendResponse.IsSuccess)
+                    {
+                        continue;
+                    }
+
+                    var token = tokens[i];
+                    var errorMessage = sendResponse.Exception?.Message ?? "Unknown FCM error";
+                    _logger.LogWarning(
+                        "FCM push failed for UserId={UserId}, TokenPrefix={TokenPrefix}. Error={Error}",
+                        notification.UserId,
+                        token.Length > 12 ? token[..12] : token,
+                        errorMessage);
+
+                    if (IsDeadTokenError(errorMessage))
+                    {
+                        await _userDeviceRepository.DeactivateByTokenAsync(token);
+                    }
+                }
+
                 return new PushDispatchResult
                 {
                     IsSent = response.SuccessCount > 0,
@@ -120,6 +143,18 @@ namespace DocApi.Services
                 _logger.LogError(ex, "FCM push send failed for UserId={UserId}.", notification.UserId);
                 return new PushDispatchResult { IsSent = false, Channel = "FCM" };
             }
+        }
+
+        private static bool IsDeadTokenError(string errorMessage)
+        {
+            if (string.IsNullOrWhiteSpace(errorMessage))
+            {
+                return false;
+            }
+
+            return errorMessage.Contains("registration-token-not-registered", StringComparison.OrdinalIgnoreCase)
+                || errorMessage.Contains("Requested entity was not found", StringComparison.OrdinalIgnoreCase)
+                || errorMessage.Contains("not a valid FCM registration token", StringComparison.OrdinalIgnoreCase);
         }
 
         private bool TryEnsureFirebaseApp()

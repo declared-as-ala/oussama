@@ -44,10 +44,10 @@ namespace DocApi.Common
             || Role == UserRoles.UTILISATEUR;
 
         public bool CanWriteIndicators => Role == UserRoles.ADMIN_ORG
-            || Role == UserRoles.RESPONSABLE_QUALITE;
-
-        public bool CanReadIndicators => CanWriteIndicators
+            || Role == UserRoles.RESPONSABLE_QUALITE
             || Role == UserRoles.UTILISATEUR;
+
+        public bool CanReadIndicators => CanWriteIndicators;
 
         public bool CanWriteDocuments => Role == UserRoles.ADMIN_ORG
             || Role == UserRoles.RESPONSABLE_QUALITE;

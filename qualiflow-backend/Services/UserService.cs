@@ -89,6 +89,17 @@ namespace DocApi.Services
                     throw new NotFoundException("Organization not found");
             }
 
+            if (request.BirthDate.HasValue && request.BirthDate.Value.Date > DateTime.UtcNow.Date)
+                throw new ServiceException("Birth date cannot be in the future");
+
+            var normalizedPhone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim();
+            if (normalizedPhone != null && normalizedPhone.Length > 30)
+                throw new ServiceException("Phone is too long");
+
+            var normalizedCity = string.IsNullOrWhiteSpace(request.City) ? null : request.City.Trim();
+            if (normalizedCity != null && normalizedCity.Length > 120)
+                throw new ServiceException("City is too long");
+
             var passwordHash = BCryptNet.HashPassword(request.Password);
 
             var user = new User
@@ -101,6 +112,9 @@ namespace DocApi.Services
                 PasswordHash = passwordHash,
                 Role = request.Role,
                 Function = request.Function,
+                Phone = normalizedPhone,
+                City = normalizedCity,
+                BirthDate = request.BirthDate?.Date,
                 IsActive = true,
                 IsEmailVerified = true,
                 EmailVerificationToken = null,
@@ -158,7 +172,7 @@ namespace DocApi.Services
             return id;
         }
 
-        public async Task<bool> UpdateAsync(int id, UpdateUserRequest request)
+        public async Task<bool> UpdateAsync(int id, UpdateUserRequest request, int? requestingUserId = null)
         {
             var user = await _userRepository.GetByIdAsync(id);
             if (user == null)
@@ -170,21 +184,38 @@ namespace DocApi.Services
             if (existingUser != null && existingUser.Id != id)
                 throw new ServiceException("Email already exists");
 
+            if (request.BirthDate.HasValue && request.BirthDate.Value.Date > DateTime.UtcNow.Date)
+                throw new ServiceException("Birth date cannot be in the future");
+
+            var normalizedPhone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim();
+            if (normalizedPhone != null && normalizedPhone.Length > 30)
+                throw new ServiceException("Phone is too long");
+
+            var normalizedCity = string.IsNullOrWhiteSpace(request.City) ? null : request.City.Trim();
+            if (normalizedCity != null && normalizedCity.Length > 120)
+                throw new ServiceException("City is too long");
+
             user.FirstName = request.FirstName;
             user.LastName = request.LastName;
             user.Email = normalizedEmail;
             user.Username = normalizedEmail;
             user.Function = request.Function;
+            user.Phone = normalizedPhone;
+            user.City = normalizedCity;
+            user.BirthDate = request.BirthDate?.Date;
             user.UpdatedAt = DateTime.UtcNow;
 
             var result = await _userRepository.UpdateAsync(user);
 
             if (result && user.OrganizationId.HasValue)
             {
+                var actor = requestingUserId.HasValue ? await _userRepository.GetByIdAsync(requestingUserId.Value) : null;
+                var actorName = actor != null ? $"{actor.FirstName} {actor.LastName}" : "Administrateur";
+
                 await _actionLogger.LogActionAsync(
                     user.OrganizationId.Value,
-                    0, 
-                    "Administrateur", 
+                    requestingUserId ?? user.Id,
+                    actorName,
                     "USER_MANAGEMENT",
                     "UPDATE",
                     $"Mise à jour utilisateur : {user.Email}",
@@ -194,7 +225,7 @@ namespace DocApi.Services
             return result;
         }
 
-        public async Task<bool> ToggleStatusAsync(int id, bool isActive)
+        public async Task<bool> ToggleStatusAsync(int id, bool isActive, int? requestingUserId = null)
         {
             var user = await _userRepository.GetByIdAsync(id);
             if (user == null)
@@ -218,13 +249,16 @@ namespace DocApi.Services
                             "USER",
                             user.Id.ToString(),
                             $"/users/{user.Id}",
-                            null);
+                            requestingUserId);
                     }
+
+                    var actor = requestingUserId.HasValue ? await _userRepository.GetByIdAsync(requestingUserId.Value) : null;
+                    var actorName = actor != null ? $"{actor.FirstName} {actor.LastName}" : "Administrateur";
 
                     await _actionLogger.LogActionAsync(
                         user.OrganizationId.Value,
-                        0,
-                        "Administrateur",
+                        requestingUserId ?? user.Id,
+                        actorName,
                         "USER_MANAGEMENT",
                         isActive ? "ACTIVATE" : "DEACTIVATE",
                         $"{(isActive ? "Activation" : "Désactivation")} utilisateur : {user.Email}",
@@ -268,7 +302,7 @@ namespace DocApi.Services
             return result;
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<bool> DeleteAsync(int id, int? requestingUserId = null)
         {
             var user = await _userRepository.GetByIdAsync(id);
             if (user == null)
@@ -278,10 +312,13 @@ namespace DocApi.Services
 
             if (result && user.OrganizationId.HasValue)
             {
+                var actor = requestingUserId.HasValue ? await _userRepository.GetByIdAsync(requestingUserId.Value) : null;
+                var actorName = actor != null ? $"{actor.FirstName} {actor.LastName}" : "Administrateur";
+
                 await _actionLogger.LogActionAsync(
                     user.OrganizationId.Value,
-                    0,
-                    "Administrateur",
+                    requestingUserId ?? user.Id,
+                    actorName,
                     "USER_MANAGEMENT",
                     "DELETE",
                     $"Suppression utilisateur : {user.Email}",
@@ -321,6 +358,9 @@ namespace DocApi.Services
                 Email = user.Email,
                 Role = user.Role,
                 Function = user.Function,
+                Phone = user.Phone,
+                City = user.City,
+                BirthDate = user.BirthDate,
                 IsActive = user.IsActive,
                 LastLoginAt = user.LastLoginAt,
                 CreatedAt = user.CreatedAt,

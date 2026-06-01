@@ -169,7 +169,7 @@ namespace DocApi.Services
                     ? ProcedureConstants.StatusActif
                     : request.Status.Trim().ToUpperInvariant(),
                 VersionNumber = string.IsNullOrWhiteSpace(request.VersionNumber) ? "1.0" : request.VersionNumber.Trim(),
-                RevisionComment = string.IsNullOrWhiteSpace(request.RevisionComment) ? "CrÃƒÂ©ation initiale" : request.RevisionComment.Trim(),
+                RevisionComment = string.IsNullOrWhiteSpace(request.RevisionComment) ? "Création initiale" : request.RevisionComment.Trim(),
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -182,7 +182,7 @@ namespace DocApi.Services
                 "PROCEDURE_CREATED",
                 null,
                 created.Code,
-                $"ProcÃƒÂ©dure crÃƒÂ©ÃƒÂ©e : '{created.Title}'.",
+                $"Procédure créée : '{created.Title}'.",
                 userContext.UserId);
 
             return await MapToProcedureResponseAsync(created);
@@ -244,15 +244,15 @@ namespace DocApi.Services
             await EnsureResponsibleIsProcessActorAsync(procedure.ProcessId, procedure.OrganizationId, procedure.ResponsibleUserId);
 
             var changesList = new List<string>();
-            if (oldCode != procedure.Code) changesList.Add($"Code : '{oldCode}' Ã¢â€ â€™ '{procedure.Code}'");
-            if (oldTitle != procedure.Title) changesList.Add($"Titre : '{oldTitle}' Ã¢â€ â€™ '{procedure.Title}'");
-            if (oldStatus != procedure.Status) changesList.Add($"Statut : '{oldStatus}' Ã¢â€ â€™ '{procedure.Status}'");
-            if (oldVersionNumber != procedure.VersionNumber) changesList.Add($"Version : '{oldVersionNumber}' Ã¢â€ â€™ '{procedure.VersionNumber}'");
-            if (oldRevisionComment != procedure.RevisionComment) changesList.Add($"Commentaire : '{oldRevisionComment}' Ã¢â€ â€™ '{procedure.RevisionComment}'");
+            if (oldCode != procedure.Code) changesList.Add($"Code : '{oldCode}' → '{procedure.Code}'");
+            if (oldTitle != procedure.Title) changesList.Add($"Titre : '{oldTitle}' → '{procedure.Title}'");
+            if (oldStatus != procedure.Status) changesList.Add($"Statut : '{oldStatus}' → '{procedure.Status}'");
+            if (oldVersionNumber != procedure.VersionNumber) changesList.Add($"Version : '{oldVersionNumber}' → '{procedure.VersionNumber}'");
+            if (oldRevisionComment != procedure.RevisionComment) changesList.Add($"Commentaire : '{oldRevisionComment}' → '{procedure.RevisionComment}'");
 
             var detailedComment = changesList.Any()
                 ? "Modifications : " + string.Join(" | ", changesList)
-                : "MÃƒÂ©tadonnÃƒÂ©es de la procÃƒÂ©dure modifiÃƒÂ©es.";
+                : "Métadonnées de la procédure modifiées.";
 
             await LogProcedureActionAsync(
                 procedure,
@@ -281,7 +281,7 @@ namespace DocApi.Services
                     "PROCEDURE_DELETED",
                     procedure.Code,
                     null,
-                    $"ProcÃƒÂ©dure '{procedure.Title}' supprimÃƒÂ©e.",
+                    $"Procédure '{procedure.Title}' supprimée.",
                     userContext.UserId);
             }
 
@@ -310,7 +310,7 @@ namespace DocApi.Services
                 "STATUS_TOGGLED",
                 prevStatus,
                 nextStatus,
-                $"Statut changÃƒÂ© de {prevStatus} ÃƒÂ  {nextStatus}.",
+                $"Statut changé de {prevStatus} à {nextStatus}.",
                 userContext.UserId);
 
             return await MapToProcedureResponseAsync(procedure);
@@ -414,7 +414,7 @@ namespace DocApi.Services
                 "INSTRUCTION_ADDED",
                 null,
                 created.Code,
-                $"Instruction ajoutÃƒÂ©e : '{created.Title}'.",
+                $"Instruction ajoutée : '{created.Title}'.",
                 userContext.UserId);
 
             return MapToInstructionResponse(created);
@@ -462,7 +462,7 @@ namespace DocApi.Services
                 "INSTRUCTION_UPDATED",
                 $"Code: {oldCode}, Titre: {oldTitle}",
                 $"Code: {instruction.Code}, Titre: {instruction.Title}",
-                $"Instruction modifiÃƒÂ©e : '{instruction.Title}'.",
+                $"Instruction modifiée : '{instruction.Title}'.",
                 userContext.UserId);
 
             return MapToInstructionResponse(instruction);
@@ -495,7 +495,7 @@ namespace DocApi.Services
                     "INSTRUCTION_DELETED",
                     instruction.Code,
                     null,
-                    $"Instruction supprimÃƒÂ©e : '{instruction.Title}'.",
+                    $"Instruction supprimée : '{instruction.Title}'.",
                     userContext.UserId);
             }
 
@@ -970,15 +970,15 @@ namespace DocApi.Services
             try
             {
                 var user = await _userRepository.GetByIdAsync(performedByUserId);
-                var actorName = user != null ? $"{user.FirstName} {user.LastName}".Trim() : "SystÃƒÂ¨me";
+                var actorName = user != null ? $"{user.FirstName} {user.LastName}".Trim() : "Système";
                 await _actionLogger.LogActionAsync(
                     procedure.OrganizationId,
                     performedByUserId,
                     actorName,
                     "PROCEDURE",
                     actionType.Replace("PROCEDURE_", ""),
-                    $"ProcÃƒÂ©dure {procedure.Code} : {actionType}",
-                    comment ?? $"Action {actionType} effectuÃƒÂ©e sur la procÃƒÂ©dure '{procedure.Title}'.");
+                    $"Procédure {procedure.Code} : {actionType}",
+                    comment ?? $"Action {actionType} effectuée sur la procédure '{procedure.Title}'.");
             }
             catch
             {
@@ -1026,7 +1026,7 @@ namespace DocApi.Services
                     "PROCEDURE_UPDATED",
                     null,
                     $"LinkedToProcess: {process.Code}",
-                    $"ProcÃƒÂ©dure liÃƒÂ©e au processus '{process.Name}'.",
+                    $"Procédure liée au processus '{process.Name}'.",
                     userContext.UserId);
             }
 
@@ -1054,7 +1054,7 @@ namespace DocApi.Services
                     "PROCEDURE_UPDATED",
                     $"LinkedToProcess: {process.Code}",
                     null,
-                    $"ProcÃƒÂ©dure dÃƒÂ©liÃƒÂ©e du processus '{process.Name}'.",
+                    $"Procédure déliée du processus '{process.Name}'.",
                     userContext.UserId);
             }
 

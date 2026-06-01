@@ -145,6 +145,51 @@
         resize: vertical;
         min-height: 80px;
     }
+
+    // Hint: soft info below a field (e.g. pilot name)
+    .field-hint {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 4px;
+        padding: 6px 10px;
+        background: rgba(16, 185, 129, 0.06);
+        border: 1px solid rgba(16, 185, 129, 0.15);
+        border-radius: 6px;
+        font-size: 12px;
+        color: #2e7d32;
+        font-weight: 500;
+
+        mat-icon {
+            font-size: 15px;
+            width: 15px;
+            height: 15px;
+        }
+    }
+
+    // Notice: blue info box (e.g. auto-actor assignment)
+    .field-notice {
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+        margin-top: 4px;
+        padding: 8px 10px;
+        background: rgba(33, 150, 243, 0.05);
+        border: 1px solid rgba(33, 150, 243, 0.2);
+        border-radius: 6px;
+        font-size: 12px;
+        color: #1565c0;
+        font-weight: 500;
+        line-height: 1.5;
+
+        mat-icon {
+            font-size: 15px;
+            width: 15px;
+            height: 15px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+    }
 }
 
 .sticky-footer {
@@ -260,7 +305,7 @@
   @media (max-width: 600px) {
     flex-direction: column;
     padding: 8px;
-    
+
     .tab-button {
       width: 100%;
       justify-content: flex-start;

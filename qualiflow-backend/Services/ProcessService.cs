@@ -429,6 +429,18 @@ namespace DocApi.Services
 
             normalizedActors.AddRange(protectedProcedurePilots);
 
+            // Also preserve RESPONSABLE_INDICATEUR actors that are not explicitly in the request
+            var protectedIndicatorResponsibles = oldActors
+                .Where(actor => string.Equals(actor.ActorType, ProcessConstants.ActorResponsableIndicateur, StringComparison.OrdinalIgnoreCase))
+                .Where(actor => normalizedActors.All(requestedActor => requestedActor.UserId != actor.UserId))
+                .Select(actor => new AssignProcessActorItemRequest
+                {
+                    UserId = actor.UserId,
+                    ActorType = ProcessConstants.ActorResponsableIndicateur
+                });
+
+            normalizedActors.AddRange(protectedIndicatorResponsibles);
+
             foreach (var actor in normalizedActors)
             {
                 if (actor.UserId <= 0)
@@ -545,6 +557,11 @@ namespace DocApi.Services
             if (actorToRemove != null && string.Equals(actorToRemove.ActorType, ProcessConstants.ActorPiloteProcedure, StringComparison.OrdinalIgnoreCase))
             {
                 throw new ServiceException("Le pilote de procedure est lie au responsable de procedure et ne peut pas etre retire depuis les acteurs du processus.");
+            }
+
+            if (actorToRemove != null && string.Equals(actorToRemove.ActorType, ProcessConstants.ActorResponsableIndicateur, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ServiceException("Le responsable d'indicateur est lié à un indicateur actif et ne peut pas être retiré depuis les acteurs du processus.");
             }
 
             var actorUser = await _userRepository.GetByIdAsync(userId);

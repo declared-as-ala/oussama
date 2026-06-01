@@ -377,3 +377,245 @@
   color: #64748b;
   gap: 16px;
 }
+
+/* Responsive refinements */
+.user-detail-container {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.page-header {
+  gap: 16px;
+}
+
+.page-header .header-breadcrumb,
+.profile-sidebar,
+.details-content,
+.content-card,
+.details-grid,
+.form-grid,
+.form-grid .form-section,
+.details-grid .detail-block .field {
+  min-width: 0;
+}
+
+.page-header .header-breadcrumb .breadcrumb-item,
+.profile-card .profile-info .info-item .details .value,
+.details-grid .detail-block .field .value,
+.meta-card .meta-info .meta-item .value,
+.toggle-field .label {
+  overflow-wrap: anywhere;
+}
+
+.page-header .header-breadcrumb .breadcrumb-item {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.page-header .header-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.page-header .header-actions button {
+  white-space: nowrap;
+}
+
+.content-grid {
+  grid-template-columns: minmax(280px, 320px) minmax(0, 1fr);
+  min-width: 0;
+}
+
+.profile-card .profile-header mat-chip-listbox {
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+.profile-card .profile-info .info-item .details {
+  min-width: 0;
+}
+
+.meta-card .meta-info .meta-item {
+  gap: 16px;
+}
+
+.meta-card .meta-info .meta-item .label {
+  flex: 0 0 auto;
+}
+
+.meta-card .meta-info .meta-item .value {
+  min-width: 0;
+  text-align: right;
+}
+
+.details-grid .detail-block .grid-row,
+.form-grid .form-section .row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.form-grid .form-section mat-form-field {
+  width: 100%;
+  min-width: 0;
+}
+
+.content-card .card-header p {
+  line-height: 1.5;
+}
+
+.toggle-field {
+  gap: 16px;
+  min-width: 0;
+}
+
+@media (max-width: 1024px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1024px) and (min-width: 641px) {
+  .profile-card {
+    display: grid;
+    grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  }
+
+  .profile-card mat-divider {
+    display: none;
+  }
+
+  .profile-card .profile-header {
+    border-right: 1px solid #eef2f7;
+  }
+
+  .meta-card .meta-info {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .meta-card .meta-info .meta-item {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .meta-card .meta-info .meta-item .value {
+    text-align: left;
+  }
+}
+
+@media (max-width: 768px) {
+  .user-detail-container {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .page-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .page-header .header-actions {
+    width: 100%;
+  }
+
+  .page-header .header-actions button {
+    flex: 1 1 140px;
+  }
+
+  .content-grid {
+    gap: 16px;
+  }
+
+  .content-card {
+    padding: 24px;
+  }
+
+  .content-card .card-header {
+    margin-bottom: 24px;
+  }
+}
+
+@media (max-width: 640px) {
+  .profile-card .profile-header {
+    padding: 24px 16px;
+  }
+
+  .profile-card .profile-header .avatar-large {
+    width: 84px;
+    height: 84px;
+    border-radius: 24px;
+    font-size: 30px;
+  }
+
+  .profile-card .profile-header .user-full-name {
+    font-size: 20px;
+    overflow-wrap: anywhere;
+  }
+
+  .profile-card .profile-info {
+    padding: 18px 16px;
+    gap: 16px;
+  }
+
+  .meta-card {
+    margin-top: 16px;
+    padding: 18px 16px;
+  }
+
+  .meta-card .meta-info .meta-item {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .meta-card .meta-info .meta-item .value {
+    text-align: left;
+  }
+
+  .details-grid,
+  .form-grid {
+    gap: 24px;
+  }
+
+  .details-grid .detail-block .grid-row,
+  .form-grid .form-section .row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .user-detail-container {
+    padding: 12px;
+  }
+
+  .page-header .header-breadcrumb {
+    width: 100%;
+  }
+
+  .page-header .header-breadcrumb .breadcrumb-item:not(.active),
+  .page-header .header-breadcrumb .breadcrumb-separator {
+    display: none;
+  }
+
+  .page-header .header-actions {
+    gap: 8px;
+  }
+
+  .page-header .header-actions button {
+    flex-basis: 100%;
+  }
+
+  .content-card {
+    padding: 18px 16px;
+  }
+
+  .content-card .card-header {
+    margin-bottom: 20px;
+  }
+
+  .content-card .card-header h3 {
+    font-size: 18px;
+  }
+}

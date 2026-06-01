@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace DocApi.DTOs.Users
@@ -24,5 +25,11 @@ namespace DocApi.DTOs.Users
         public required string Role { get; set; }
 
         public string? Function { get; set; }
+
+        public string? Phone { get; set; }
+
+        public string? City { get; set; }
+
+        public DateTime? BirthDate { get; set; }
     }
 }

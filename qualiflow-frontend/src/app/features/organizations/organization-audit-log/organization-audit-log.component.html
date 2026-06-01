@@ -153,7 +153,7 @@
           <div class="header-left-side">
             <span class="audit-module">{{ getModuleLabel(act.type) }}</span>
             <span class="audit-action-badge" [class]="getActionBadgeClass(act.actionType)">
-              {{ act.actionType || 'Action' }}
+              {{ getActionLabel(act.actionType) }}
             </span>
           </div>
           <span class="audit-time">{{ act.createdAt | date: 'dd MMM yyyy HH:mm:ss' }}</span>
@@ -161,12 +161,12 @@
 
         <!-- Title & description -->
         <div class="audit-card-body">
-          <h3 class="audit-title">{{ act.title }}</h3>
+          <h3 class="audit-title">{{ getActivityTitle(act) }}</h3>
           <p class="audit-desc" *ngIf="expandedIndex !== i">
-            {{ act.description | slice:0:130 }}{{ act.description.length > 130 ? '...' : '' }}
+            {{ displayText(act.description) | slice:0:130 }}{{ displayText(act.description).length > 130 ? '...' : '' }}
           </p>
           <p class="audit-desc-full" *ngIf="expandedIndex === i">
-            {{ act.description }}
+            {{ displayText(act.description) }}
           </p>
         </div>
 
@@ -177,12 +177,12 @@
               <span class="grid-label">Actionneur</span>
               <span class="grid-val font-medium">
                 <mat-icon class="icon-inline">person</mat-icon>
-                {{ act.actorName || 'Système' }}
+                {{ displayText(act.actorName) || 'Système' }}
               </span>
             </div>
             <div class="grid-col">
               <span class="grid-label">Événement</span>
-              <span class="grid-val text-mono">{{ act.actionType || 'N/A' }}</span>
+              <span class="grid-val">{{ getActionLabel(act.actionType) }}</span>
             </div>
             <div class="grid-col">
               <span class="grid-label">Module Cible</span>
@@ -212,7 +212,7 @@
             <div class="avatar-initials" [style.background-color]="getActivityColor(act.actionType, act.type)">
               {{ act.actorName ? act.actorName.charAt(0).toUpperCase() : 'S' }}
             </div>
-            <span class="actor-name">{{ act.actorName || 'Système' }}</span>
+            <span class="actor-name">{{ displayText(act.actorName) || 'Système' }}</span>
           </div>
           <div class="expand-btn">
             <span>{{ expandedIndex === i ? 'Réduire' : 'Voir les détails' }}</span>

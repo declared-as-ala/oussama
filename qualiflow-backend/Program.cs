@@ -61,6 +61,7 @@ builder.Services.AddAuthentication(options =>
     };
 
     // SignalR sends the JWT in query string (?access_token=...) for WebSocket/SSE.
+    // Also allow query string JWT for secure file downloads/previews on native mobile platforms.
     options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
@@ -69,7 +70,12 @@ builder.Services.AddAuthentication(options =>
             var path = context.HttpContext.Request.Path;
 
             if (!string.IsNullOrWhiteSpace(accessToken) &&
-                path.StartsWithSegments("/hubs/notifications"))
+                (path.StartsWithSegments("/hubs/notifications") ||
+                 path.Value.Contains("/download") ||
+                 path.Value.Contains("/preview") ||
+                 path.Value.Contains("/logo") ||
+                 path.Value.Contains("/photo") ||
+                 path.Value.Contains("/attachment")))
             {
                 context.Token = accessToken;
             }
@@ -192,6 +198,10 @@ builder.Services.AddHttpClient<IOpenRouterService, OpenRouterService>((sp, clien
 {
     var settings = sp.GetRequiredService<IOptions<OpenRouterSettings>>().Value;
     client.Timeout = TimeSpan.FromSeconds(settings.TimeoutSeconds > 0 ? settings.TimeoutSeconds : 30);
+})
+.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    CheckCertificateRevocationList = false
 });
 builder.Services.AddScoped<IChatbotService, ChatbotService>();
 if (rabbitMqSettings.Enabled)

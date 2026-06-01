@@ -23,7 +23,7 @@ namespace DocApi.Controllers
         }
 
         [HttpPost("register")]
-        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
+        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
         public async Task<ActionResult<object>> Register([FromBody] RegisterDeviceTokenRequest request)
         {
             var id = await _deviceTokenService.RegisterAsync(GetUserContext(), request);
@@ -35,7 +35,7 @@ namespace DocApi.Controllers
         }
 
         [HttpPost("unregister")]
-        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
+        [Authorize(Roles = "SUPER_ADMIN,ADMIN_ORG,RESPONSABLE_QUALITE,CHEF_SERVICE,UTILISATEUR")]
         public async Task<ActionResult<object>> Unregister([FromBody] UnregisterDeviceTokenRequest request)
         {
             var removed = await _deviceTokenService.UnregisterAsync(GetUserContext(), request);

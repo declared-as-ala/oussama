@@ -676,3 +676,271 @@
     color: #d97706;
   }
 }
+
+/* Responsive page polish */
+.org-page-container,
+.tabs-wrapper,
+.tab-pane-content,
+.dialog-form,
+.form-row-grid,
+.form-field,
+.monitor-toggle-wrapper,
+.avatar-section,
+.profile-info {
+  min-width: 0;
+}
+
+.header-banner {
+  box-sizing: border-box;
+}
+
+.profile-info h1,
+.email-text,
+.insight-value,
+.monitor-toggle-wrapper .toggle-text span {
+  overflow-wrap: anywhere;
+}
+
+.badge-row {
+  flex-wrap: wrap;
+}
+
+.email-text {
+  max-width: 100%;
+}
+
+.form-row-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.form-field {
+  min-width: 0;
+
+  ::ng-deep {
+    .mat-mdc-form-field-flex,
+    .mat-mdc-text-field-wrapper,
+    .mat-mdc-form-field-infix {
+      min-width: 0;
+    }
+
+    .mat-mdc-form-field-icon-prefix {
+      flex: 0 0 auto;
+      padding-right: 10px;
+    }
+
+    input,
+    textarea {
+      min-width: 0;
+      text-overflow: ellipsis;
+    }
+  }
+}
+
+.page-footer-actions {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+::ng-deep .org-page-tabs,
+::ng-deep .org-dialog-tabs {
+  .mat-mdc-tab-label-container {
+    overflow-x: auto;
+  }
+
+  .mat-mdc-tab-list {
+    min-width: max-content;
+  }
+
+  .mat-mdc-tab {
+    min-width: 180px;
+    padding: 0 18px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .header-banner {
+    padding: 34px 24px 72px;
+  }
+
+  .tabs-wrapper {
+    padding: 0 16px;
+  }
+
+  ::ng-deep .org-page-tabs .mat-mdc-tab-body-wrapper {
+    padding: 24px;
+  }
+
+  .tab-pane-content {
+    max-width: none;
+    padding: 18px 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-banner {
+    padding: 28px 18px 64px;
+  }
+
+  .avatar-section {
+    align-items: flex-start;
+    gap: 18px;
+  }
+
+  .avatar-circle {
+    width: 88px;
+    height: 88px;
+    flex: 0 0 88px;
+  }
+
+  .avatar-initials {
+    font-size: 30px;
+  }
+
+  .profile-info h1 {
+    font-size: 24px;
+    line-height: 1.15;
+  }
+
+  .tabs-wrapper {
+    margin-top: -36px;
+  }
+
+  ::ng-deep .org-page-tabs {
+    border-radius: 10px;
+
+    .mat-mdc-tab-body-wrapper {
+      padding: 20px 16px;
+    }
+
+    .mat-mdc-tab {
+      min-width: 160px;
+    }
+  }
+
+  .tab-pane-content {
+    padding: 12px 0;
+  }
+
+  .pane-header {
+    margin-bottom: 22px;
+    padding-bottom: 16px;
+  }
+
+  .form-row-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .form-field.full-width {
+    grid-column: span 1;
+  }
+
+  .monitor-toggle-wrapper {
+    height: auto;
+    min-height: 56px;
+    gap: 16px;
+  }
+
+  .page-footer-actions {
+    justify-content: stretch;
+    padding: 0 16px;
+  }
+
+  .btn-primary-custom {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 560px) {
+  .header-banner {
+    padding: 22px 14px 58px;
+  }
+
+  .avatar-section {
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .profile-info {
+    width: 100%;
+  }
+
+  .profile-info h1 {
+    font-size: 22px;
+  }
+
+  .badge-row,
+  .email-text {
+    justify-content: center;
+  }
+
+  .avatar-circle {
+    width: 76px;
+    height: 76px;
+    flex-basis: 76px;
+  }
+
+  .tabs-wrapper {
+    margin: -30px auto 28px;
+    padding: 0 10px;
+  }
+
+  ::ng-deep .org-page-tabs {
+    .mat-mdc-tab-body-wrapper {
+      padding: 16px 12px;
+    }
+
+    .mat-mdc-tab {
+      min-width: 138px;
+      padding: 0 12px;
+
+      .mdc-tab__text-label {
+        font-size: 12px !important;
+        gap: 6px !important;
+      }
+    }
+  }
+
+  .tab-icon {
+    font-size: 16px !important;
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  .pane-header h2 {
+    font-size: 18px;
+  }
+
+  .dialog-form {
+    gap: 12px;
+  }
+
+  .monitor-toggle-wrapper {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 12px 14px;
+  }
+
+  .page-footer-actions {
+    margin-bottom: 28px;
+    padding: 0 10px;
+  }
+}
+
+@media (max-width: 420px) {
+  .role-badge,
+  .org-badge {
+    font-size: 11px;
+    padding: 4px 10px;
+  }
+
+  .email-text {
+    font-size: 13px;
+  }
+
+  ::ng-deep .org-page-tabs .mat-mdc-tab {
+    min-width: 126px;
+  }
+}

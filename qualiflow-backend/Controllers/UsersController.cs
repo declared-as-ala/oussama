@@ -164,7 +164,8 @@ namespace DocApi.Controllers
             {
                 var organizationId = GetRequiredOrganizationId();
                 await EnsureUserInSameOrganizationAsync(id, organizationId);
-                var result = await _userService.UpdateAsync(id, request);
+                var userId = GetUserId();
+                var result = await _userService.UpdateAsync(id, request, userId);
                 return result ? NoContent() : BadRequest(new { message = "Failed to update user" });
             }
             catch (ForbiddenException)
@@ -189,7 +190,8 @@ namespace DocApi.Controllers
             {
                 var organizationId = GetRequiredOrganizationId();
                 await EnsureUserInSameOrganizationAsync(id, organizationId);
-                var result = await _userService.ToggleStatusAsync(id, request.IsActive);
+                var userId = GetUserId();
+                var result = await _userService.ToggleStatusAsync(id, request.IsActive, userId);
                 return result ? NoContent() : BadRequest(new { message = "Failed to update user status" });
             }
             catch (ForbiddenException)
@@ -246,7 +248,8 @@ namespace DocApi.Controllers
             {
                 var organizationId = GetRequiredOrganizationId();
                 await EnsureUserInSameOrganizationAsync(id, organizationId);
-                var result = await _userService.DeleteAsync(id);
+                var userId = GetUserId();
+                var result = await _userService.DeleteAsync(id, userId);
                 return result ? NoContent() : BadRequest(new { message = "Failed to delete user" });
             }
             catch (ForbiddenException)

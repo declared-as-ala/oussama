@@ -13,6 +13,9 @@ export interface UserResponse {
   email: string;
   role: string;
   function?: string;
+  phone?: string;
+  city?: string;
+  birthDate?: string;
   isActive: boolean;
   lastLoginAt?: string;
   createdAt: string;
@@ -33,6 +36,9 @@ export interface CreateUserRequest {
   password: string;
   role: UserRole;
   function?: string;
+  phone?: string | null;
+  city?: string | null;
+  birthDate?: string | null;
 }
 
 export interface UpdateUserRequest {
@@ -40,6 +46,9 @@ export interface UpdateUserRequest {
   lastName: string;
   email: string;
   function?: string;
+  phone?: string | null;
+  city?: string | null;
+  birthDate?: string | null;
 }
 
 export interface ChangeUserRoleRequest {

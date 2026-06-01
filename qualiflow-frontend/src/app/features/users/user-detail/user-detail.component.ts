@@ -64,6 +64,9 @@ export class UserDetailComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       role: ['', [Validators.required]],
       function: [''],
+      phone: [''],
+      city: [''],
+      birthDate: [''],
       isActive: [true]
     });
   }
@@ -102,6 +105,9 @@ export class UserDetailComponent implements OnInit {
       email: user.email,
       role: user.role,
       function: user.function || '',
+      phone: user.phone || '',
+      city: user.city || '',
+      birthDate: this.formatDateForInput(user.birthDate),
       isActive: user.isActive
     });
   }
@@ -128,7 +134,10 @@ export class UserDetailComponent implements OnInit {
       firstName: formData.firstName,
       lastName: formData.lastName,
       email: formData.email,
-      function: formData.function
+      function: formData.function,
+      phone: formData.phone || null,
+      city: formData.city || null,
+      birthDate: formData.birthDate || null
     }));
 
     // Role update if changed
@@ -189,6 +198,20 @@ export class UserDetailComponent implements OnInit {
       hour: '2-digit',
       minute: '2-digit'
     });
+  }
+
+  formatDateOnly(dateString?: string): string {
+    if (!dateString) return 'Non définie';
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  }
+
+  private formatDateForInput(dateString?: string): string {
+    if (!dateString) return '';
+    return dateString.slice(0, 10);
   }
 
   goBack(): void {

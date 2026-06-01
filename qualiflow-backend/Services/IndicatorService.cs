@@ -20,6 +20,7 @@ namespace DocApi.Services
         private readonly INotificationEventPublisher _notificationEventPublisher;
         private readonly IIndicatorActionLogRepository _indicatorActionLogRepository;
         private readonly IActionLogger _actionLogger;
+        private readonly IProcessActorRepository _processActorRepository;
 
         public IndicatorService(
             IIndicatorRepository indicatorRepository,
@@ -29,7 +30,8 @@ namespace DocApi.Services
             IUserRepository userRepository,
             INotificationEventPublisher notificationEventPublisher,
             IIndicatorActionLogRepository indicatorActionLogRepository,
-            IActionLogger actionLogger)
+            IActionLogger actionLogger,
+            IProcessActorRepository processActorRepository)
         {
             _indicatorRepository = indicatorRepository;
             _indicatorValueRepository = indicatorValueRepository;
@@ -39,6 +41,7 @@ namespace DocApi.Services
             _notificationEventPublisher = notificationEventPublisher;
             _indicatorActionLogRepository = indicatorActionLogRepository;
             _actionLogger = actionLogger;
+            _processActorRepository = processActorRepository;
         }
 
         public async Task<PagedIndicatorResponse> GetIndicatorsAsync(GetIndicatorsQueryRequest query, UserContext userContext)
@@ -116,13 +119,6 @@ namespace DocApi.Services
             EnsureCanWrite(userContext);
             var organizationId = ResolveOrganizationScope(userContext);
 
-            // Automatically set the responsible of the indicator to the pilot of the process if set
-            var process = await _processRepository.GetByIdAsync(request.ProcessId);
-            if (process != null && process.PilotUserId.HasValue)
-            {
-                request.ResponsibleUserId = process.PilotUserId.Value;
-            }
-
             var payload = await ValidateIndicatorPayloadAsync(
                 request.ProcessId,
                 request.Code,
@@ -137,6 +133,15 @@ namespace DocApi.Services
                 request.Status,
                 organizationId,
                 null);
+
+            // Un UTILISATEUR ne peut créer un indicateur que s'il est le pilote du processus associé
+            if (userContext.Role == UserRoles.UTILISATEUR)
+            {
+                if (!payload.Process.PilotUserId.HasValue || payload.Process.PilotUserId.Value != userContext.UserId)
+                {
+                    throw new ForbiddenException("Seul le pilote du processus peut créer un indicateur pour ce processus.");
+                }
+            }
 
             var entity = new Indicator
             {
@@ -158,6 +163,7 @@ namespace DocApi.Services
             var id = await _indicatorRepository.CreateAsync(entity);
 
             entity.Id = id;
+            await EnsureResponsibleIsProcessActorIfNotPilotAsync(payload.Process, organizationId, payload.ResponsibleUserId);
             await LogIndicatorActionAsync(
                 entity,
                 "INDICATOR_CREATED",
@@ -218,6 +224,7 @@ namespace DocApi.Services
 
             await _indicatorRepository.UpdateAsync(current);
             await ReevaluateAlertStateAsync(current, organizationId, userContext.UserId);
+            await EnsureResponsibleIsProcessActorIfNotPilotAsync(payload.Process, organizationId, payload.ResponsibleUserId);
 
             var comment = $"Configuration de l'indicateur mise à jour par l'utilisateur.";
             await LogIndicatorActionAsync(
@@ -539,6 +546,22 @@ namespace DocApi.Services
             }
 
             return deleted;
+        }
+
+        private async Task EnsureResponsibleIsProcessActorIfNotPilotAsync(Process process, int organizationId, int responsibleUserId)
+        {
+            // If the responsible is the pilot of the process, no extra actor entry is needed
+            if (process.PilotUserId.HasValue && process.PilotUserId.Value == responsibleUserId)
+            {
+                return;
+            }
+
+            // Add the responsible as a RESPONSABLE_INDICATEUR actor if not already an actor
+            await _processActorRepository.AddActorIfMissingAsync(
+                process.Id,
+                organizationId,
+                responsibleUserId,
+                ProcessConstants.ActorResponsableIndicateur);
         }
 
         private async Task ReevaluateAlertStateAsync(Indicator indicator, int organizationId, int? triggeredByUserId = null)

@@ -39,6 +39,10 @@
                             <option [value]="null">{{ 'form.indicator.select' | t }}</option>
                             <option *ngFor="let p of processes" [value]="p.id">{{p.code}} - {{p.name}}</option>
                         </select>
+                        <div class="field-hint" *ngIf="selectedProcessPilotName">
+                            <mat-icon>person_outline</mat-icon>
+                            Pilote&nbsp;: <strong>{{ selectedProcessPilotName }}</strong>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>{{ 'form.indicator.codeRef' | t }} <span class="req">*</span></label>
@@ -84,10 +88,22 @@
                     </div>
                     <div class="form-group">
                         <label>{{ 'form.indicator.followUpOwner' | t }} <span class="req">*</span></label>
-                        <select formControlName="responsibleUserId">
-                            <option [value]="null">{{ 'form.indicator.select' | t }}</option>
-                            <option *ngFor="let u of users" [value]="u.id">{{u.firstName}} {{u.lastName}}</option>
+                        <div *ngIf="loadingActors" style="display:flex;align-items:center;gap:8px;padding:10px 0;color:#78909c;font-size:13px;">
+                            <mat-spinner diameter="16"></mat-spinner>
+                            <span>Chargement des acteurs du processus...</span>
+                        </div>
+                        <select *ngIf="!loadingActors" formControlName="responsibleUserId">
+                            <option [value]="0">{{ 'form.indicator.select' | t }}</option>
+                            <option *ngFor="let u of responsibleUsers" [value]="u.id">{{u.firstName}} {{u.lastName}}</option>
                         </select>
+                        <div class="field-hint" *ngIf="!loadingActors && processActors.length > 0">
+                            <mat-icon>group</mat-icon>
+                            {{ processActors.length }} acteur(s) du processus sélectionné
+                        </div>
+                        <div class="field-notice" *ngIf="selectedProcess && form.getRawValue().responsibleUserId && form.getRawValue().responsibleUserId !== selectedProcess?.pilotUserId">
+                            <mat-icon>info_outline</mat-icon>
+                            Ce responsable sera automatiquement ajouté comme acteur du processus avec le rôle <strong>Responsable indicateur</strong>.
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>{{ 'form.indicator.initialStatus' | t }}</label>

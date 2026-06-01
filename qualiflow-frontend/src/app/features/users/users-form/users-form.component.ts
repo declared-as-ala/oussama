@@ -66,6 +66,9 @@ export class UsersFormComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       role: ['UTILISATEUR', [Validators.required]],
       function: [''],
+      phone: [''],
+      city: [''],
+      birthDate: [''],
       isActive: [true],
       password: ['', [Validators.minLength(6)]]
     });
@@ -97,6 +100,9 @@ export class UsersFormComponent implements OnInit {
           email: user.email,
           role: user.role,
           function: user.function || '',
+          phone: user.phone || '',
+          city: user.city || '',
+          birthDate: this.formatDateForInput(user.birthDate),
           isActive: user.isActive
         });
         this.isLoading = false;
@@ -133,7 +139,10 @@ export class UsersFormComponent implements OnInit {
       email: formData.email,
       password: formData.password,
       role: formData.role,
-      function: formData.function
+      function: formData.function,
+      phone: formData.phone || null,
+      city: formData.city || null,
+      birthDate: formData.birthDate || null
     }).subscribe({
       next: (id) => {
         const afterCreate$: Observable<void> = formData.isActive
@@ -169,7 +178,10 @@ export class UsersFormComponent implements OnInit {
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
-        function: formData.function
+        function: formData.function,
+        phone: formData.phone || null,
+        city: formData.city || null,
+        birthDate: formData.birthDate || null
       })
     ];
 
@@ -213,5 +225,10 @@ export class UsersFormComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/users']);
+  }
+
+  private formatDateForInput(dateString?: string): string {
+    if (!dateString) return '';
+    return dateString.slice(0, 10);
   }
 }

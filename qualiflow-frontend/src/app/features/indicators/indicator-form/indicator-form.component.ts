@@ -87,6 +87,16 @@ export class IndicatorFormComponent implements OnInit {
 
   processes: ProcessListItemResponse[] = [];
   users: UserResponse[] = [];
+  processActors: { userId: number; fullName: string }[] = [];
+  loadingActors = false;
+
+  get responsibleUsers(): UserResponse[] {
+    if (this.processActors.length === 0) {
+      return this.users;
+    }
+    const actorIds = new Set(this.processActors.map(a => a.userId));
+    return this.users.filter(u => actorIds.has(u.id));
+  }
 
   constructor(
     private readonly fb: FormBuilder,
@@ -104,20 +114,46 @@ export class IndicatorFormComponent implements OnInit {
     this.isEdit = this.indicatorId !== null && !Number.isNaN(this.indicatorId);
     this.loadData();
 
-    // Listen to processId changes to auto-select pilotUserId as responsibleUserId
+    // When process changes, load its actors to filter the responsible dropdown
     this.form.get('processId')?.valueChanges.subscribe(val => {
-      if (val) {
-        const processId = Number(val);
-        const selectedProcess = this.processes.find(p => p.id === processId);
-        if (selectedProcess && selectedProcess.pilotUserId) {
-          this.form.patchValue({ responsibleUserId: selectedProcess.pilotUserId });
-        }
+      const processId = val ? Number(val) : null;
+      if (processId && processId > 0) {
+        this.loadingActors = true;
+        this.processService.getActors(processId).subscribe({
+          next: (actors) => {
+            this.processActors = actors.map(a => ({ userId: a.userId, fullName: a.fullName }));
+            // Reset responsible if current selection is not in the new process actors
+            const currentResponsible = this.form.getRawValue().responsibleUserId;
+            const actorIds = new Set(this.processActors.map(a => a.userId));
+            if (currentResponsible && !actorIds.has(currentResponsible)) {
+              this.form.patchValue({ responsibleUserId: 0 }, { emitEvent: false });
+            }
+            this.loadingActors = false;
+          },
+          error: () => {
+            this.processActors = [];
+            this.loadingActors = false;
+          }
+        });
+      } else {
+        this.processActors = [];
       }
     });
   }
 
   get title(): string {
     return this.isEdit ? 'Modifier indicateur' : 'Nouvel indicateur';
+  }
+
+  get selectedProcess(): ProcessListItemResponse | undefined {
+    const pid = this.form.getRawValue().processId;
+    return pid ? this.processes.find(p => p.id === pid) : undefined;
+  }
+
+  get selectedProcessPilotName(): string | null {
+    if (!this.selectedProcess?.pilotUserId) return null;
+    const pilot = this.users.find(u => u.id === this.selectedProcess!.pilotUserId);
+    return pilot ? `${pilot.firstName} ${pilot.lastName}` : null;
   }
 
   goBack(): void {

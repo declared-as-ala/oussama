@@ -60,6 +60,20 @@
               <span class="value">{{ user?.function || 'Non définie' }}</span>
             </div>
           </div>
+          <div class="info-item">
+            <mat-icon>phone</mat-icon>
+            <div class="details">
+              <span class="label">Téléphone</span>
+              <span class="value">{{ user?.phone || 'Non défini' }}</span>
+            </div>
+          </div>
+          <div class="info-item">
+            <mat-icon>location_city</mat-icon>
+            <div class="details">
+              <span class="label">Ville</span>
+              <span class="value">{{ user?.city || 'Non définie' }}</span>
+            </div>
+          </div>
         </div>
       </mat-card>
 
@@ -100,6 +114,27 @@
               <div class="field">
                 <span class="label">Nom</span>
                 <span class="value">{{ user?.lastName }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="detail-block">
+            <h4>Coordonnées</h4>
+            <div class="grid-row">
+              <div class="field">
+                <span class="label">Email</span>
+                <span class="value">{{ user?.email }}</span>
+              </div>
+              <div class="field">
+                <span class="label">Téléphone</span>
+                <span class="value">{{ user?.phone || 'Non défini' }}</span>
+              </div>
+              <div class="field">
+                <span class="label">Ville</span>
+                <span class="value">{{ user?.city || 'Non définie' }}</span>
+              </div>
+              <div class="field">
+                <span class="label">Date de naissance</span>
+                <span class="value">{{ formatDateOnly(user?.birthDate) }}</span>
               </div>
             </div>
           </div>
@@ -162,6 +197,24 @@
                 <input matInput formControlName="function" placeholder="Chargé de qualité">
               </mat-form-field>
             </div>
+          </div>
+
+          <div class="form-section">
+            <h4>Coordonnées</h4>
+            <div class="row">
+              <mat-form-field appearance="outline">
+                <mat-label>Téléphone</mat-label>
+                <input matInput formControlName="phone" placeholder="+216 12 345 678">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Ville</mat-label>
+                <input matInput formControlName="city" placeholder="Tunis">
+              </mat-form-field>
+            </div>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Date de naissance</mat-label>
+              <input matInput type="date" formControlName="birthDate">
+            </mat-form-field>
           </div>
 
           <div class="form-section">

@@ -253,98 +253,110 @@ V --> U : Confirmation declaration
 
 ```plantuml
 @startuml
-title Traiter une action corrective
+title **Traiter une action corrective**
+
+' Style Premium & Compact
+skinparam RoundCorner 6
+skinparam BoxPadding 10
+skinparam ParticipantPadding 10
 skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
+
+' Slate & Teal Theme
+!define PRIMARY #1E293B
+!define ACCENT #0EA5E9
+
+skinparam ActorBackgroundColor #FFFFFF
+skinparam ActorBorderColor PRIMARY
+skinparam ActorFontColor PRIMARY
+skinparam ActorFontWeight bold
+
+skinparam ParticipantBackgroundColor #FFFFFF
+skinparam ParticipantBorderColor PRIMARY
+skinparam ParticipantFontColor PRIMARY
+skinparam ParticipantFontWeight bold
+
+skinparam DatabaseBackgroundColor #FFFFFF
+skinparam DatabaseBorderColor PRIMARY
+skinparam DatabaseFontColor PRIMARY
+
+skinparam ArrowColor ACCENT
+skinparam ArrowFontColor PRIMARY
+skinparam ArrowFontWeight bold
+
+skinparam SequenceLifeLineBackgroundColor #F8FAFC
+skinparam SequenceLifeLineBorderColor ACCENT
+
+skinparam GroupHeaderFontColor PRIMARY
+skinparam GroupHeaderFontWeight bold
+skinparam GroupBorderColor PRIMARY
+skinparam GroupBackgroundColor #E2E8F0
+skinparam GroupBodyBackgroundColor #FFFFFF
+
 autonumber 1
 autoactivate on
 
-actor "Responsable Qualite" as RQ
-actor "Responsable Action" as RA
-boundary "Vue" as V
-control "Controleur" as C
-database "Modele" as M
-control "Notification" as N
+actor "**Responsable Qualité**\n*(RQ / Admin)*" as RQ
+actor "**Responsable Action**\n*(Acteur)*" as RA
+boundary "**Vue**" as V
+control "**Contrôleur**" as C
+control "**Service**" as S
+database "**Base de données**" as M
+control "**Notification**" as N
 
-ref over RQ, N : Authentification
+group **1. Création de l'action**
+    RQ -> V : **Créer l'action corrective**
+    V -> C : **Envoyer les données de l'action**
+    C -> S : **Lancer la création de l'action**
+    S -> M : **Vérifier et enregistrer l'action**
+    M --> S : **Confirmation d'enregistrement (Id)**
+    S -> N : **Déclencher la notification**
+    N --> RA : **Alerte : Nouvelle action assignée**
+    S --> C : **Détails de l'action créée**
+    C --> V : **Confirmation de création**
+    V --> RQ : **Succès de la création affiché**
+end
 
-group 1. Creation action corrective
-    RQ -> V : Saisir action corrective
-    V -> C : creerActionCorrective(donnees)
-    C -> M : verifierNonConformiteEtResponsable()
-    
-    alt Erreur verification
-        M --> C : Erreur
-        C --> V : Message erreur
-        V --> RQ : Erreur affichee
-    else OK
-        M --> C : OK
-        C -> M : enregistrerActionCorrective(Status=PLANIFIEE)
-        C -> M : ajouterHistorique(CORRECTIVE_ACTION_CREATED)
-        C -> N : notifierResponsable()
-        N --> RA : Notification assignation
-        C --> V : Action creee
-        V --> RQ : Confirmation
+group **2. Suivi de l'avancement (par l'Acteur)**
+    alt **Ajouter une pièce jointe**
+        RA -> V : **Ajouter un fichier**
+        V -> C : **Uploader le document**
+        C -> S : **Lancer l'ajout de la pièce jointe**
+        S -> M : **Enregistrer le fichier & Historique**
+        M --> S : **Confirmation d'enregistrement**
+        S --> C : **Détails du fichier enregistré**
+        C --> V : **Succès de l'upload**
+    else **Signaler la fin des tâches**
+        RA -> V : **Déclarer l'action comme terminée**
+        V -> C : **Signaler la fin des travaux**
+        C -> S : **Traiter la complétion**
+        S -> M : **Enregistrer l'état & Historique**
+        M --> S : **Confirmation**
+        S -> N : **Notifier les validateurs**
+        N --> RQ : **Alerte : Action à valider**
+        S --> C : **Détails de l'action mise à jour**
+        C --> V : **Confirmation d'envoi**
     end
 end
 
-group 2. Gestion avancement
-    alt Ajouter piece jointe
-        RA -> V : Uploader fichier
-        V -> C : ajouterPieceJointe(actionId, fichier)
-        C -> M : enregistrerAttachment()
-        C -> M : ajouterHistorique(ATTACHMENT_ADDED)
-        C --> V : OK
-        V --> RA : Fichier ajoute
-    end
+group **3. Vérification de l'efficacité (par le RQ)**
+    RQ -> V : **Consulter l'action à valider**
+    V -> C : **Demander les détails de l'action**
+    C -> S : **Lancer le chargement**
+    S -> M : **Récupérer l'action, l'historique & PJ**
+    M --> S : **Données complètes**
+    S --> C : **Détails structurés**
+    C --> V : **Afficher les détails de l'action**
     
-    alt Notifier completion
-        RA -> V : Action terminee
-        V -> C : notifierCompletion(actionId)
-        C -> M : verifierResponsable()
-        C -> M : ajouterHistorique(COMPLETION_NOTIFIED)
-        C -> N : notifierRoles([ADMIN_ORG, RESPONSABLE_QUALITE])
-        N --> RQ : A valider
-        C --> V : OK
-    end
+    RQ -> V : **Évaluer l'efficacité (Résultat + Commentaire)**
+    V -> C : **Envoyer les données d'évaluation**
+    C -> S : **Vérifier l'efficacité**
+    S -> M : **Enregistrer le statut final & Historique**
+    M --> S : **Statut enregistré**
+    S --> C : **Données de l'action clôturée**
+    C --> V : **Confirmation de clôture**
+    V --> RQ : **Action close et validée**
 end
-
-group 3. Verification efficacite
-    RQ -> V : Consulter action
-    V -> C : consulterDetails(actionId)
-    C -> M : chargerDetails()
-    C --> V : Afficher
-    
-    RQ -> V : Changer statut REALISEE
-    V -> C : mettreAJourStatut(Status=REALISEE)
-    C -> M : verifierTransitionStatut()
-    alt Transition invalide
-        M --> C : Erreur
-        C --> V : Erreur
-    else OK
-        M --> C : OK
-        C -> M : enregistrerNouveauStatut(CompletionDate=NOW)
-        C -> M : ajouterHistorique(STATUS_CHANGED)
-        C -> N : notifierRoles()
-        C --> V : OK
-    end
-    
-    RQ -> V : Verifier efficacite (resultat + commentaire)
-    V -> C : verifierEfficacite(actionId, EffectivenessVerified, Comment)
-    C -> M : validerCommentaire()
-    alt Commentaire vide
-        M --> C : Erreur
-        C --> V : Erreur
-    else OK
-        M --> C : OK
-        C -> M : enregistrerVerification(Status=VERIFIEE si TRUE, sinon REALISEE)
-        C -> M : ajouterHistorique(EFFECTIVENESS_VERIFIED)
-        C -> M : mettreAJourEffectivenessComment()
-        C --> V : OK
-        V --> RQ : Action verifiee
-    end
-end
-
 
 @enduml
 ```

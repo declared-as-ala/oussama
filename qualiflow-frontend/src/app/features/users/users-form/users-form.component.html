@@ -56,6 +56,21 @@
             <mat-error *ngIf="userForm.get('email')?.hasError('email')">Format d'email invalide</mat-error>
           </mat-form-field>
 
+          <mat-form-field appearance="outline">
+            <mat-label>Téléphone</mat-label>
+            <input matInput formControlName="phone" placeholder="+216 12 345 678" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Ville</mat-label>
+            <input matInput formControlName="city" placeholder="Tunis" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Date de naissance</mat-label>
+            <input matInput type="date" formControlName="birthDate" />
+          </mat-form-field>
+
           <mat-form-field *ngIf="!isEditMode" appearance="outline" class="full-width">
             <mat-label>Mot de passe temporaire</mat-label>
             <input matInput type="password" formControlName="password" placeholder="Minimum 6 caractères" />

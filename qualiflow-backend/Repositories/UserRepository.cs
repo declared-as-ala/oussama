@@ -229,8 +229,8 @@ namespace DocApi.Repositories
         {
             using var connection = _connectionFactory.CreateConnection();
             const string sql = @"
-                INSERT INTO Users (OrganizationId, FirstName, LastName, Email, Username, PasswordHash, Role, Function, BirthDate, PreferredLanguage, ProfilePhotoPath, IsActive, IsEmailVerified, EmailVerificationToken, EmailVerificationExpiresAt, CreatedAt) 
-                VALUES (@OrganizationId, @FirstName, @LastName, @Email, @Username, @PasswordHash, @Role, @Function, @BirthDate, @PreferredLanguage, @ProfilePhotoPath, @IsActive, @IsEmailVerified, @EmailVerificationToken, @EmailVerificationExpiresAt, @CreatedAt)
+                INSERT INTO Users (OrganizationId, FirstName, LastName, Email, Username, PasswordHash, Role, Function, Phone, City, BirthDate, PreferredLanguage, ProfilePhotoPath, IsActive, IsEmailVerified, EmailVerificationToken, EmailVerificationExpiresAt, CreatedAt) 
+                VALUES (@OrganizationId, @FirstName, @LastName, @Email, @Username, @PasswordHash, @Role, @Function, @Phone, @City, @BirthDate, @PreferredLanguage, @ProfilePhotoPath, @IsActive, @IsEmailVerified, @EmailVerificationToken, @EmailVerificationExpiresAt, @CreatedAt)
                 RETURNING Id;";
 
             try
@@ -260,6 +260,9 @@ namespace DocApi.Repositories
                     Username = @Email,
                     Role = @Role,
                     Function = @Function,
+                    Phone = @Phone,
+                    City = @City,
+                    BirthDate = @BirthDate,
                     UpdatedAt = @UpdatedAt
                 WHERE Id = @Id";
             

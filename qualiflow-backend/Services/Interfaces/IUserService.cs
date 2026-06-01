@@ -10,10 +10,10 @@ namespace DocApi.Services.Interfaces
         Task<UserListResponse> GetAllAsync(int organizationId, int page = 1, int pageSize = 10);
         Task<UserListResponse> SearchAsync(string? searchTerm, int? organizationId, int page = 1, int pageSize = 10);
         Task<int> CreateAsync(CreateUserRequest request, int? requestingUserId = null);
-        Task<bool> UpdateAsync(int id, UpdateUserRequest request);
-        Task<bool> ToggleStatusAsync(int id, bool isActive);
+        Task<bool> UpdateAsync(int id, UpdateUserRequest request, int? requestingUserId = null);
+        Task<bool> ToggleStatusAsync(int id, bool isActive, int? requestingUserId = null);
         Task<bool> ChangeRoleAsync(int id, ChangeUserRoleRequest request, int? requestingUserId = null);
-        Task<bool> DeleteAsync(int id);
+        Task<bool> DeleteAsync(int id, int? requestingUserId = null);
         Task<bool> HardDeleteAsync(int id);
     }
 }

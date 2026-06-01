@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroupDirective, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -142,7 +142,7 @@ export class ProcessActorsComponent implements OnInit {
     });
   }
 
-  addActor(): void {
+  addActor(formDirective?: FormGroupDirective): void {
     if (!this.details) {
       return;
     }
@@ -184,7 +184,11 @@ export class ProcessActorsComponent implements OnInit {
         }
 
         this.details.actors = actors;
-        this.actorForm.reset({ userId: null, actorType: 'OBSERVATEUR' });
+        if (formDirective) {
+          formDirective.resetForm({ userId: null, actorType: 'OBSERVATEUR' });
+        } else {
+          this.actorForm.reset({ userId: null, actorType: 'OBSERVATEUR' });
+        }
         this.notificationService.showSuccess('Acteur ajoute au processus.');
       },
       error: () => {

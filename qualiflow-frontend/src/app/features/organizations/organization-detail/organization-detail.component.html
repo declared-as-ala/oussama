@@ -1,5 +1,5 @@
 <div [class.org-page-container]="!isDialog" [class.org-dialog-container]="isDialog">
-  
+
   <!-- PAGE HEADER BANNER (Only when not in a dialog) -->
   <div class="header-banner" *ngIf="!isDialog">
     <div class="header-content">
@@ -47,20 +47,22 @@
     </div>
 
     <!-- TABS CONTAINER -->
-    <mat-tab-group *ngIf="!loading" animationDuration="400ms" [class.org-dialog-tabs]="isDialog" [class.org-page-tabs]="!isDialog">
-      
+    <mat-tab-group *ngIf="!loading" animationDuration="400ms" [class.org-dialog-tabs]="isDialog"
+      [class.org-page-tabs]="!isDialog">
+
       <!-- TAB 1: IDENTITÉ VISUELLE & STATUT -->
       <mat-tab>
         <ng-template mat-tab-label>
           <mat-icon class="tab-icon">photo_camera</mat-icon>
           <span>Identité Visuelle</span>
         </ng-template>
-        
+
         <div [class.tab-content-panel]="isDialog" [class.tab-pane-content]="!isDialog" class="logo-tab-layout">
           <div class="logo-control-section">
             <div class="logo-preview-box">
-              <img *ngIf="logoObjectUrl && !selectedLogo" [src]="logoObjectUrl" alt="Logo Officiel" class="org-logo-img">
-              
+              <img *ngIf="logoObjectUrl && !selectedLogo" [src]="logoObjectUrl" alt="Logo Officiel"
+                class="org-logo-img">
+
               <div *ngIf="!logoObjectUrl && !selectedLogo" class="logo-empty-state">
                 <mat-icon>business</mat-icon>
                 <p>Aucun logo défini</p>
@@ -74,9 +76,11 @@
             </div>
 
             <div class="logo-action-buttons">
-              <input type="file" id="orgLogoSelect" (change)="onLogoSelected($event)" hidden #logoFileInput accept="image/*">
-              
-              <button mat-stroked-button class="select-file-btn" (click)="logoFileInput.click()" [disabled]="uploadingLogo">
+              <input type="file" id="orgLogoSelect" (change)="onLogoSelected($event)" hidden #logoFileInput
+                accept="image/*">
+
+              <button mat-stroked-button class="select-file-btn" (click)="logoFileInput.click()"
+                [disabled]="uploadingLogo">
                 <mat-icon>add_photo_alternate</mat-icon>
                 {{ selectedLogo ? 'Remplacer le fichier' : 'Choisir un logo' }}
               </button>
@@ -86,7 +90,8 @@
                   <mat-spinner diameter="18" *ngIf="uploadingLogo"></mat-spinner>
                   <span *ngIf="!uploadingLogo">Enregistrer le logo</span>
                 </button>
-                <button mat-icon-button class="cancel-file-btn" (click)="removeSelectedLogo()" [disabled]="uploadingLogo">
+                <button mat-icon-button class="cancel-file-btn" (click)="removeSelectedLogo()"
+                  [disabled]="uploadingLogo">
                   <mat-icon>close</mat-icon>
                 </button>
               </div>
@@ -110,7 +115,8 @@
               <div class="insight-row">
                 <span class="insight-label">Statut du Compte :</span>
                 <span class="insight-badge active" *ngIf="organization?.status === 'ACTIF'">ACTIF</span>
-                <span class="insight-badge inactive" *ngIf="organization?.status !== 'ACTIF'">{{ organization?.status }}</span>
+                <span class="insight-badge inactive" *ngIf="organization?.status !== 'ACTIF'">{{ organization?.status
+                  }}</span>
               </div>
             </mat-card>
           </div>
@@ -123,7 +129,7 @@
           <mat-icon class="tab-icon">settings_applications</mat-icon>
           <span>Informations Générales</span>
         </ng-template>
-        
+
         <div [class.tab-content-panel]="isDialog" [class.tab-pane-content]="!isDialog">
           <div class="pane-header" *ngIf="!isDialog">
             <h2>Informations Générales</h2>
@@ -145,10 +151,11 @@
               </mat-form-field>
             </div>
 
-            <mat-form-field appearance="outline" class="form-field full-width">
+            <mat-form-field appearance="outline" floatLabel="always" class="form-field full-width">
               <mat-label>Adresse complète</mat-label>
               <mat-icon matIconPrefix>place</mat-icon>
-              <button mat-icon-button matSuffix type="button" (click)="fillAddressFromGps()" [disabled]="locatingAddress" title="Utiliser la position GPS actuelle">
+              <button mat-icon-button matSuffix type="button" (click)="fillAddressFromGps()"
+                [disabled]="locatingAddress" title="Utiliser la position GPS actuelle">
                 <mat-icon *ngIf="!locatingAddress">my_location</mat-icon>
                 <mat-spinner *ngIf="locatingAddress" diameter="18"></mat-spinner>
               </button>
@@ -157,7 +164,8 @@
 
             <mat-form-field appearance="outline" class="form-field full-width">
               <mat-label>Description / Présentation</mat-label>
-              <textarea matInput rows="4" formControlName="description" placeholder="Présentation rapide de votre organisation..."></textarea>
+              <textarea matInput rows="4" formControlName="description"
+                placeholder="Présentation rapide de votre organisation..."></textarea>
             </mat-form-field>
           </form>
         </div>
@@ -169,7 +177,7 @@
           <mat-icon class="tab-icon">contact_mail</mat-icon>
           <span>Coordonnées & Contact</span>
         </ng-template>
-        
+
         <div [class.tab-content-panel]="isDialog" [class.tab-pane-content]="!isDialog">
           <div class="pane-header" *ngIf="!isDialog">
             <h2>Coordonnées & Contact</h2>
@@ -178,13 +186,13 @@
 
           <form [formGroup]="organizationForm" class="dialog-form">
             <div class="form-row-grid">
-              <mat-form-field appearance="outline" class="form-field">
+              <mat-form-field appearance="outline" floatLabel="always" class="form-field">
                 <mat-label>Email officiel</mat-label>
                 <mat-icon matIconPrefix>alternate_email</mat-icon>
                 <input matInput formControlName="email" placeholder="contact@organisation.com">
               </mat-form-field>
 
-              <mat-form-field appearance="outline" class="form-field">
+              <mat-form-field appearance="outline" floatLabel="always" class="form-field">
                 <mat-label>Téléphone support</mat-label>
                 <mat-icon matIconPrefix>phone</mat-icon>
                 <input matInput formControlName="phone" placeholder="+33 X XX XX XX XX">
@@ -192,13 +200,13 @@
             </div>
 
             <div class="form-row-grid">
-              <mat-form-field appearance="outline" class="form-field">
+              <mat-form-field appearance="outline" floatLabel="always" class="form-field">
                 <mat-label>Numéro de Fax</mat-label>
                 <mat-icon matIconPrefix>print</mat-icon>
                 <input matInput formControlName="fax" placeholder="Numéro de fax">
               </mat-form-field>
 
-              <mat-form-field appearance="outline" class="form-field">
+              <mat-form-field appearance="outline" floatLabel="always" class="form-field">
                 <mat-label>Site Web</mat-label>
                 <mat-icon matIconPrefix>language</mat-icon>
                 <input matInput formControlName="website" placeholder="https://www.site.com">
@@ -214,7 +222,7 @@
           <mat-icon class="tab-icon">timer</mat-icon>
           <span>Abonnement</span>
         </ng-template>
-        
+
         <div [class.tab-content-panel]="isDialog" [class.tab-pane-content]="!isDialog">
           <div class="pane-header" *ngIf="!isDialog">
             <h2>Abonnement & Notifications</h2>
@@ -223,12 +231,12 @@
 
           <div class="subscription-readonly-note" *ngIf="!isSuperAdmin">
             <mat-icon>info</mat-icon>
-            <span>Les paramètres d'abonnement sont gérés exclusivement par le Super Administrateur de QualiFlow.</span>
+            <span>Contacter l'administrateur de QualiFlow pour toute modification d'abonnement.</span>
           </div>
 
           <form [formGroup]="organizationForm" class="dialog-form">
             <div class="form-row-grid align-center">
-              <mat-form-field appearance="outline" class="form-field">
+              <mat-form-field appearance="outline" floatLabel="always" class="form-field">
                 <mat-label>Abonnement (jours restants)</mat-label>
                 <mat-icon matIconPrefix>timer</mat-icon>
                 <input matInput type="number" min="0" formControlName="subscriptionDaysRemaining">
