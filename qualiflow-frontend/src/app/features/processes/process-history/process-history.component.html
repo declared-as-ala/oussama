@@ -149,6 +149,12 @@
               <span>Statuts</span>
               <span class="category-badge count-status">{{ getCategoryCount('STATUS') }}</span>
             </button>
+
+            <button type="button" class="category-pill-btn" [class.active]="selectedCategory === 'DOCUMENTS'" (click)="selectedCategory = 'DOCUMENTS'">
+              <mat-icon>link</mat-icon>
+              <span>Liaisons</span>
+              <span class="category-badge count-documents">{{ getCategoryCount('DOCUMENTS') }}</span>
+            </button>
           </div>
 
           <!-- Search Bar -->

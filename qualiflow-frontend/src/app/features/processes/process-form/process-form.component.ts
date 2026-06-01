@@ -22,7 +22,8 @@ import {
   ProcessResponse,
   ProcessStatus,
   ProcessType,
-  UpdateProcessRequest
+  UpdateProcessRequest,
+  ProcessListItemResponse
 } from '../models/process.models';
 import { ProcessService } from '../services/process.service';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
@@ -137,6 +138,7 @@ export class ProcessFormComponent implements OnInit {
   isEdit = false;
   processId: number | null = null;
   pilots: UserResponse[] = [];
+  existingProcesses: ProcessListItemResponse[] = [];
   activeTab = 0;
 
   constructor(
@@ -154,15 +156,24 @@ export class ProcessFormComponent implements OnInit {
     this.processId = idParam ? Number(idParam) : null;
     this.isEdit = this.processId !== null && !Number.isNaN(this.processId);
 
+    // Auto-generate code when name or type changes
+    this.processForm.controls.name.valueChanges.subscribe(() => this.autoGenerateCode());
+    this.processForm.controls.type.valueChanges.subscribe(() => this.autoGenerateCode());
+
+    // Add duplicate code validator
+    this.processForm.controls.code.addValidators(this.duplicateCodeValidator());
+
     this.loading = true;
 
     if (this.isEdit && this.processId) {
       forkJoin({
         users: this.userService.getAll(1, 300),
-        details: this.processService.getProcessById(this.processId)
+        details: this.processService.getProcessById(this.processId),
+        processes: this.processService.getProcesses({ pageNumber: 1, pageSize: 500 })
       }).subscribe({
-        next: ({ users, details }) => {
+        next: ({ users, details, processes }) => {
           this.pilots = users.items.filter(user => user.isActive);
+          this.existingProcesses = processes.items;
           this.patchForm(details.process);
           this.loading = false;
         },
@@ -175,14 +186,18 @@ export class ProcessFormComponent implements OnInit {
       return;
     }
 
-    this.userService.getAll(1, 300).subscribe({
-      next: (users) => {
+    forkJoin({
+      users: this.userService.getAll(1, 300),
+      processes: this.processService.getProcesses({ pageNumber: 1, pageSize: 500 })
+    }).subscribe({
+      next: ({ users, processes }) => {
         this.pilots = users.items.filter(user => user.isActive);
+        this.existingProcesses = processes.items;
         this.loading = false;
       },
       error: () => {
         this.loading = false;
-        this.notificationService.showError('Impossible de charger les utilisateurs pilotes.');
+        this.notificationService.showError('Impossible de charger les données de référence.');
       }
     });
   }
@@ -361,6 +376,95 @@ export class ProcessFormComponent implements OnInit {
       .filter(value => value.length > 0);
 
     return Array.from(new Set(normalized));
+  }
+
+  private getTypePrefix(type: ProcessType): string {
+    switch (type) {
+      case 'PILOTAGE':
+        return 'PIL';
+      case 'REALISATION':
+        return 'REA';
+      case 'SUPPORT':
+        return 'SUP';
+      default:
+        return 'PRC';
+    }
+  }
+
+  private generateTitleCode(title: string): string {
+    if (!title) return '';
+
+    // Normalize: remove accents
+    const normalized = title.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    // Keep only alphanumeric characters and spaces/hyphens
+    const cleaned = normalized.replace(/[^a-zA-Z0-9\s-]/g, '').trim();
+
+    const words = cleaned.split(/[\s-]+/).filter(w => w.length > 0);
+
+    if (words.length === 1) {
+      // Single word: take up to 4 characters
+      return words[0].substring(0, 4).toUpperCase();
+    } else {
+      // Multiple words: take the initials of words, ignoring short stop words
+      const stopWords = ['DE', 'LA', 'LE', 'DES', 'EN', 'ET', 'UN', 'UNE', 'DU', 'AU', 'AUX', 'POUR', 'PAR', 'SUR', 'D', 'L'];
+      const filteredWords = words.filter(w => !stopWords.includes(w.toUpperCase()));
+
+      const finalWords = filteredWords.length > 0 ? filteredWords : words;
+      return finalWords.map(w => w[0].toUpperCase()).join('');
+    }
+  }
+
+  private autoGenerateCode(): void {
+    const codeCtrl = this.processForm.controls.code;
+
+    // If the field is dirty (manually changed by the user) and is not empty, don't overwrite it
+    if (codeCtrl.dirty && codeCtrl.value) {
+      return;
+    }
+
+    // If editing and we already have a value, don't overwrite it
+    if (this.isEdit && codeCtrl.value) {
+      return;
+    }
+
+    const name = this.processForm.controls.name.value;
+    const type = this.processForm.controls.type.value;
+
+    if (!name) {
+      codeCtrl.setValue('', { emitEvent: false });
+      return;
+    }
+
+    const typePrefix = this.getTypePrefix(type);
+    const titleCode = this.generateTitleCode(name);
+    const year = new Date().getFullYear();
+
+    const generatedCode = `${typePrefix}-${titleCode}-${year}`;
+
+    // Prevent duplicate codes
+    let finalCode = generatedCode;
+    let counter = 1;
+    while (this.existingProcesses.some(p => p.code.toUpperCase() === finalCode.toUpperCase() && p.id !== this.processId)) {
+      const suffix = counter < 10 ? `-0${counter}` : `-${counter}`;
+      finalCode = `${generatedCode}${suffix}`;
+      counter++;
+    }
+
+    codeCtrl.setValue(finalCode, { emitEvent: false });
+  }
+
+  duplicateCodeValidator(): import('@angular/forms').ValidatorFn {
+    return (control: import('@angular/forms').AbstractControl): import('@angular/forms').ValidationErrors | null => {
+      const value = control.value;
+      if (!value) return null;
+
+      const exists = this.existingProcesses.some(
+        p => p.code.toUpperCase() === value.trim().toUpperCase() && p.id !== this.processId
+      );
+
+      return exists ? { duplicateCode: true } : null;
+    };
   }
 
   setActiveTab(index: number): void {

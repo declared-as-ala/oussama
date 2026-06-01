@@ -54,6 +54,7 @@ export class ProcessDocumentsComponent implements OnInit {
   docSearchTerm = '';
   selectedDocIdToLink: number | null = null;
   linkingDoc = false;
+  selectedProcedureIdToLink: number | null = null;
 
   /** null = "Tous les documents" */
   selectedProcedureId: number | null = null;
@@ -90,6 +91,7 @@ export class ProcessDocumentsComponent implements OnInit {
     this.loading = true;
     this.searchTerm = '';
     this.selectedProcedureId = null;
+    this.selectedProcedureIdToLink = null;
 
     forkJoin({
       details: this.processService.getProcessById(this.processId),
@@ -117,6 +119,7 @@ export class ProcessDocumentsComponent implements OnInit {
   selectProcedure(id: number | null): void {
     this.selectedProcedureId = id;
     this.searchTerm = '';
+    this.selectedProcedureIdToLink = id;
   }
 
   /** Filtered document list shown in the table */
@@ -212,27 +215,63 @@ export class ProcessDocumentsComponent implements OnInit {
   }
 
   addDocumentLink(): void {
-    if (!this.selectedDocIdToLink) return;
+    const targetProcedureId = this.selectedProcedureId || this.selectedProcedureIdToLink;
+    if (!targetProcedureId || !this.selectedDocIdToLink) return;
 
     const doc = this.allAvailableDocs.find(d => d.id === this.selectedDocIdToLink);
     if (!doc) return;
 
+    const proc = this.procedures.find(p => p.id === targetProcedureId);
+    const procLabel = proc ? `[${proc.code}] ${proc.title}` : `#${targetProcedureId}`;
+
     const confirmed = window.confirm(
-      `Confirmer la liaison ?\n\nDocument : [${doc.code}] ${doc.title}\n\nCe document sera associé à ce processus.`
+      `Confirmer la liaison ?\n\nDocument : [${doc.code}] ${doc.title}\n\nCe document sera associé à la procédure : ${procLabel}.`
     );
     if (!confirmed) return;
 
     this.linkingDoc = true;
-    this.processService.addDocumentLink(this.processId, this.selectedDocIdToLink).subscribe({
-      next: () => {
-        this.notificationService.showSuccess(`Document [${doc.code}] lié avec succès.`);
-        this.selectedDocIdToLink = null;
-        this.docSearchTerm = '';
-        this.loadData();
-        this.linkingDoc = false;
+    this.documentService.getDocumentById(this.selectedDocIdToLink).subscribe({
+      next: (detailsRes) => {
+        const docDetails = detailsRes.document;
+        
+        const newProcedureIds = new Set(docDetails.procedureIds || []);
+        newProcedureIds.add(targetProcedureId);
+        
+        const newProcessIds = new Set(docDetails.processIds || []);
+        newProcessIds.add(this.processId);
+
+        const updatedPayload = {
+          code: docDetails.code,
+          title: docDetails.title,
+          type: docDetails.type,
+          description: docDetails.description || null,
+          category: docDetails.category || null,
+          keywords: docDetails.keywords || null,
+          signature: docDetails.signature || null,
+          ownerUserId: docDetails.ownerUserId || null,
+          isActive: docDetails.isActive,
+          processId: this.processId,
+          procedureId: targetProcedureId,
+          processIds: Array.from(newProcessIds),
+          procedureIds: Array.from(newProcedureIds)
+        };
+
+        this.documentService.updateDocument(docDetails.id, updatedPayload).subscribe({
+          next: () => {
+            this.notificationService.showSuccess(`Document [${doc.code}] lié avec succès à la procédure ${proc?.code}.`);
+            this.selectedDocIdToLink = null;
+            this.docSearchTerm = '';
+            this.loadData();
+            this.linkingDoc = false;
+          },
+          error: () => {
+            this.notificationService.showError("Impossible de lier le document.");
+            this.linkingDoc = false;
+          }
+        });
       },
       error: () => {
-        this.notificationService.showError('Impossible de lier le document.');
+        this.notificationService.showError("Impossible de charger les détails du document.");
         this.linkingDoc = false;
       }
     });
@@ -246,21 +285,69 @@ export class ProcessDocumentsComponent implements OnInit {
     return this.allAvailableDocs.find(d => d.id === this.selectedDocIdToLink)?.title || '';
   }
 
-  removeDocumentLink(documentId: number): void {
-    const doc = this.allDocuments.find(d => d.id === documentId);
-    const label = doc ? `[${doc.code}] ${doc.title}` : `#${documentId}`;
+  removeDocumentLink(d: DocumentListItemResponse): void {
+    const targetProcedureId = this.selectedProcedureId || d.procedureId;
+    if (!targetProcedureId) {
+      this.notificationService.showError("Impossible de déterminer la procédure associée.");
+      return;
+    }
+
+    const proc = this.procedures.find(p => p.id === targetProcedureId);
+    const procLabel = proc ? `[${proc.code}] ${proc.title}` : `#${targetProcedureId}`;
+
     const confirmed = window.confirm(
-      `Confirmer la déliaison ?\n\nDocument : ${label}\n\nCe document ne sera plus associé à ce processus.`
+      `Confirmer la déliaison ?\n\nDocument : [${d.code}] ${d.title}\n\nCe document ne sera plus associé à la procédure : ${procLabel}.`
     );
     if (!confirmed) return;
 
-    this.processService.removeDocumentLink(this.processId, documentId).subscribe({
-      next: () => {
-        this.notificationService.showSuccess(`Document ${label} délié avec succès.`);
-        this.loadData();
+    this.loading = true;
+
+    this.documentService.getDocumentById(d.id).subscribe({
+      next: (detailsRes) => {
+        const docDetails = detailsRes.document;
+
+        const newProcedureIds = (docDetails.procedureIds || []).filter(id => id !== targetProcedureId);
+        
+        let newProcessIds = docDetails.processIds || [];
+        const hasOtherProcsOfSameProcess = this.allDocuments.some(
+          otherDoc => otherDoc.id !== d.id && 
+                      otherDoc.procedureId !== targetProcedureId && 
+                      this.procedures.some(p => p.id === otherDoc.procedureId)
+        );
+        if (!hasOtherProcsOfSameProcess) {
+          newProcessIds = newProcessIds.filter(id => id !== this.processId);
+        }
+
+        const updatedPayload = {
+          code: docDetails.code,
+          title: docDetails.title,
+          type: docDetails.type,
+          description: docDetails.description || null,
+          category: docDetails.category || null,
+          keywords: docDetails.keywords || null,
+          signature: docDetails.signature || null,
+          ownerUserId: docDetails.ownerUserId || null,
+          isActive: docDetails.isActive,
+          processId: newProcessIds.length > 0 ? newProcessIds[0] : null,
+          procedureId: newProcedureIds.length > 0 ? newProcedureIds[0] : null,
+          processIds: newProcessIds,
+          procedureIds: newProcedureIds
+        };
+
+        this.documentService.updateDocument(docDetails.id, updatedPayload).subscribe({
+          next: () => {
+            this.notificationService.showSuccess(`Document [${d.code}] délié avec succès.`);
+            this.loadData();
+          },
+          error: () => {
+            this.loading = false;
+            this.notificationService.showError("Impossible de délier le document.");
+          }
+        });
       },
       error: () => {
-        this.notificationService.showError('Impossible de délier le document.');
+        this.loading = false;
+        this.notificationService.showError("Impossible de charger les détails du document.");
       }
     });
   }

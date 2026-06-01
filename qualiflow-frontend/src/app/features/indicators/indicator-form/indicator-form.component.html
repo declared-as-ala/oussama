@@ -33,11 +33,15 @@
             <div class="form-section" *ngIf="activeTab === 0">
                 <div class="form-section-title">{{ 'form.indicator.generalInfo' | t }}</div>
                 <div class="form-grid">
+                    <div class="form-group full">
+                        <label>{{ 'form.indicator.designation' | t }} <span class="req">*</span></label>
+                        <input type="text" formControlName="name" [placeholder]="'form.indicator.namePlaceholder' | t">
+                    </div>
                     <div class="form-group">
                         <label>{{ 'form.indicator.processOwner' | t }} <span class="req">*</span></label>
                         <select formControlName="processId">
-                            <option [value]="null">{{ 'form.indicator.select' | t }}</option>
-                            <option *ngFor="let p of processes" [value]="p.id">{{p.code}} - {{p.name}}</option>
+                            <option [ngValue]="null">{{ 'form.indicator.select' | t }}</option>
+                            <option *ngFor="let p of processes" [ngValue]="p.id">{{p.code}} - {{p.name}}</option>
                         </select>
                         <div class="field-hint" *ngIf="selectedProcessPilotName">
                             <mat-icon>person_outline</mat-icon>
@@ -46,11 +50,13 @@
                     </div>
                     <div class="form-group">
                         <label>{{ 'form.indicator.codeRef' | t }} <span class="req">*</span></label>
-                        <input type="text" formControlName="code" placeholder="KPI-QUAL-01">
-                    </div>
-                    <div class="form-group full">
-                        <label>{{ 'form.indicator.designation' | t }} <span class="req">*</span></label>
-                        <input type="text" formControlName="name" [placeholder]="'form.indicator.namePlaceholder' | t">
+                        <input type="text" formControlName="code" placeholder="Ex: IND-SUP-GRH-TSC-2026">
+                        <div class="field-error" *ngIf="form.controls.code.hasError('duplicateCode')" style="color: #ef4444; font-size: 12px; margin-top: 4px; font-weight: 500;">
+                            Ce code d'indicateur existe déjà.
+                        </div>
+                        <div class="field-error" *ngIf="form.controls.code.invalid && !form.controls.code.hasError('duplicateCode') && (form.controls.code.dirty || form.controls.code.touched)" style="color: #ef4444; font-size: 12px; margin-top: 4px; font-weight: 500;">
+                            Code obligatoire.
+                        </div>
                     </div>
                     <div class="form-group full">
                         <label>{{ 'form.indicator.descObjective' | t }}</label>

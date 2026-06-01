@@ -24,7 +24,8 @@ import {
   CorrectiveActionType,
   CorrectiveActionAttachmentResponse,
   CreateCorrectiveActionRequest,
-  UpdateCorrectiveActionRequest
+  UpdateCorrectiveActionRequest,
+  CorrectiveActionListItemResponse
 } from '../models/corrective-action.models';
 import { CorrectiveActionService } from '../services/corrective-action.service';
 
@@ -51,6 +52,12 @@ export class CorrectiveActionFormComponent implements OnInit {
   readonly typeOptions = CORRECTIVE_ACTION_TYPE_OPTIONS;
 
   readonly form = this.fb.group({
+    code: this.fb.nonNullable.control('', [
+      Validators.required,
+      Validators.minLength(2),
+      Validators.maxLength(30),
+      Validators.pattern(/^[A-Za-z0-9_\-/]+$/)
+    ]),
     nonConformityId: this.fb.control<number | null>(null, [Validators.required, Validators.min(1)]),
     type: this.fb.nonNullable.control<CorrectiveActionType>('CORRECTIVE', Validators.required),
     title: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(3), Validators.maxLength(255)]),
@@ -74,6 +81,7 @@ export class CorrectiveActionFormComponent implements OnInit {
   existingAttachments: CorrectiveActionAttachmentResponse[] = [];
   selectedFiles: File[] = [];
   processActors: { userId: number; fullName: string }[] = [];
+  existingActions: CorrectiveActionListItemResponse[] = [];
   loadingActors = false;
   readonly acceptedAttachmentTypes = '.png,.jpg,.jpeg,.webp,.gif,.pdf,.doc,.docx,.xls,.xlsx';
   readonly allowedAttachmentFormatsLabel = 'images, PDF, Word ou Excel';
@@ -94,6 +102,103 @@ export class CorrectiveActionFormComponent implements OnInit {
     return nc?.processCode ?? null;
   }
 
+  get generatedActionCode(): string {
+    const ncId = this.form.controls.nonConformityId.value;
+    const type = this.form.controls.type.value;
+
+    if (!ncId) {
+      return 'AC-NC-XXXX-' + new Date().getFullYear();
+    }
+
+    const nc = this.nonConformities.find(n => n.id === ncId);
+    let ncCode = nc ? nc.code : 'NC-XXXX';
+
+    const yearPattern = /-\d{4}-/;
+    if (yearPattern.test(ncCode)) {
+      ncCode = ncCode.replace(yearPattern, '-');
+    }
+
+    let typePrefix = 'COR';
+    if (type === 'CURATIVE') typePrefix = 'CUR';
+    if (type === 'RISQUE') typePrefix = 'RSQ';
+
+    const yearTwoDigits = new Date().getFullYear().toString().substring(2);
+
+    return `AC-${ncCode}-${typePrefix}-${yearTwoDigits}`;
+  }
+
+  private autoGenerateCode(): void {
+    const codeCtrl = this.form.controls.code;
+
+    // If the field is dirty (manually changed by the user) and is not empty, don't overwrite it
+    if (codeCtrl.dirty && codeCtrl.value) {
+      return;
+    }
+
+    // If editing and we already have a value, don't overwrite it
+    if (this.isEdit && codeCtrl.value) {
+      return;
+    }
+
+    const ncId = this.form.controls.nonConformityId.value;
+    const type = this.form.controls.type.value;
+
+    if (!ncId) {
+      codeCtrl.setValue('', { emitEvent: false });
+      return;
+    }
+
+    const nc = this.nonConformities.find(n => n.id === ncId);
+    let ncCode = nc ? nc.code : 'NC-XXXX';
+
+    // Strip year pattern in NC code to keep it short (minimiser le code!)
+    // e.g. NC-2026-001 -> NC-001
+    const yearPattern = /-\d{4}-/;
+    if (yearPattern.test(ncCode)) {
+      ncCode = ncCode.replace(yearPattern, '-');
+    }
+
+    let typePrefix = 'COR';
+    if (type === 'CURATIVE') typePrefix = 'CUR';
+    if (type === 'RISQUE') typePrefix = 'RSQ';
+
+    const yearTwoDigits = new Date().getFullYear().toString().substring(2);
+
+    const generatedCode = `AC-${ncCode}-${typePrefix}-${yearTwoDigits}`;
+
+    // Prevent duplicate codes
+    let finalCode = generatedCode;
+    let counter = 1;
+    while (this.existingActions.some(a => {
+      const titleStr = a.title || '';
+      const match = /^(AC-[^\s-]+)\s*-\s*(.+)$/.exec(titleStr);
+      const existingCode = match ? match[1] : titleStr;
+      return existingCode.toUpperCase() === finalCode.toUpperCase() && a.id !== this.correctiveActionId;
+    })) {
+      const suffix = counter < 10 ? `-0${counter}` : `-${counter}`;
+      finalCode = `${generatedCode}${suffix}`;
+      counter++;
+    }
+
+    codeCtrl.setValue(finalCode, { emitEvent: false });
+  }
+
+  duplicateCodeValidator(): import('@angular/forms').ValidatorFn {
+    return (control: import('@angular/forms').AbstractControl): import('@angular/forms').ValidationErrors | null => {
+      const value = control.value;
+      if (!value) return null;
+
+      const exists = this.existingActions.some(a => {
+        const titleStr = a.title || '';
+        const match = /^(AC-[^\s-]+)\s*-\s*(.+)$/.exec(titleStr);
+        const existingCode = match ? match[1] : titleStr;
+        return existingCode.toUpperCase() === value.trim().toUpperCase() && a.id !== this.correctiveActionId;
+      });
+
+      return exists ? { duplicateCode: true } : null;
+    };
+  }
+
   constructor(
     private readonly fb: FormBuilder,
     private readonly route: ActivatedRoute,
@@ -111,6 +216,14 @@ export class CorrectiveActionFormComponent implements OnInit {
     this.correctiveActionId = idParam ? Number(idParam) : null;
     this.isEdit = this.correctiveActionId !== null && !Number.isNaN(this.correctiveActionId);
 
+    // Auto-generate code when type changes
+    this.form.get('type')?.valueChanges.subscribe(() => {
+      this.autoGenerateCode();
+    });
+
+    // Add duplicate code validator
+    this.form.controls.code.addValidators(this.duplicateCodeValidator());
+
     this.loadData();
 
     // When NC changes, load its linked process actors to filter the responsible dropdown
@@ -118,6 +231,7 @@ export class CorrectiveActionFormComponent implements OnInit {
       const ncId = val ? Number(val) : null;
       if (!ncId) {
         this.processActors = [];
+        this.autoGenerateCode();
         return;
       }
       const nc = this.nonConformities.find(n => n.id === ncId);
@@ -133,14 +247,17 @@ export class CorrectiveActionFormComponent implements OnInit {
               this.form.patchValue({ responsibleUserId: null }, { emitEvent: false });
             }
             this.loadingActors = false;
+            this.autoGenerateCode();
           },
           error: () => {
             this.processActors = [];
             this.loadingActors = false;
+            this.autoGenerateCode();
           }
         });
       } else {
         this.processActors = [];
+        this.autoGenerateCode();
       }
     });
   }
@@ -212,7 +329,8 @@ export class CorrectiveActionFormComponent implements OnInit {
     const refs$ = forkJoin({
       users: this.userService.getAll(1, 300),
       nonConformities: this.nonConformityService.getNonConformities({ pageNumber: 1, pageSize: 300 }),
-      records: this.documentService.getDocuments({ pageNumber: 1, pageSize: 300, type: 'ENREGISTREMENT' })
+      records: this.documentService.getDocuments({ pageNumber: 1, pageSize: 300, type: 'ENREGISTREMENT' }),
+      actions: this.correctiveActionService.getCorrectiveActions({ pageNumber: 1, pageSize: 500 })
     });
 
     if (this.isEdit && this.correctiveActionId) {
@@ -224,6 +342,7 @@ export class CorrectiveActionFormComponent implements OnInit {
           this.users = refs.users.items.filter(user => user.isActive);
           this.nonConformities = refs.nonConformities.items;
           this.proofRecords = refs.records.items;
+          this.existingActions = refs.actions.items;
           this.existingAttachments = details.attachments ?? [];
           this.patchForm(details.action);
           this.loading = false;
@@ -239,10 +358,11 @@ export class CorrectiveActionFormComponent implements OnInit {
     }
 
     refs$.subscribe({
-      next: ({ users, nonConformities, records }) => {
+      next: ({ users, nonConformities, records, actions }) => {
         this.users = users.items.filter(user => user.isActive);
         this.nonConformities = nonConformities.items;
         this.proofRecords = records.items;
+        this.existingActions = actions.items;
         this.loading = false;
       },
       error: () => {
@@ -290,10 +410,32 @@ export class CorrectiveActionFormComponent implements OnInit {
   }
 
   private patchForm(action: any): void {
+    let code = '';
+    let title = action.title || '';
+
+    // Extract code from title if matches standard separator " - "
+    // e.g. "AC-NC-01-COR-26 - Action Title" -> code = "AC-NC-01-COR-26", title = "Action Title"
+    // Also support custom format from seeds: "AC-001 - Title"
+    const match = /^(AC-[^\s-]+)\s*-\s*(.+)$/.exec(title);
+    if (match) {
+      code = match[1];
+      title = match[2];
+    } else {
+      // Fallback: auto-generate a code if it doesn't match
+      const nc = this.nonConformities.find(n => n.id === action.nonConformityId);
+      const ncCode = nc ? nc.code : 'NC-XXXX';
+      const yearTwoDigits = new Date(action.createdAt || new Date()).getFullYear().toString().substring(2);
+      let typePrefix = 'COR';
+      if (action.type === 'CURATIVE') typePrefix = 'CUR';
+      if (action.type === 'RISQUE') typePrefix = 'RSQ';
+      code = `AC-${ncCode}-${typePrefix}-${yearTwoDigits}`;
+    }
+
     this.form.patchValue({
+      code: code,
       nonConformityId: action.nonConformityId,
       type: action.type,
-      title: action.title,
+      title: title,
       description: action.description || '',
       responsibleUserId: action.responsibleUserId,
       dueDate: this.toDateInputValue(action.dueDate),
@@ -305,11 +447,13 @@ export class CorrectiveActionFormComponent implements OnInit {
 
   private buildCreatePayload(): CreateCorrectiveActionRequest {
     const raw = this.form.getRawValue();
+    const code = raw.code?.trim() || 'AC-XXXX';
+    const title = raw.title?.trim() || '';
 
     return {
       nonConformityId: raw.nonConformityId!,
       type: raw.type,
-      title: raw.title.trim(),
+      title: `${code} - ${title}`,
       description: raw.description?.trim() || null,
       responsibleUserId: raw.responsibleUserId!,
       dueDate: `${raw.dueDate}T00:00:00Z`,

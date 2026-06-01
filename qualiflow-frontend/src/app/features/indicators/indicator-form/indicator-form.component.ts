@@ -20,7 +20,8 @@ import {
   MeasurementFrequency,
   UpdateIndicatorRequest,
   INDICATOR_FREQUENCY_OPTIONS,
-  INDICATOR_STATUS_OPTIONS
+  INDICATOR_STATUS_OPTIONS,
+  IndicatorListItemResponse
 } from '../models/indicator.models';
 import { IndicatorService } from '../services/indicator.service';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
@@ -48,13 +49,28 @@ export class IndicatorFormComponent implements OnInit {
   readonly statusOptions = INDICATOR_STATUS_OPTIONS;
   readonly frequencyOptions = INDICATOR_FREQUENCY_OPTIONS;
 
+  readonly unitOptions: { value: string; label: string }[] = [
+    { value: '%',       label: 'Pourcentage (%)' },
+    { value: 'nombre',  label: 'Nombre' },
+    { value: 'score',   label: 'Score' },
+    { value: 'heures',  label: 'Heures' },
+    { value: 'jours',   label: 'Jours' },
+    { value: 'MAD',     label: 'Dirhams (MAD)' },
+    { value: 'EUR',     label: 'Euros (EUR)' },
+    { value: 'USD',     label: 'Dollars (USD)' },
+    { value: 'unités',  label: 'Unités' },
+    { value: 'km',      label: 'Kilomètres (km)' },
+    { value: 'kg',      label: 'Kilogrammes (kg)' },
+    { value: 'autre',   label: 'Autre' },
+  ];
+
   readonly form = this.fb.group({
     processId: this.fb.nonNullable.control(0, [Validators.required, Validators.min(1)]),
     code: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(50)]),
     name: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(255)]),
     description: this.fb.control<string>(''),
     calculationMethod: this.fb.control<string>(''),
-    unit: this.fb.control<string>(''),
+    unit: this.fb.nonNullable.control('%'),
     targetValue: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
     alertThreshold: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
     measurementFrequency: this.fb.nonNullable.control<MeasurementFrequency>('MENSUEL', Validators.required),
@@ -89,6 +105,7 @@ export class IndicatorFormComponent implements OnInit {
   users: UserResponse[] = [];
   processActors: { userId: number; fullName: string }[] = [];
   loadingActors = false;
+  existingIndicators: IndicatorListItemResponse[] = [];
 
   get responsibleUsers(): UserResponse[] {
     if (this.processActors.length === 0) {
@@ -112,6 +129,14 @@ export class IndicatorFormComponent implements OnInit {
     const idParam = this.route.snapshot.paramMap.get('id');
     this.indicatorId = idParam ? Number(idParam) : null;
     this.isEdit = this.indicatorId !== null && !Number.isNaN(this.indicatorId);
+
+    // Auto-generate code when processId or name changes
+    this.form.controls.processId.valueChanges.subscribe(() => this.autoGenerateCode());
+    this.form.controls.name.valueChanges.subscribe(() => this.autoGenerateCode());
+
+    // Add duplicate code validator
+    this.form.controls.code.addValidators(this.duplicateCodeValidator());
+
     this.loadData();
 
     // When process changes, load its actors to filter the responsible dropdown
@@ -208,7 +233,8 @@ export class IndicatorFormComponent implements OnInit {
 
     const refs$ = forkJoin({
       processes: this.processService.getProcesses({ pageNumber: 1, pageSize: 300 }),
-      users: this.userService.getAll(1, 300)
+      users: this.userService.getAll(1, 300),
+      indicators: this.indicatorService.getIndicators({ pageNumber: 1, pageSize: 500 })
     });
 
     if (this.isEdit && this.indicatorId) {
@@ -219,6 +245,7 @@ export class IndicatorFormComponent implements OnInit {
         next: ({ refs, details }) => {
           this.processes = refs.processes.items;
           this.users = refs.users.items.filter(user => user.isActive);
+          this.existingIndicators = refs.indicators.items;
           this.patchForm(details.indicator);
           this.loading = false;
         },
@@ -233,9 +260,10 @@ export class IndicatorFormComponent implements OnInit {
     }
 
     refs$.subscribe({
-      next: ({ processes, users }) => {
+      next: ({ processes, users, indicators }) => {
         this.processes = processes.items;
         this.users = users.items.filter(user => user.isActive);
+        this.existingIndicators = indicators.items;
         this.loading = false;
 
         const qProcessId = this.route.snapshot.queryParamMap.get('processId');
@@ -301,5 +329,94 @@ export class IndicatorFormComponent implements OnInit {
 
   private buildUpdatePayload(): UpdateIndicatorRequest {
     return this.buildCreatePayload();
+  }
+
+  private generateTitleCode(title: string): string {
+    if (!title) return '';
+
+    // Normalize: remove accents
+    const normalized = title.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    // Keep only alphanumeric characters and spaces/hyphens
+    const cleaned = normalized.replace(/[^a-zA-Z0-9\s-]/g, '').trim();
+
+    const words = cleaned.split(/[\s-]+/).filter(w => w.length > 0);
+
+    if (words.length === 1) {
+      // Single word: take up to 4 characters
+      return words[0].substring(0, 4).toUpperCase();
+    } else {
+      // Multiple words: take the initials of words, ignoring short stop words
+      const stopWords = ['DE', 'LA', 'LE', 'DES', 'EN', 'ET', 'UN', 'UNE', 'DU', 'AU', 'AUX', 'POUR', 'PAR', 'SUR', 'D', 'L'];
+      const filteredWords = words.filter(w => !stopWords.includes(w.toUpperCase()));
+
+      const finalWords = filteredWords.length > 0 ? filteredWords : words;
+      return finalWords.map(w => w[0].toUpperCase()).join('');
+    }
+  }
+
+  private autoGenerateCode(): void {
+    const codeCtrl = this.form.controls.code;
+
+    // If the field is dirty (manually changed by the user) and is not empty, don't overwrite it
+    if (codeCtrl.dirty && codeCtrl.value) {
+      return;
+    }
+
+    // If editing and we already have a value, don't overwrite it
+    if (this.isEdit && codeCtrl.value) {
+      return;
+    }
+
+    const processIdRaw = this.form.controls.processId.value;
+    const name = this.form.controls.name.value;
+
+    if (!processIdRaw || !name) {
+      codeCtrl.setValue('', { emitEvent: false });
+      return;
+    }
+
+    const processId = Number(processIdRaw);
+    const selectedProcess = this.processes.find(p => p.id === processId);
+    if (!selectedProcess) {
+      codeCtrl.setValue('', { emitEvent: false });
+      return;
+    }
+
+    // Base process code (extract prefix, e.g. PIL-GRH from PIL-GRH-2026)
+    let processPrefix = selectedProcess.code;
+    const yearPattern = /-\d{4}$/;
+    if (yearPattern.test(processPrefix)) {
+      processPrefix = processPrefix.replace(yearPattern, '');
+    }
+
+    const titleCode = this.generateTitleCode(name);
+    const year = new Date().getFullYear();
+
+    const generatedCode = `IND-${processPrefix}-${titleCode}-${year}`;
+
+    // Prevent duplicate codes
+    let finalCode = generatedCode;
+    let counter = 1;
+    while (this.existingIndicators.some(ind => ind.code.toUpperCase() === finalCode.toUpperCase() && ind.id !== this.indicatorId)) {
+      const suffix = counter < 10 ? `-0${counter}` : `-${counter}`;
+      finalCode = `${generatedCode}${suffix}`;
+      counter++;
+    }
+
+    codeCtrl.setValue(finalCode, { emitEvent: false });
+  }
+
+  duplicateCodeValidator(): import('@angular/forms').ValidatorFn {
+    return (control: import('@angular/forms').AbstractControl): import('@angular/forms').ValidationErrors | null => {
+      const value = control.value;
+      if (!value) return null;
+
+      const exists = this.existingIndicators.some(
+        ind => ind.code.toUpperCase() === value.trim().toUpperCase() && ind.id !== this.indicatorId
+      );
+
+      return exists ? { duplicateCode: true } : null;
+    };
   }
 }

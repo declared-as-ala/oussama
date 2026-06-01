@@ -42,6 +42,21 @@
         </div>
 
         <div class="card-body">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Titre de l'action *</mat-label>
+            <input matInput formControlName="title" placeholder="Ex: Mise à jour du mode opératoire..." />
+            <mat-error *ngIf="form.controls.title.invalid">Titre obligatoire</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Code de l'action *</mat-label>
+            <input matInput formControlName="code" placeholder="Ex: AC-NC-01-COR-26" />
+            <mat-error *ngIf="form.controls.code.hasError('duplicateCode')">Ce code d'action corrective existe
+              déjà.</mat-error>
+            <mat-error *ngIf="form.controls.code.invalid && !form.controls.code.hasError('duplicateCode')">Code
+              obligatoire et valide requis</mat-error>
+          </mat-form-field>
+
           <div class="input-row">
             <mat-form-field appearance="outline">
               <mat-label>Non-conformité *</mat-label>
@@ -63,12 +78,6 @@
           </div>
 
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Titre de l'action *</mat-label>
-            <input matInput formControlName="title" placeholder="Ex: Mise à jour du mode opératoire..." />
-            <mat-error *ngIf="form.controls.title.invalid">Titre obligatoire</mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="full-width">
             <mat-label>Description détaillée</mat-label>
             <textarea matInput rows="6" formControlName="description"
               placeholder="Détails de l'action à mener..."></textarea>
@@ -88,7 +97,7 @@
             <mat-label>Responsable de l'action *</mat-label>
             <mat-select formControlName="responsibleUserId">
               <mat-option [value]="null">Sélectionner un pilote</mat-option>
-              <mat-option *ngFor="let user of users" [value]="user.id">
+              <mat-option *ngFor="let user of responsibleUsers" [value]="user.id">
                 {{ user.firstName }} {{ user.lastName }}
               </mat-option>
             </mat-select>

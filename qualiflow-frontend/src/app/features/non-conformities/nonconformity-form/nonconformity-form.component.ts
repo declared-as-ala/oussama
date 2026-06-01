@@ -27,7 +27,8 @@ import {
   NonConformitySeverity,
   NonConformityStatus,
   NonConformityType,
-  UpdateNonConformityRequest
+  UpdateNonConformityRequest,
+  NonConformityListItemResponse
 } from '../models/nonconformity.models';
 import { NonConformityService } from '../services/nonconformity.service';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
@@ -77,6 +78,7 @@ export class NonconformityFormComponent implements OnInit {
   processes: ProcessListItemResponse[] = [];
   procedures: ProcedureListItemResponse[] = [];
   users: UserResponse[] = [];
+  existingNonConformities: NonConformityListItemResponse[] = [];
   selectedFiles: File[] = [];
   existingAttachments: NonConformityAttachmentResponse[] = [];
   activeTab = 0;
@@ -97,6 +99,14 @@ export class NonconformityFormComponent implements OnInit {
     const idParam = this.route.snapshot.paramMap.get('id');
     this.nonConformityId = idParam ? Number(idParam) : null;
     this.isEdit = this.nonConformityId !== null && !Number.isNaN(this.nonConformityId);
+
+    // Auto-generate code when title, type or process changes
+    this.form.controls.title.valueChanges.subscribe(() => this.autoGenerateCode());
+    this.form.controls.type.valueChanges.subscribe(() => this.autoGenerateCode());
+    this.form.controls.processId.valueChanges.subscribe(() => this.autoGenerateCode());
+
+    // Add duplicate code validator
+    this.form.controls.code.addValidators(this.duplicateCodeValidator());
 
     if (!this.canLoadUsers) {
       this.form.controls.responsibleUserId.disable();
@@ -158,7 +168,8 @@ export class NonconformityFormComponent implements OnInit {
     const baseLoad$ = forkJoin({
       processes: this.processService.getProcesses({ pageNumber: 1, pageSize: 300 }),
       procedures: this.procedureService.getProcedures({ pageNumber: 1, pageSize: 300 }),
-      users: usersRequest$
+      users: usersRequest$,
+      nonConformities: this.nonConformityService.getNonConformities({ pageNumber: 1, pageSize: 500 })
     });
 
     if (this.isEdit && this.nonConformityId) {
@@ -167,6 +178,7 @@ export class NonconformityFormComponent implements OnInit {
         details: this.nonConformityService.getNonConformityById(this.nonConformityId)
       }).subscribe({
         next: ({ base, details }) => {
+          this.existingNonConformities = base.nonConformities.items;
           this.applyReferences(base.processes.items, base.procedures.items, base.users.items);
           this.patchForm(details.nonConformity);
           this.existingAttachments = details.attachments || [];
@@ -183,7 +195,8 @@ export class NonconformityFormComponent implements OnInit {
     }
 
     baseLoad$.subscribe({
-      next: ({ processes, procedures, users }) => {
+      next: ({ processes, procedures, users, nonConformities }) => {
+        this.existingNonConformities = nonConformities.items;
         this.applyReferences(processes.items, procedures.items, users.items);
         this.form.controls.detectedDate.setValue(this.toDateInputValue(new Date().toISOString()));
         this.loading = false;
@@ -441,6 +454,103 @@ export class NonconformityFormComponent implements OnInit {
         }
       });
     }
+  }
+
+  private getTypePrefix(type: NonConformityType): string {
+    return type === 'INTERNE' ? 'INT' : 'EXT';
+  }
+
+  private generateTitleCode(title: string): string {
+    if (!title) return '';
+
+    // Normalize: remove accents
+    const normalized = title.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    // Keep only alphanumeric characters and spaces/hyphens
+    const cleaned = normalized.replace(/[^a-zA-Z0-9\s-]/g, '').trim();
+
+    const words = cleaned.split(/[\s-]+/).filter(w => w.length > 0);
+
+    if (words.length === 1) {
+      // Single word: take up to 4 characters
+      return words[0].substring(0, 4).toUpperCase();
+    } else {
+      // Multiple words: take the initials of words, ignoring short stop words
+      const stopWords = ['DE', 'LA', 'LE', 'DES', 'EN', 'ET', 'UN', 'UNE', 'DU', 'AU', 'AUX', 'POUR', 'PAR', 'SUR', 'D', 'L'];
+      const filteredWords = words.filter(w => !stopWords.includes(w.toUpperCase()));
+
+      const finalWords = filteredWords.length > 0 ? filteredWords : words;
+      return finalWords.map(w => w[0].toUpperCase()).join('');
+    }
+  }
+
+  private autoGenerateCode(): void {
+    const codeCtrl = this.form.controls.code;
+
+    // If the field is dirty (manually changed by the user) and is not empty, don't overwrite it
+    if (codeCtrl.dirty && codeCtrl.value) {
+      return;
+    }
+
+    // If editing and we already have a value, don't overwrite it
+    if (this.isEdit && codeCtrl.value) {
+      return;
+    }
+
+    const title = this.form.controls.title.value;
+    const type = this.form.controls.type.value;
+    const processId = this.form.controls.processId.value;
+
+    if (!title) {
+      codeCtrl.setValue('', { emitEvent: false });
+      return;
+    }
+
+    const titleCode = this.generateTitleCode(title);
+    const year = new Date().getFullYear();
+
+    let generatedCode = '';
+
+    if (processId) {
+      const selectedProcess = this.processes.find(p => p.id === processId);
+      if (selectedProcess) {
+        let processPrefix = selectedProcess.code;
+        const yearPattern = /-\d{4}$/;
+        if (yearPattern.test(processPrefix)) {
+          processPrefix = processPrefix.replace(yearPattern, '');
+        }
+        generatedCode = `NC-${processPrefix}-${titleCode}-${year}`;
+      }
+    }
+
+    if (!generatedCode) {
+      const typePrefix = this.getTypePrefix(type);
+      generatedCode = `NC-${titleCode}-${typePrefix}-${year}`;
+    }
+
+    // Prevent duplicate codes
+    let finalCode = generatedCode;
+    let counter = 1;
+    while (this.existingNonConformities.some(nc => nc.code.toUpperCase() === finalCode.toUpperCase() && nc.id !== this.nonConformityId)) {
+      const suffix = counter < 10 ? `-0${counter}` : `-${counter}`;
+      finalCode = `${generatedCode}${suffix}`;
+      counter++;
+    }
+
+    codeCtrl.setValue(finalCode, { emitEvent: false });
+  }
+
+  duplicateCodeValidator(): import('@angular/forms').ValidatorFn {
+    return (control: import('@angular/forms').AbstractControl): import('@angular/forms').ValidationErrors | null => {
+      const value = control.value;
+      if (!value) return null;
+
+      const exists = this.existingNonConformities.some(
+        nc => nc.code.toUpperCase() === value.trim().toUpperCase() && nc.id !== this.nonConformityId
+      );
+
+      return exists ? { duplicateCode: true } : null;
+    };
   }
 
   setActiveTab(index: number): void {

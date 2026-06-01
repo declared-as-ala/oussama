@@ -20,7 +20,8 @@ import {
   PROCEDURE_STATUS_OPTIONS,
   ProcedureResponse,
   ProcedureStatus,
-  UpdateProcedureRequest
+  UpdateProcedureRequest,
+  ProcedureListItemResponse
 } from '../models/procedure.models';
 import { ProcedureService } from '../services/procedure.service';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
@@ -66,6 +67,7 @@ export class ProcedureFormComponent implements OnInit {
   procedureId: number | null = null;
   processes: ProcessListItemResponse[] = [];
   responsibles: UserResponse[] = [];
+  existingProcedures: ProcedureListItemResponse[] = [];
   activeTab = 0;
 
   constructor(
@@ -77,18 +79,26 @@ export class ProcedureFormComponent implements OnInit {
     private readonly userService: UserService,
     private readonly notificationService: NotificationService,
     private readonly authService: AuthService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     const idParam = this.route.snapshot.paramMap.get('id');
     this.procedureId = idParam ? Number(idParam) : null;
     this.isEdit = this.procedureId !== null && !Number.isNaN(this.procedureId);
 
+    // Auto-generate code when processId or title changes
+    this.procedureForm.controls.processId.valueChanges.subscribe(() => this.autoGenerateCode());
+    this.procedureForm.controls.title.valueChanges.subscribe(() => this.autoGenerateCode());
+
+    // Add duplicate code validator
+    this.procedureForm.controls.code.addValidators(this.duplicateCodeValidator());
+
     this.loading = true;
 
     const baseLoad$ = forkJoin({
       users: this.userService.getAll(1, 300),
-      processes: this.processService.getProcesses({ pageNumber: 1, pageSize: 300 })
+      processes: this.processService.getProcesses({ pageNumber: 1, pageSize: 300 }),
+      procedures: this.procedureService.getProcedures({ pageNumber: 1, pageSize: 500 })
     });
 
     if (this.isEdit && this.procedureId) {
@@ -99,6 +109,7 @@ export class ProcedureFormComponent implements OnInit {
         next: ({ base, details }) => {
           this.responsibles = base.users.items.filter(user => user.isActive && (user.role === 'RESPONSABLE_QUALITE' || user.role === 'SUPER_ADMIN' || user.role === 'ADMIN_ORG'));
           this.processes = base.processes.items;
+          this.existingProcedures = base.procedures.items;
           this.patchForm(details.procedure);
           this.loading = false;
         },
@@ -112,9 +123,10 @@ export class ProcedureFormComponent implements OnInit {
     }
 
     baseLoad$.subscribe({
-      next: ({ users, processes }) => {
+      next: ({ users, processes, procedures }) => {
         this.responsibles = users.items.filter(user => user.isActive && (user.role === 'RESPONSABLE_QUALITE' || user.role === 'SUPER_ADMIN' || user.role === 'ADMIN_ORG'));
         this.processes = processes.items;
+        this.existingProcedures = procedures.items;
         this.loading = false;
       },
       error: () => {
@@ -236,6 +248,95 @@ export class ProcedureFormComponent implements OnInit {
       status: raw.status,
       versionNumber: raw.versionNumber,
       revisionComment: raw.revisionComment || null
+    };
+  }
+
+  private generateTitleCode(title: string): string {
+    if (!title) return '';
+
+    // Normalize: remove accents
+    const normalized = title.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    // Keep only alphanumeric characters and spaces/hyphens
+    const cleaned = normalized.replace(/[^a-zA-Z0-9\s-]/g, '').trim();
+
+    const words = cleaned.split(/[\s-]+/).filter(w => w.length > 0);
+
+    if (words.length === 1) {
+      // Single word: take up to 4 characters
+      return words[0].substring(0, 4).toUpperCase();
+    } else {
+      // Multiple words: take the initials of words, ignoring short stop words
+      const stopWords = ['DE', 'LA', 'LE', 'DES', 'EN', 'ET', 'UN', 'UNE', 'DU', 'AU', 'AUX', 'POUR', 'PAR', 'SUR', 'D', 'L'];
+      const filteredWords = words.filter(w => !stopWords.includes(w.toUpperCase()));
+
+      const finalWords = filteredWords.length > 0 ? filteredWords : words;
+      return finalWords.map(w => w[0].toUpperCase()).join('');
+    }
+  }
+
+  private autoGenerateCode(): void {
+    const codeCtrl = this.procedureForm.controls.code;
+
+    // If the field is dirty (manually changed by the user) and is not empty, don't overwrite it
+    if (codeCtrl.dirty && codeCtrl.value) {
+      return;
+    }
+
+    // If editing and we already have a value, don't overwrite it
+    if (this.isEdit && codeCtrl.value) {
+      return;
+    }
+
+    const processId = this.procedureForm.controls.processId.value;
+    const title = this.procedureForm.controls.title.value;
+
+    if (!processId || !title) {
+      codeCtrl.setValue('', { emitEvent: false });
+      return;
+    }
+
+    const selectedProcess = this.processes.find(p => p.id === processId);
+    if (!selectedProcess) {
+      codeCtrl.setValue('', { emitEvent: false });
+      return;
+    }
+
+    // Base process code (extract prefix, e.g. PIL-GRH from PIL-GRH-2026)
+    // If it has a year suffix (e.g. -2026 at the end), let's strip it to keep the code clean
+    let processPrefix = selectedProcess.code;
+    const yearPattern = /-\d{4}$/;
+    if (yearPattern.test(processPrefix)) {
+      processPrefix = processPrefix.replace(yearPattern, '');
+    }
+
+    const titleCode = this.generateTitleCode(title);
+    const year = new Date().getFullYear();
+
+    const generatedCode = `${processPrefix}-${titleCode}-${year}`;
+
+    // Prevent duplicate codes
+    let finalCode = generatedCode;
+    let counter = 1;
+    while (this.existingProcedures.some(p => p.code.toUpperCase() === finalCode.toUpperCase() && p.id !== this.procedureId)) {
+      const suffix = counter < 10 ? `-0${counter}` : `-${counter}`;
+      finalCode = `${generatedCode}${suffix}`;
+      counter++;
+    }
+
+    codeCtrl.setValue(finalCode, { emitEvent: false });
+  }
+
+  duplicateCodeValidator(): import('@angular/forms').ValidatorFn {
+    return (control: import('@angular/forms').AbstractControl): import('@angular/forms').ValidationErrors | null => {
+      const value = control.value;
+      if (!value) return null;
+
+      const exists = this.existingProcedures.some(
+        p => p.code.toUpperCase() === value.trim().toUpperCase() && p.id !== this.procedureId
+      );
+
+      return exists ? { duplicateCode: true } : null;
     };
   }
 

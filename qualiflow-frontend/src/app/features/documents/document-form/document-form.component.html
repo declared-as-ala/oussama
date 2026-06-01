@@ -69,10 +69,10 @@
           <mat-icon matSuffix style="color: #6200ee;">assignment</mat-icon>
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Code Document *</mat-label>
-          <input matInput formControlName="code" placeholder="ex: DOC-QUA-001" />
-          <mat-error *ngIf="documentForm.get('code')?.invalid">Code requis (lettres, chiffres, -, _)</mat-error>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Titre du document *</mat-label>
+          <input matInput formControlName="title" placeholder="ex: Manuel de Management de la Qualité" />
+          <mat-error *ngIf="documentForm.get('title')?.invalid">Un titre est obligatoire</mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
@@ -82,10 +82,11 @@
           </mat-select>
         </mat-form-field>
 
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Titre du document *</mat-label>
-          <input matInput formControlName="title" placeholder="ex: Manuel de Management de la Qualité" />
-          <mat-error *ngIf="documentForm.get('title')?.invalid">Un titre est obligatoire</mat-error>
+        <mat-form-field appearance="outline">
+          <mat-label>Code Document *</mat-label>
+          <input matInput formControlName="code" placeholder="ex: DOC-QUA-001" />
+          <mat-error *ngIf="documentForm.get('code')?.hasError('duplicateCode')">Ce code de document existe déjà.</mat-error>
+          <mat-error *ngIf="documentForm.get('code')?.invalid && !documentForm.get('code')?.hasError('duplicateCode')">Code requis (lettres, chiffres, -, _)</mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full-width">
@@ -117,12 +118,7 @@
       </div>
 
       <div class="section-content grid-2-cols">
-        <mat-form-field appearance="outline">
-          <mat-label>Processus associés</mat-label>
-          <mat-select formControlName="processIds" (selectionChange)="onProcessChanged()" multiple>
-            <mat-option *ngFor="let p of processes" [value]="p.id">{{ p.code }} - {{ p.name }}</mat-option>
-          </mat-select>
-        </mat-form-field>
+
 
         <mat-form-field appearance="outline">
           <mat-label>Procédures liées</mat-label>

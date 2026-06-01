@@ -109,11 +109,21 @@ export class PrcessHistoryDetailleComponent implements OnInit {
       case 'PILOT_UPDATED': return 'Pilote mis à jour';
       case 'ACTORS_ASSIGNED': return 'Acteurs assignés';
       case 'ACTOR_REMOVED': return 'Acteur retiré';
+      case 'DOCUMENT_LINKED': return 'Document lié';
+      case 'DOCUMENT_UNLINKED': return 'Document délié';
+      case 'PROCEDURE_LINKED': return 'Procédure liée';
+      case 'PROCEDURE_UNLINKED': return 'Procédure déliée';
+      case 'INDICATOR_LINKED': return 'Indicateur lié';
       default: return actionType.replace(/_/g, ' ').toLowerCase();
     }
   }
 
   getActionIcon(actionType: string): string {
+    if (actionType === 'DOCUMENT_LINKED') return 'attach_file';
+    if (actionType === 'DOCUMENT_UNLINKED') return 'link_off';
+    if (actionType === 'PROCEDURE_LINKED') return 'account_tree';
+    if (actionType === 'PROCEDURE_UNLINKED') return 'link_off';
+    if (actionType === 'INDICATOR_LINKED') return 'bar_chart';
     if (actionType.includes('CREATED')) return 'add_circle_outline';
     if (actionType.includes('DELETED')) return 'delete_outline';
     if (actionType.includes('UPDATED')) return 'edit';

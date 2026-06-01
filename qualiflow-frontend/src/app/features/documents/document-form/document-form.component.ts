@@ -27,7 +27,8 @@ import {
   DOCUMENT_TYPE_OPTIONS,
   DocumentResponse,
   DocumentStatus,
-  DocumentType
+  DocumentType,
+  DocumentListItemResponse
 } from '../models/document.models';
 import { DocumentService } from '../services/document.service';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
@@ -106,6 +107,7 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
   processes: ProcessListItemResponse[] = [];
   procedures: ProcedureListItemResponse[] = [];
   owners: UserResponse[] = [];
+  existingDocuments: DocumentListItemResponse[] = [];
   startWithImport = false;
   signaturePreview: string | null = null;
   activeTab = 0;
@@ -227,6 +229,14 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
     this.documentId = idParam ? Number(idParam) : null;
     this.isEdit = this.documentId !== null && !Number.isNaN(this.documentId);
     this.startWithImport = this.route.snapshot.queryParamMap.get('mode') === 'import';
+
+    // Auto-generate code when title or type changes
+    this.documentForm.controls.title.valueChanges.subscribe(() => this.autoGenerateCode());
+    this.documentForm.controls.type.valueChanges.subscribe(() => this.autoGenerateCode());
+
+    // Add duplicate code validator
+    this.documentForm.controls.code.addValidators(this.duplicateCodeValidator());
+
     if (!this.canValidateStatus) {
       this.documentForm.controls.initialVersionStatus.disable({ emitEvent: false });
     }
@@ -245,7 +255,8 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
       processes: this.processService.getProcesses(processParams),
       users: this.canSelectOwner
         ? this.userService.getAll(1, 300)
-        : of<UserListResponse>({ total: 0, page: 1, pageSize: 0, items: [] })
+        : of<UserListResponse>({ total: 0, page: 1, pageSize: 0, items: [] }),
+      documents: this.documentService.getDocuments({ pageNumber: 1, pageSize: 500 })
     });
 
     if (this.isEdit && this.documentId) {
@@ -255,6 +266,7 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
       }).subscribe({
         next: ({ base, details }) => {
           this.owners = base.users.items.filter(user => user.isActive);
+          this.existingDocuments = base.documents.items;
 
           if (!this.canSelectOwner && currentUser) {
             this.processes = base.processes.items.filter(p => p.pilotUserId === currentUser.id);
@@ -314,8 +326,9 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
     }
 
     baseData$.subscribe({
-      next: ({ processes, users }) => {
+      next: ({ processes, users, documents }) => {
         this.owners = users.items.filter(user => user.isActive);
+        this.existingDocuments = documents.items;
 
         if (!this.canSelectOwner && currentUser) {
           this.processes = processes.items.filter(p => p.pilotUserId === currentUser.id);
@@ -603,7 +616,7 @@ COMMENTAIRES LIBRES :
     forkJoin(obsList).subscribe({
       next: (results) => {
         this.procedures = results.reduce((acc, curr) => acc.concat(curr), []);
-        
+
         // Auto-select process owner (pilotUserId) of the first selected process
         const selectedProcess = this.processes.find(p => p.id === processIds[0]);
         if (selectedProcess?.pilotUserId) {
@@ -735,10 +748,22 @@ COMMENTAIRES LIBRES :
   private buildDocumentPayload(): CreateDocumentRequest {
     const raw = this.documentForm.getRawValue();
 
+    const resolvedProcessIds = new Set<number>();
+    if (raw.procedureIds && raw.procedureIds.length > 0) {
+      raw.procedureIds.forEach(procId => {
+        const proc = this.procedures.find(p => p.id === procId);
+        if (proc?.processId) {
+          resolvedProcessIds.add(proc.processId);
+        }
+      });
+    }
+
+    const processIdsArray = Array.from(resolvedProcessIds);
+
     return {
-      processId: raw.processIds && raw.processIds.length > 0 ? raw.processIds[0] : null,
+      processId: processIdsArray.length > 0 ? processIdsArray[0] : null,
       procedureId: raw.procedureIds && raw.procedureIds.length > 0 ? raw.procedureIds[0] : null,
-      processIds: raw.processIds || [],
+      processIds: processIdsArray,
       procedureIds: raw.procedureIds || [],
       code: raw.code.trim(),
       title: raw.title.trim(),
@@ -865,6 +890,93 @@ COMMENTAIRES LIBRES :
     const month = `${value.getMonth() + 1}`.padStart(2, '0');
     const day = `${value.getDate()}`.padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  private getTypePrefix(type: DocumentType): string {
+    switch (type) {
+      case 'MANUEL': return 'MNL';
+      case 'PROCEDURE': return 'PRC';
+      case 'INSTRUCTION': return 'INS';
+      case 'ENREGISTREMENT': return 'ENR';
+      case 'FORMULAIRE': return 'FOR';
+      default: return 'DOC';
+    }
+  }
+
+  private generateTitleCode(title: string): string {
+    if (!title) return '';
+
+    // Normalize: remove accents
+    const normalized = title.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    // Keep only alphanumeric characters and spaces/hyphens
+    const cleaned = normalized.replace(/[^a-zA-Z0-9\s-]/g, '').trim();
+
+    const words = cleaned.split(/[\s-]+/).filter(w => w.length > 0);
+
+    if (words.length === 1) {
+      // Single word: take up to 4 characters
+      return words[0].substring(0, 4).toUpperCase();
+    } else {
+      // Multiple words: take the initials of words, ignoring short stop words
+      const stopWords = ['DE', 'LA', 'LE', 'DES', 'EN', 'ET', 'UN', 'UNE', 'DU', 'AU', 'AUX', 'POUR', 'PAR', 'SUR', 'D', 'L'];
+      const filteredWords = words.filter(w => !stopWords.includes(w.toUpperCase()));
+
+      const finalWords = filteredWords.length > 0 ? filteredWords : words;
+      return finalWords.map(w => w[0].toUpperCase()).join('');
+    }
+  }
+
+  private autoGenerateCode(): void {
+    const codeCtrl = this.documentForm.controls.code;
+
+    // If the field is dirty (manually changed by the user) and is not empty, don't overwrite it
+    if (codeCtrl.dirty && codeCtrl.value) {
+      return;
+    }
+
+    // If editing and we already have a value, don't overwrite it
+    if (this.isEdit && codeCtrl.value) {
+      return;
+    }
+
+    const title = this.documentForm.controls.title.value;
+    const type = this.documentForm.controls.type.value;
+
+    if (!title) {
+      codeCtrl.setValue('', { emitEvent: false });
+      return;
+    }
+
+    const typePrefix = this.getTypePrefix(type);
+    const titleCode = this.generateTitleCode(title);
+    const year = new Date().getFullYear();
+
+    const generatedCode = `${typePrefix}-${titleCode}-${year}`;
+
+    // Prevent duplicate codes
+    let finalCode = generatedCode;
+    let counter = 1;
+    while (this.existingDocuments.some(doc => doc.code.toUpperCase() === finalCode.toUpperCase() && doc.id !== this.documentId)) {
+      const suffix = counter < 10 ? `-0${counter}` : `-${counter}`;
+      finalCode = `${generatedCode}${suffix}`;
+      counter++;
+    }
+
+    codeCtrl.setValue(finalCode, { emitEvent: false });
+  }
+
+  duplicateCodeValidator(): import('@angular/forms').ValidatorFn {
+    return (control: import('@angular/forms').AbstractControl): import('@angular/forms').ValidationErrors | null => {
+      const value = control.value;
+      if (!value) return null;
+
+      const exists = this.existingDocuments.some(
+        doc => doc.code.toUpperCase() === value.trim().toUpperCase() && doc.id !== this.documentId
+      );
+
+      return exists ? { duplicateCode: true } : null;
+    };
   }
 
   setActiveTab(index: number): void {

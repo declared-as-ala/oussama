@@ -52,9 +52,9 @@
 
                 <div class="section-content grid-two">
                     <mat-form-field appearance="outline">
-                        <mat-label>{{ 'common.code' | t }}</mat-label>
-                        <input matInput formControlName="code" placeholder="Ex: PROC-QUAL-001" />
-                        <mat-error *ngIf="isInvalid('code')">{{ 'form.procedure.codeError' | t }}</mat-error>
+                        <mat-label>{{ 'form.procedure.titleLabel' | t }}</mat-label>
+                        <input matInput formControlName="title" [placeholder]="'form.procedure.titlePlaceholder' | t" />
+                        <mat-error *ngIf="isInvalid('title')">{{ 'form.procedure.titleError' | t }}</mat-error>
                     </mat-form-field>
 
                     <mat-form-field appearance="outline">
@@ -67,9 +67,10 @@
                     </mat-form-field>
 
                     <mat-form-field appearance="outline" class="full-width">
-                        <mat-label>{{ 'form.procedure.titleLabel' | t }}</mat-label>
-                        <input matInput formControlName="title" [placeholder]="'form.procedure.titlePlaceholder' | t" />
-                        <mat-error *ngIf="isInvalid('title')">{{ 'form.procedure.titleError' | t }}</mat-error>
+                        <mat-label>{{ 'common.code' | t }}</mat-label>
+                        <input matInput formControlName="code" placeholder="Ex: PROC-QUAL-001" />
+                        <mat-error *ngIf="procedureForm.controls.code.hasError('duplicateCode')">Ce code de procédure existe déjà.</mat-error>
+                        <mat-error *ngIf="isInvalid('code') && !procedureForm.controls.code.hasError('duplicateCode')">{{ 'form.procedure.codeError' | t }}</mat-error>
                     </mat-form-field>
                 </div>
             </div>

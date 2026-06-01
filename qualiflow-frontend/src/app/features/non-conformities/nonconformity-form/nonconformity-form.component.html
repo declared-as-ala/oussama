@@ -48,11 +48,10 @@
       </div>
 
       <div class="section-content grid-2-cols">
-        <mat-form-field appearance="outline">
-          <mat-label>{{ 'form.nc.identificationCode' | t }}</mat-label>
-          <input matInput formControlName="code" placeholder="ex: NC-2024-001" />
-          <mat-hint>{{ 'form.nc.codeHint' | t }}</mat-hint>
-          <mat-error *ngIf="form.get('code')?.invalid">{{ 'form.nc.codeRequired' | t }}</mat-error>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>{{ 'form.nc.titleLabel' | t }} *</mat-label>
+          <input matInput formControlName="title" [placeholder]="'form.nc.titlePlaceholder' | t" />
+          <mat-error *ngIf="form.get('title')?.invalid">{{ 'form.nc.titleRequired' | t }}</mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
@@ -64,10 +63,12 @@
           </mat-select>
         </mat-form-field>
 
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>{{ 'form.nc.titleLabel' | t }} *</mat-label>
-          <input matInput formControlName="title" [placeholder]="'form.nc.titlePlaceholder' | t" />
-          <mat-error *ngIf="form.get('title')?.invalid">{{ 'form.nc.titleRequired' | t }}</mat-error>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'form.nc.identificationCode' | t }}</mat-label>
+          <input matInput formControlName="code" placeholder="ex: NC-2024-001" />
+          <mat-hint>{{ 'form.nc.codeHint' | t }}</mat-hint>
+          <mat-error *ngIf="form.get('code')?.hasError('duplicateCode')">Ce code de non-conformité existe déjà.</mat-error>
+          <mat-error *ngIf="form.get('code')?.invalid && !form.get('code')?.hasError('duplicateCode')">{{ 'form.nc.codeRequired' | t }}</mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full-width">

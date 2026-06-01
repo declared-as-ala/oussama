@@ -50,11 +50,6 @@
         </div>
 
         <div class="section-content grid-two">
-          <mat-form-field appearance="outline">
-            <mat-label>{{ 'common.code' | t }}</mat-label>
-            <input matInput formControlName="code" placeholder="PIL-001" />
-            <mat-error *ngIf="isInvalid('code')">{{ 'form.process.codeError' | t }}</mat-error>
-          </mat-form-field>
 
           <mat-form-field appearance="outline">
             <mat-label>{{ 'form.process.name' | t }}</mat-label>
@@ -67,6 +62,16 @@
             <mat-select formControlName="type">
               <mat-option *ngFor="let option of typeOptions" [value]="option.value">{{ option.label }}</mat-option>
             </mat-select>
+          </mat-form-field>
+
+
+
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'common.code' | t }}</mat-label>
+            <input matInput formControlName="code" placeholder="PIL-001" />
+            <mat-error *ngIf="processForm.controls.code.hasError('duplicateCode')">Ce code de processus existe déjà.</mat-error>
+            <mat-error *ngIf="isInvalid('code') && !processForm.controls.code.hasError('duplicateCode')">{{ 'form.process.codeError' | t }}</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
@@ -107,7 +112,8 @@
           <mat-form-field appearance="outline" class="full-width" *ngIf="!canChangePilot && isEdit">
             <mat-label>{{ 'form.process.pilotOwner' | t }}</mat-label>
             <input matInput [value]="getPilotName()" readonly disabled />
-            <mat-hint style="color: #f59e0b; font-weight: 600;">⚠ Seul un administrateur peut modifier le pilote du processus.</mat-hint>
+            <mat-hint style="color: #f59e0b; font-weight: 600;">⚠ Seul un administrateur peut modifier le pilote du
+              processus.</mat-hint>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
@@ -186,11 +192,13 @@
           <mat-icon>navigate_before</mat-icon> Précédent
         </button>
         <div class="spacer"></div>
-        <button mat-flat-button color="primary" type="button" class="submit-btn" (click)="nextTab()" *ngIf="activeTab < 2">
+        <button mat-flat-button color="primary" type="button" class="submit-btn" (click)="nextTab()"
+          *ngIf="activeTab < 2">
           <span>Suivant</span>
           <mat-icon>navigate_next</mat-icon>
         </button>
-        <button mat-flat-button color="primary" type="submit" class="submit-btn" [disabled]="saving || processForm.invalid" *ngIf="activeTab === 2">
+        <button mat-flat-button color="primary" type="submit" class="submit-btn"
+          [disabled]="saving || processForm.invalid" *ngIf="activeTab === 2">
           <mat-spinner *ngIf="saving" diameter="18" style="margin-right: 8px;"></mat-spinner>
           <span>{{ isEdit ? ('common.save' | t) : ('form.process.create' | t) }}</span>
         </button>

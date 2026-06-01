@@ -19,6 +19,7 @@ namespace DocApi.Services
         private readonly IUserRepository _userRepository;
         private readonly INotificationEventPublisher _notificationEventPublisher;
         private readonly IIndicatorActionLogRepository _indicatorActionLogRepository;
+        private readonly IProcessActionLogRepository _processActionLogRepository;
         private readonly IActionLogger _actionLogger;
         private readonly IProcessActorRepository _processActorRepository;
 
@@ -30,6 +31,7 @@ namespace DocApi.Services
             IUserRepository userRepository,
             INotificationEventPublisher notificationEventPublisher,
             IIndicatorActionLogRepository indicatorActionLogRepository,
+            IProcessActionLogRepository processActionLogRepository,
             IActionLogger actionLogger,
             IProcessActorRepository processActorRepository)
         {
@@ -40,6 +42,7 @@ namespace DocApi.Services
             _userRepository = userRepository;
             _notificationEventPublisher = notificationEventPublisher;
             _indicatorActionLogRepository = indicatorActionLogRepository;
+            _processActionLogRepository = processActionLogRepository;
             _actionLogger = actionLogger;
             _processActorRepository = processActorRepository;
         }
@@ -172,6 +175,26 @@ namespace DocApi.Services
                 $"L'indicateur '{entity.Name}' a été créé.",
                 userContext.UserId);
 
+            // --- Write entry in the PROCESS action journal ---
+            try
+            {
+                await _processActionLogRepository.CreateAsync(new ProcessActionLog
+                {
+                    OrganizationId = organizationId,
+                    ProcessId = payload.Process.Id,
+                    ActionType = "INDICATOR_LINKED",
+                    OldValue = null,
+                    NewValue = $"Code: {entity.Code}, Nom: {entity.Name}",
+                    Comment = $"Indicateur '{entity.Code} — {entity.Name}' lié à ce processus.",
+                    PerformedByUserId = userContext.UserId,
+                    PerformedAt = DateTime.UtcNow
+                });
+            }
+            catch
+            {
+                // Ignored to avoid breaking primary operation if log fails
+            }
+
             var created = await _indicatorRepository.GetDetailsByIdAsync(id, organizationId);
             if (created == null)
             {
@@ -234,6 +257,28 @@ namespace DocApi.Services
                 $"Nom: {current.Name}, Code: {current.Code}, Cible: {current.TargetValue}, Seuil: {current.AlertThreshold}",
                 comment,
                 userContext.UserId);
+
+            // --- If the process changed, write an entry in the NEW process action journal ---
+            var oldProcessId = current.ProcessId; // Note: ProcessId was already updated above
+            try
+            {
+                // current.ProcessId is now the new process id (set at line "current.ProcessId = payload.Process.Id")
+                await _processActionLogRepository.CreateAsync(new ProcessActionLog
+                {
+                    OrganizationId = organizationId,
+                    ProcessId = payload.Process.Id,
+                    ActionType = "INDICATOR_LINKED",
+                    OldValue = null,
+                    NewValue = $"Code: {current.Code}, Nom: {current.Name}",
+                    Comment = $"Indicateur '{current.Code} — {current.Name}' lié à ce processus (mis à jour).",
+                    PerformedByUserId = userContext.UserId,
+                    PerformedAt = DateTime.UtcNow
+                });
+            }
+            catch
+            {
+                // Ignored to avoid breaking primary operation if log fails
+            }
 
             await NotifyQualityManagerIfResponsibleModifiedAsync(current, comment, userContext);
 

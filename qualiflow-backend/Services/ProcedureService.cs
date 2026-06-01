@@ -18,6 +18,7 @@ namespace DocApi.Services
         private readonly IUserRepository _userRepository;
         private readonly IProcessActorRepository _processActorRepository;
         private readonly IProcedureActionLogRepository _procedureActionLogRepository;
+        private readonly IProcessActionLogRepository _processActionLogRepository;
         private readonly IActionLogger _actionLogger;
         private readonly IDocumentRepository _documentRepository;
 
@@ -28,6 +29,7 @@ namespace DocApi.Services
             IUserRepository userRepository,
             IProcessActorRepository processActorRepository,
             IProcedureActionLogRepository procedureActionLogRepository,
+            IProcessActionLogRepository processActionLogRepository,
             IActionLogger actionLogger,
             IDocumentRepository documentRepository)
         {
@@ -37,6 +39,7 @@ namespace DocApi.Services
             _userRepository = userRepository;
             _processActorRepository = processActorRepository;
             _procedureActionLogRepository = procedureActionLogRepository;
+            _processActionLogRepository = processActionLogRepository;
             _actionLogger = actionLogger;
             _documentRepository = documentRepository;
         }
@@ -1028,6 +1031,26 @@ namespace DocApi.Services
                     $"LinkedToProcess: {process.Code}",
                     $"Procédure liée au processus '{process.Name}'.",
                     userContext.UserId);
+
+                // --- Write entry in the PROCESS action journal ---
+                try
+                {
+                    await _processActionLogRepository.CreateAsync(new ProcessActionLog
+                    {
+                        OrganizationId = process.OrganizationId,
+                        ProcessId = processId,
+                        ActionType = "PROCEDURE_LINKED",
+                        OldValue = null,
+                        NewValue = $"Code: {procedure.Code}, Titre: {procedure.Title}",
+                        Comment = $"Procédure '{procedure.Code} — {procedure.Title}' liée à ce processus.",
+                        PerformedByUserId = userContext.UserId,
+                        PerformedAt = DateTime.UtcNow
+                    });
+                }
+                catch
+                {
+                    // Ignored to avoid breaking primary operation if log fails
+                }
             }
 
             return linked;
@@ -1056,6 +1079,26 @@ namespace DocApi.Services
                     null,
                     $"Procédure déliée du processus '{process.Name}'.",
                     userContext.UserId);
+
+                // --- Write entry in the PROCESS action journal ---
+                try
+                {
+                    await _processActionLogRepository.CreateAsync(new ProcessActionLog
+                    {
+                        OrganizationId = process.OrganizationId,
+                        ProcessId = processId,
+                        ActionType = "PROCEDURE_UNLINKED",
+                        OldValue = $"Code: {procedure.Code}, Titre: {procedure.Title}",
+                        NewValue = null,
+                        Comment = $"Procédure '{procedure.Code} — {procedure.Title}' déliée de ce processus.",
+                        PerformedByUserId = userContext.UserId,
+                        PerformedAt = DateTime.UtcNow
+                    });
+                }
+                catch
+                {
+                    // Ignored to avoid breaking primary operation if log fails
+                }
             }
 
             return unlinked;
