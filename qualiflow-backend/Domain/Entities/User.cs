@@ -15,6 +15,7 @@ namespace DocApi.Domain.Entities
         public string? Function { get; set; }
         public string? Phone { get; set; }
         public string? City { get; set; }
+        public string? Nationality { get; set; }
         public DateTime? BirthDate { get; set; }
         public string? PreferredLanguage { get; set; }
         public string? ProfilePhotoPath { get; set; }

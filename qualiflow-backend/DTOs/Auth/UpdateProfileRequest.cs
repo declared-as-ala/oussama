@@ -20,6 +20,9 @@ namespace DocApi.DTOs.Auth
         [MaxLength(120)]
         public string? City { get; set; }
 
+        [MaxLength(100)]
+        public string? Nationality { get; set; }
+
         [Required]
         [RegularExpression("^(fr|en|ar)$", ErrorMessage = "Supported languages are: fr, en, ar")]
         public required string PreferredLanguage { get; set; }

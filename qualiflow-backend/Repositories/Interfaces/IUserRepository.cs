@@ -24,7 +24,7 @@ namespace DocApi.Repositories.Interfaces
         Task<int> GetSearchCountAsync(string? searchTerm, int? organizationId);
         Task<int> CreateAsync(User user);
         Task<bool> UpdateAsync(User user);
-        Task<bool> UpdateProfileAsync(int id, string firstName, string lastName, DateTime? birthDate, string? phone, string? city, string preferredLanguage, DateTime updatedAt);
+        Task<bool> UpdateProfileAsync(int id, string firstName, string lastName, DateTime? birthDate, string? phone, string? city, string? nationality, string preferredLanguage, DateTime updatedAt);
         Task<bool> UpdateProfilePhotoPathAsync(int id, string? profilePhotoPath, DateTime updatedAt);
         Task<bool> ToggleStatusAsync(int id, bool isActive);
         Task<bool> UpdatePasswordAsync(int id, string passwordHash);

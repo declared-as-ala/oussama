@@ -91,6 +91,8 @@ namespace DocApi.Services
                 PasswordHash = BCryptNet.HashPassword(request.Password),
                 Role = UserRoles.UTILISATEUR,
                 BirthDate = request.BirthDate.Date,
+                Phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim(),
+                Nationality = string.IsNullOrWhiteSpace(request.Nationality) ? null : request.Nationality.Trim(),
                 PreferredLanguage = "fr",
                 IsActive = true,
                 IsEmailVerified = false,
@@ -415,6 +417,7 @@ namespace DocApi.Services
                 Function = user.Function,
                 Phone = user.Phone,
                 City = user.City,
+                Nationality = user.Nationality,
                 BirthDate = user.BirthDate,
                 PreferredLanguage = NormalizeLanguage(user.PreferredLanguage),
                 ProfilePhotoPath = user.ProfilePhotoPath,
@@ -458,6 +461,12 @@ namespace DocApi.Services
                 throw new ServiceException("City is too long");
             }
 
+            var normalizedNationality = string.IsNullOrWhiteSpace(request.Nationality) ? null : request.Nationality.Trim();
+            if (normalizedNationality != null && normalizedNationality.Length > 100)
+            {
+                throw new ServiceException("Nationality is too long");
+            }
+
             var preferredLanguage = NormalizeLanguage(request.PreferredLanguage);
             var updated = await _userRepository.UpdateProfileAsync(
                 userId,
@@ -466,6 +475,7 @@ namespace DocApi.Services
                 request.BirthDate?.Date,
                 normalizedPhone,
                 normalizedCity,
+                normalizedNationality,
                 preferredLanguage,
                 DateTime.UtcNow);
 

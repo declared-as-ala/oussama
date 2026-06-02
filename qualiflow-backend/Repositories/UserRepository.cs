@@ -229,8 +229,8 @@ namespace DocApi.Repositories
         {
             using var connection = _connectionFactory.CreateConnection();
             const string sql = @"
-                INSERT INTO Users (OrganizationId, FirstName, LastName, Email, Username, PasswordHash, Role, Function, Phone, City, BirthDate, PreferredLanguage, ProfilePhotoPath, IsActive, IsEmailVerified, EmailVerificationToken, EmailVerificationExpiresAt, CreatedAt) 
-                VALUES (@OrganizationId, @FirstName, @LastName, @Email, @Username, @PasswordHash, @Role, @Function, @Phone, @City, @BirthDate, @PreferredLanguage, @ProfilePhotoPath, @IsActive, @IsEmailVerified, @EmailVerificationToken, @EmailVerificationExpiresAt, @CreatedAt)
+                INSERT INTO Users (OrganizationId, FirstName, LastName, Email, Username, PasswordHash, Role, Function, Phone, City, BirthDate, Nationality, PreferredLanguage, ProfilePhotoPath, IsActive, IsEmailVerified, EmailVerificationToken, EmailVerificationExpiresAt, CreatedAt) 
+                VALUES (@OrganizationId, @FirstName, @LastName, @Email, @Username, @PasswordHash, @Role, @Function, @Phone, @City, @BirthDate, @Nationality, @PreferredLanguage, @ProfilePhotoPath, @IsActive, @IsEmailVerified, @EmailVerificationToken, @EmailVerificationExpiresAt, @CreatedAt)
                 RETURNING Id;";
 
             try
@@ -263,6 +263,7 @@ namespace DocApi.Repositories
                     Phone = @Phone,
                     City = @City,
                     BirthDate = @BirthDate,
+                    Nationality = @Nationality,
                     UpdatedAt = @UpdatedAt
                 WHERE Id = @Id";
             
@@ -270,7 +271,7 @@ namespace DocApi.Repositories
             return rowsAffected > 0;
         }
 
-        public async Task<bool> UpdateProfileAsync(int id, string firstName, string lastName, DateTime? birthDate, string? phone, string? city, string preferredLanguage, DateTime updatedAt)
+        public async Task<bool> UpdateProfileAsync(int id, string firstName, string lastName, DateTime? birthDate, string? phone, string? city, string? nationality, string preferredLanguage, DateTime updatedAt)
         {
             using var connection = _connectionFactory.CreateConnection();
             const string sql = @"
@@ -280,6 +281,7 @@ namespace DocApi.Repositories
                     BirthDate = @BirthDate,
                     Phone = @Phone,
                     City = @City,
+                    Nationality = @Nationality,
                     PreferredLanguage = @PreferredLanguage,
                     UpdatedAt = @UpdatedAt
                 WHERE Id = @Id";
@@ -292,6 +294,7 @@ namespace DocApi.Repositories
                 BirthDate = birthDate,
                 Phone = phone,
                 City = city,
+                Nationality = nationality,
                 PreferredLanguage = preferredLanguage,
                 UpdatedAt = updatedAt
             });

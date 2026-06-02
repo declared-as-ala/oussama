@@ -25,6 +25,9 @@ namespace DocApi.DTOs.Auth
         [Required]
         public DateTime BirthDate { get; set; }
 
+        public string? Phone { get; set; }
+        public string? Nationality { get; set; }
+
         [Required]
         [MinLength(8)]
         public required string Password { get; set; }

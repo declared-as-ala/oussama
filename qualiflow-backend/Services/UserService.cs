@@ -100,6 +100,10 @@ namespace DocApi.Services
             if (normalizedCity != null && normalizedCity.Length > 120)
                 throw new ServiceException("City is too long");
 
+            var normalizedNationality = string.IsNullOrWhiteSpace(request.Nationality) ? null : request.Nationality.Trim();
+            if (normalizedNationality != null && normalizedNationality.Length > 100)
+                throw new ServiceException("Nationality is too long");
+
             var passwordHash = BCryptNet.HashPassword(request.Password);
 
             var user = new User
@@ -114,6 +118,7 @@ namespace DocApi.Services
                 Function = request.Function,
                 Phone = normalizedPhone,
                 City = normalizedCity,
+                Nationality = normalizedNationality,
                 BirthDate = request.BirthDate?.Date,
                 IsActive = true,
                 IsEmailVerified = true,
@@ -195,6 +200,10 @@ namespace DocApi.Services
             if (normalizedCity != null && normalizedCity.Length > 120)
                 throw new ServiceException("City is too long");
 
+            var normalizedNationality = string.IsNullOrWhiteSpace(request.Nationality) ? null : request.Nationality.Trim();
+            if (normalizedNationality != null && normalizedNationality.Length > 100)
+                throw new ServiceException("Nationality is too long");
+
             user.FirstName = request.FirstName;
             user.LastName = request.LastName;
             user.Email = normalizedEmail;
@@ -202,6 +211,7 @@ namespace DocApi.Services
             user.Function = request.Function;
             user.Phone = normalizedPhone;
             user.City = normalizedCity;
+            user.Nationality = normalizedNationality;
             user.BirthDate = request.BirthDate?.Date;
             user.UpdatedAt = DateTime.UtcNow;
 
@@ -360,6 +370,7 @@ namespace DocApi.Services
                 Function = user.Function,
                 Phone = user.Phone,
                 City = user.City,
+                Nationality = user.Nationality,
                 BirthDate = user.BirthDate,
                 IsActive = user.IsActive,
                 LastLoginAt = user.LastLoginAt,

@@ -30,6 +30,8 @@ namespace DocApi.DTOs.Users
 
         public string? City { get; set; }
 
+        public string? Nationality { get; set; }
+
         public DateTime? BirthDate { get; set; }
     }
 }

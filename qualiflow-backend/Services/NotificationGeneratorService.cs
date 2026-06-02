@@ -9,6 +9,7 @@ using DocApi.Infrastructure;
 using DocApi.Repositories.Interfaces;
 using DocApi.Services.Interfaces;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace DocApi.Services
 {
@@ -27,6 +28,7 @@ namespace DocApi.Services
         private readonly INotificationRepository _notificationRepository;
         private readonly INotificationPublisher _notificationPublisher;
         private readonly IAlertRuleRepository _alertRuleRepository;
+        private readonly IMemoryCache _cache;
         private readonly ILogger<NotificationGeneratorService> _logger;
 
         public NotificationGeneratorService(
@@ -35,6 +37,7 @@ namespace DocApi.Services
             INotificationRepository notificationRepository,
             INotificationPublisher notificationPublisher,
             IAlertRuleRepository alertRuleRepository,
+            IMemoryCache cache,
             ILogger<NotificationGeneratorService> logger)
         {
             _connectionFactory = connectionFactory;
@@ -42,6 +45,7 @@ namespace DocApi.Services
             _notificationRepository = notificationRepository;
             _notificationPublisher = notificationPublisher;
             _alertRuleRepository = alertRuleRepository;
+            _cache = cache;
             _logger = logger;
         }
 
@@ -49,6 +53,13 @@ namespace DocApi.Services
         {
             if (!userContext.OrganizationId.HasValue || userContext.IsSuperAdmin)
             {
+                return;
+            }
+
+            var cacheKey = $"LastAutoAlertRun_User_{userContext.UserId}";
+            if (_cache.TryGetValue(cacheKey, out _))
+            {
+                // Already ran recently, skip to prevent severe database load.
                 return;
             }
 
@@ -394,6 +405,9 @@ namespace DocApi.Services
                     }
                 }
             }
+
+            // Generation succeeded, set cache expiration to 5 minutes to throttle future runs
+            _cache.Set(cacheKey, true, TimeSpan.FromMinutes(5));
         }
 
         private async Task<Dictionary<string, bool>> LoadRulesAsync(int organizationId)

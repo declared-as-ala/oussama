@@ -57,6 +57,7 @@ namespace DocApi.Infrastructure
                     Function VARCHAR(255) NULL,
                     Phone VARCHAR(30) NULL,
                     City VARCHAR(120) NULL,
+                    Nationality VARCHAR(100) NULL,
                     BirthDate DATE NULL,
                     PreferredLanguage VARCHAR(10) NULL,
                     ProfilePhotoPath TEXT NULL,
@@ -82,6 +83,7 @@ namespace DocApi.Infrastructure
                 ALTER TABLE Users ADD COLUMN IF NOT EXISTS Function VARCHAR(255) NULL;
                 ALTER TABLE Users ADD COLUMN IF NOT EXISTS Phone VARCHAR(30) NULL;
                 ALTER TABLE Users ADD COLUMN IF NOT EXISTS City VARCHAR(120) NULL;
+                ALTER TABLE Users ADD COLUMN IF NOT EXISTS Nationality VARCHAR(100) NULL;
                 ALTER TABLE Users ADD COLUMN IF NOT EXISTS BirthDate DATE NULL;
                 ALTER TABLE Users ADD COLUMN IF NOT EXISTS PreferredLanguage VARCHAR(10) NULL;
                 ALTER TABLE Users ADD COLUMN IF NOT EXISTS ProfilePhotoPath TEXT NULL;
