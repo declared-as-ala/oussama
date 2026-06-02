@@ -22,6 +22,8 @@ namespace DocApi.Repositories.Interfaces
         Task<int> GetTotalCountAsync();
         Task<int> GetCountByOrganizationAsync(int organizationId);
         Task<int> GetSearchCountAsync(string? searchTerm, int? organizationId);
+        Task<IEnumerable<User>> GetUsersWithNoProcessAsync(int organizationId, int page = 1, int pageSize = 10);
+        Task<int> GetUsersWithNoProcessCountAsync(int organizationId);
         Task<int> CreateAsync(User user);
         Task<bool> UpdateAsync(User user);
         Task<bool> UpdateProfileAsync(int id, string firstName, string lastName, DateTime? birthDate, string? phone, string? city, string? nationality, string preferredLanguage, DateTime updatedAt);

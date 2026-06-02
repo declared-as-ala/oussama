@@ -55,6 +55,7 @@ export class UsersListComponent implements OnInit {
   page = 1;
   pageSize = 10;
   pendingRoles: Record<number, UserRole> = {};
+  filterType: 'all' | 'no_process' = 'all';
 
   constructor(
     private readonly userService: UserService,
@@ -70,12 +71,20 @@ export class UsersListComponent implements OnInit {
     return this.authService.hasRole('ADMIN_ORG');
   }
 
+  setFilterType(type: 'all' | 'no_process'): void {
+    this.filterType = type;
+    this.page = 1;
+    this.loadUsers();
+  }
+
   loadUsers(): void {
     this.loading = true;
 
     const request$ = this.searchTerm.trim().length > 0
       ? this.userService.searchUsers(this.searchTerm.trim(), this.page, this.pageSize)
-      : this.userService.getUsers(this.page, this.pageSize);
+      : (this.filterType === 'no_process'
+        ? this.userService.getUsersWithNoProcess(this.page, this.pageSize)
+        : this.userService.getUsers(this.page, this.pageSize));
 
     request$.subscribe({
       next: (response) => {

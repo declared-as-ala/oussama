@@ -35,6 +35,18 @@
         </div>
     </mat-card>
 
+    <!-- PREMIUM FILTER TABS -->
+    <div class="filter-tabs-container" *ngIf="isAdminOrg()">
+        <button mat-button class="tab-btn" [class.active]="filterType === 'all'" (click)="setFilterType('all')">
+            <mat-icon class="tab-icon">people</mat-icon>
+            Tous les utilisateurs
+        </button>
+        <button mat-button class="tab-btn" [class.active]="filterType === 'no_process'" (click)="setFilterType('no_process')">
+            <mat-icon class="tab-icon">person_off</mat-icon>
+            Utilisateurs sans rôle processus
+        </button>
+    </div>
+
     <!-- USERS TABLE -->
     <mat-card class="table-card shadow-sm">
         <div class="loading-overlay" *ngIf="loading">

@@ -349,6 +349,20 @@ namespace DocApi.Services
             return result;
         }
 
+        public async Task<UserListResponse> GetUsersWithNoProcessAsync(int organizationId, int page = 1, int pageSize = 10)
+        {
+            var users = await _userRepository.GetUsersWithNoProcessAsync(organizationId, page, pageSize);
+            var total = await _userRepository.GetUsersWithNoProcessCountAsync(organizationId);
+
+            return new UserListResponse
+            {
+                Total = total,
+                Page = page,
+                PageSize = pageSize,
+                Items = (await Task.WhenAll(users.Select(MapToResponseAsync))).ToList()
+            };
+        }
+
         private async Task<UserResponse> MapToResponseAsync(User user)
         {
             string? orgName = null;

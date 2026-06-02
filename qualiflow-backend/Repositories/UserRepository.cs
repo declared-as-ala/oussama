@@ -429,5 +429,55 @@ namespace DocApi.Repositories
 
             return rowsAffected > 0;
         }
+
+        public async Task<IEnumerable<User>> GetUsersWithNoProcessAsync(int organizationId, int page = 1, int pageSize = 10)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = @"
+                SELECT u.* FROM Users u
+                WHERE u.OrganizationId = @OrganizationId
+                  AND u.IsActive = TRUE
+                  AND u.Id NOT IN (
+                      SELECT PilotUserId 
+                      FROM Processes 
+                      WHERE OrganizationId = @OrganizationId AND PilotUserId IS NOT NULL
+                  )
+                  AND u.Id NOT IN (
+                      SELECT UserId 
+                      FROM ProcessActors 
+                      WHERE OrganizationId = @OrganizationId
+                  )
+                ORDER BY u.CreatedAt DESC
+                LIMIT @PageSize OFFSET @Offset";
+
+            var offset = (page - 1) * pageSize;
+            return await connection.QueryAsync<User>(sql, new
+            {
+                OrganizationId = organizationId,
+                Offset = offset,
+                PageSize = pageSize
+            });
+        }
+
+        public async Task<int> GetUsersWithNoProcessCountAsync(int organizationId)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = @"
+                SELECT COUNT(1) FROM Users u
+                WHERE u.OrganizationId = @OrganizationId
+                  AND u.IsActive = TRUE
+                  AND u.Id NOT IN (
+                      SELECT PilotUserId 
+                      FROM Processes 
+                      WHERE OrganizationId = @OrganizationId AND PilotUserId IS NOT NULL
+                  )
+                  AND u.Id NOT IN (
+                      SELECT UserId 
+                      FROM ProcessActors 
+                      WHERE OrganizationId = @OrganizationId
+                  )";
+
+            return await connection.QuerySingleAsync<int>(sql, new { OrganizationId = organizationId });
+        }
     }
 }

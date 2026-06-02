@@ -147,6 +147,19 @@ namespace DocApi.Services
 
             var organizationId = ResolveOrganizationScopeForWrite(userContext);
 
+            var isExempt = userContext.Role == UserRoles.ADMIN_ORG
+                        || userContext.Role == UserRoles.RESPONSABLE_QUALITE
+                        || userContext.IsSuperAdmin;
+
+            if (!isExempt)
+            {
+                var userProcesses = await _processRepository.GetByOrganizationAsync(organizationId, userContext.UserId);
+                if (userProcesses == null || !userProcesses.Any())
+                {
+                    throw new ForbiddenException("Vous devez être affecté à au moins un processus pour créer une non-conformité.");
+                }
+            }
+
             await ValidateNonConformityPayloadAsync(
                 request.Code,
                 request.Title,

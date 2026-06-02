@@ -198,6 +198,19 @@ namespace DocApi.Services
 
             var organizationId = ResolveOrganizationScopeForWrite(userContext);
 
+            var isPrivilegedCreator = userContext.Role == UserRoles.ADMIN_ORG
+                                   || userContext.Role == UserRoles.RESPONSABLE_QUALITE
+                                   || userContext.IsSuperAdmin;
+
+            if (!isPrivilegedCreator)
+            {
+                var userProcesses = await _processRepository.GetByOrganizationAsync(organizationId, userContext.UserId);
+                if (userProcesses == null || !userProcesses.Any())
+                {
+                    throw new ForbiddenException("Vous devez être affecté à au moins un processus pour déposer un document.");
+                }
+            }
+
             await ValidateDocumentPayloadAsync(
                 primaryProcessId,
                 primaryProcedureId,
@@ -770,6 +783,19 @@ namespace DocApi.Services
 
             var document = await GetDocumentOrThrowAsync(documentId);
             EnsureDocumentSubmitAccess(userContext, document.OrganizationId);
+
+            var isPrivilegedCreator = userContext.Role == UserRoles.ADMIN_ORG
+                                   || userContext.Role == UserRoles.RESPONSABLE_QUALITE
+                                   || userContext.IsSuperAdmin;
+
+            if (!isPrivilegedCreator)
+            {
+                var userProcesses = await _processRepository.GetByOrganizationAsync(document.OrganizationId, userContext.UserId);
+                if (userProcesses == null || !userProcesses.Any())
+                {
+                    throw new ForbiddenException("Vous devez être affecté à au moins un processus pour déposer une nouvelle version de document.");
+                }
+            }
 
             if (request.File == null)
             {

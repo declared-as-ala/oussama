@@ -9,6 +9,7 @@ namespace DocApi.Services.Interfaces
         Task<UserResponse> GetByIdAsync(int id);
         Task<UserListResponse> GetAllAsync(int organizationId, int page = 1, int pageSize = 10);
         Task<UserListResponse> SearchAsync(string? searchTerm, int? organizationId, int page = 1, int pageSize = 10);
+        Task<UserListResponse> GetUsersWithNoProcessAsync(int organizationId, int page = 1, int pageSize = 10);
         Task<int> CreateAsync(CreateUserRequest request, int? requestingUserId = null);
         Task<bool> UpdateAsync(int id, UpdateUserRequest request, int? requestingUserId = null);
         Task<bool> ToggleStatusAsync(int id, bool isActive, int? requestingUserId = null);

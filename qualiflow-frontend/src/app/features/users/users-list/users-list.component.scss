@@ -99,6 +99,46 @@
   }
 }
 
+/* FILTER TABS */
+.filter-tabs-container {
+  display: flex;
+  gap: 12px;
+  margin-top: -4px;
+  margin-bottom: -4px;
+
+  .tab-btn {
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 0 16px;
+    height: 38px;
+    background: transparent;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+
+    .tab-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      margin-right: 6px;
+      color: currentColor;
+      vertical-align: middle;
+    }
+
+    &:hover {
+      background: #f1f5f9;
+      color: #334155;
+    }
+
+    &.active {
+      background: rgba(46, 125, 50, 0.1) !important;
+      color: #1b5e20 !important;
+      border-color: rgba(46, 125, 50, 0.3) !important;
+    }
+  }
+}
+
 /* TABLE CARD */
 .table-card {
   border-radius: 12px;

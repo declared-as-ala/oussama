@@ -104,6 +104,26 @@ namespace DocApi.Controllers
             }
         }
 
+        [HttpGet("no-process")]
+        [Authorize(Roles = UserRoles.ADMIN_ORG)]
+        public async Task<ActionResult<UserListResponse>> GetUsersWithNoProcess([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        {
+            try
+            {
+                var organizationId = GetRequiredOrganizationId();
+                var result = await _userService.GetUsersWithNoProcessAsync(organizationId, page, pageSize);
+                return Ok(result);
+            }
+            catch (ForbiddenException)
+            {
+                return Forbid();
+            }
+            catch (ServiceException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpGet("{id}")]
         public async Task<ActionResult<UserResponse>> GetById(int id)
         {

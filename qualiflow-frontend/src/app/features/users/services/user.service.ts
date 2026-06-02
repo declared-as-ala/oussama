@@ -71,6 +71,10 @@ export class UserService {
     return this.apiService.get<UserListResponse>(`${this.endpoint}/search`, { searchTerm, page, pageSize });
   }
 
+  getUsersWithNoProcess(page = 1, pageSize = 50): Observable<UserListResponse> {
+    return this.apiService.get<UserListResponse>(`${this.endpoint}/no-process`, { page, pageSize });
+  }
+
   getUserById(id: number): Observable<UserResponse> {
     return this.apiService.get<UserResponse>(`${this.endpoint}/${id}`);
   }
