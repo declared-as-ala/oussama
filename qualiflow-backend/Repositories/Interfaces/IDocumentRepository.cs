@@ -37,8 +37,8 @@ namespace DocApi.Repositories.Interfaces
         Task<Document?> GetByIdIncludingDeletedAsync(int id);
         Task<DocumentDetailsData?> GetDetailsByIdAsync(int id);
         Task<DocumentListItemData?> GetListItemByIdAsync(int id);
-        Task<IEnumerable<DocumentListItemData>> GetDeletedAsync(int pageNumber, int pageSize, int organizationId);
-        Task<int> CountDeletedAsync(int organizationId);
+        Task<IEnumerable<DocumentListItemData>> GetDeletedAsync(int pageNumber, int pageSize, int organizationId, int? restrictedUserId = null);
+        Task<int> CountDeletedAsync(int organizationId, int? restrictedUserId = null);
         Task<IEnumerable<Document>> GetByIdsAsync(int organizationId, IEnumerable<int> ids);
         Task<bool> ExistsCodeAsync(int organizationId, string code, int? excludeId = null);
         Task<int> CreateAsync(Document document);

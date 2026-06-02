@@ -79,7 +79,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("trash")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR,CHEF_SERVICE")]
         public async Task<ActionResult<PagedDocumentResponse>> GetTrash([FromQuery] DocumentListQueryRequest query)
         {
             try

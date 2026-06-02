@@ -21,7 +21,7 @@ LoadEnvironmentFiles();
 GlobalFontSettings.FontResolver = new CustomFontResolver();
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Configuration.AddInMemoryCollection(BuildEnvironmentConfiguration());
+builder.Configuration.AddInMemoryCollection(BuildEnvironmentConfiguration(builder.Configuration));
 
 // Use console logging to avoid Windows EventLog permission issues in local dev.
 builder.Logging.ClearProviders();
@@ -245,6 +245,7 @@ else
 builder.Services.AddSingleton<SignalRNotificationService>();
 builder.Services.AddHostedService<NotificationBackgroundService>();
 builder.Services.AddHostedService<OrganizationSubscriptionMonitorService>();
+builder.Services.AddHostedService<QualityMonitoringBackgroundService>();
 if (rabbitMqSettings.Enabled)
 {
     builder.Services.AddHostedService<NotificationDispatcherService>();
@@ -336,7 +337,7 @@ static void LoadEnvironmentFiles()
     }
 }
 
-static Dictionary<string, string?> BuildEnvironmentConfiguration()
+static Dictionary<string, string?> BuildEnvironmentConfiguration(IConfiguration config)
 {
     var configuration = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
 
@@ -382,6 +383,15 @@ static Dictionary<string, string?> BuildEnvironmentConfiguration()
         var value = Environment.GetEnvironmentVariable(environmentVariableName);
         if (value != null)
         {
+            // If local configuration explicitly disables Enabled flags, do not override them with env vars
+            if (configurationKey == "RabbitMqSettings:Enabled" || configurationKey == "SmtpSettings:Enabled" || configurationKey == "Firebase:Enabled")
+            {
+                var localValue = config[configurationKey];
+                if (string.Equals(localValue, "false", StringComparison.OrdinalIgnoreCase))
+                {
+                    return;
+                }
+            }
             configuration[configurationKey] = value;
         }
     }

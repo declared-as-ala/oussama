@@ -231,7 +231,7 @@ namespace DocApi.Repositories
             return await connection.QueryFirstOrDefaultAsync<DocumentListItemData>(sql, new { Id = id });
         }
 
-        public async Task<IEnumerable<DocumentListItemData>> GetDeletedAsync(int pageNumber, int pageSize, int organizationId)
+        public async Task<IEnumerable<DocumentListItemData>> GetDeletedAsync(int pageNumber, int pageSize, int organizationId, int? restrictedUserId = null)
         {
             using var connection = _connectionFactory.CreateConnection();
             if (connection.State != System.Data.ConnectionState.Open) await ((System.Data.Common.DbConnection)connection).OpenAsync();
@@ -271,27 +271,31 @@ namespace DocApi.Repositories
                 ) cv ON TRUE
                 WHERE d.OrganizationId = @OrganizationId
                   AND d.DeletedAt IS NOT NULL
+                  AND (@RestrictedUserId IS NULL OR d.ProcessId IS NULL OR p.PilotUserId = @RestrictedUserId OR d.ProcessId IN (SELECT ProcessId FROM ProcessActors WHERE UserId = @RestrictedUserId))
                 ORDER BY d.DeletedAt DESC, d.Id DESC
                 LIMIT @PageSize OFFSET @Offset;";
 
             return await connection.QueryAsync<DocumentListItemData>(sql, new
             {
                 OrganizationId = organizationId,
+                RestrictedUserId = restrictedUserId,
                 PageSize = pageSize,
                 Offset = (pageNumber - 1) * pageSize
             });
         }
 
-        public async Task<int> CountDeletedAsync(int organizationId)
+        public async Task<int> CountDeletedAsync(int organizationId, int? restrictedUserId = null)
         {
             using var connection = _connectionFactory.CreateConnection();
             const string sql = @"
                 SELECT COUNT(1)
-                FROM Documents
-                WHERE OrganizationId = @OrganizationId
-                  AND DeletedAt IS NOT NULL;";
+                FROM Documents d
+                LEFT JOIN Processes p ON p.Id = d.ProcessId
+                WHERE d.OrganizationId = @OrganizationId
+                  AND d.DeletedAt IS NOT NULL
+                  AND (@RestrictedUserId IS NULL OR d.ProcessId IS NULL OR p.PilotUserId = @RestrictedUserId OR d.ProcessId IN (SELECT ProcessId FROM ProcessActors WHERE UserId = @RestrictedUserId));";
 
-            return await connection.QuerySingleAsync<int>(sql, new { OrganizationId = organizationId });
+            return await connection.QuerySingleAsync<int>(sql, new { OrganizationId = organizationId, RestrictedUserId = restrictedUserId });
         }
 
         public async Task<bool> ExistsCodeAsync(int organizationId, string code, int? excludeId = null)

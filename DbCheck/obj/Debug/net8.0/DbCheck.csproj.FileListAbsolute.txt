@@ -1,0 +1,6 @@
+D:\qualilflow\oussama\DbCheck\obj\Debug\net8.0\DbCheck.csproj.AssemblyReference.cache
+D:\qualilflow\oussama\DbCheck\obj\Debug\net8.0\DbCheck.GeneratedMSBuildEditorConfig.editorconfig
+D:\qualilflow\oussama\DbCheck\obj\Debug\net8.0\DbCheck.AssemblyInfoInputs.cache
+D:\qualilflow\oussama\DbCheck\obj\Debug\net8.0\DbCheck.AssemblyInfo.cs
+D:\qualilflow\oussama\DbCheck\obj\Debug\net8.0\DbCheck.csproj.CoreCompileInputs.cache
+D:\qualilflow\oussama\DbCheck\obj\Debug\net8.0\DbCheck.sourcelink.json
