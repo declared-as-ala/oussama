@@ -71,11 +71,12 @@ builder.Services.AddAuthentication(options =>
 
             if (!string.IsNullOrWhiteSpace(accessToken) &&
                 (path.StartsWithSegments("/hubs/notifications") ||
-                 path.Value.Contains("/download") ||
-                 path.Value.Contains("/preview") ||
-                 path.Value.Contains("/logo") ||
-                 path.Value.Contains("/photo") ||
-                 path.Value.Contains("/attachment")))
+                 (path.Value != null &&
+                  (path.Value.Contains("/download") ||
+                   path.Value.Contains("/preview") ||
+                   path.Value.Contains("/logo") ||
+                   path.Value.Contains("/photo") ||
+                   path.Value.Contains("/attachment")))))
             {
                 context.Token = accessToken;
             }
