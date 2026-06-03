@@ -670,6 +670,19 @@ namespace DocApi.Repositories
                                 INNER JOIN Processes pr ON pr.Id = dp.ProcessId 
                                 WHERE pr.PilotUserId = @RestrictedUserId
                             )
+                            OR d.ProcedureId IN (
+                                SELECT pr.Id 
+                                FROM Procedures pr 
+                                INNER JOIN Processes proc ON proc.Id = pr.ProcessId 
+                                WHERE proc.PilotUserId = @RestrictedUserId
+                            )
+                            OR d.Id IN (
+                                SELECT dpr.DocumentId 
+                                FROM DocumentProcedures dpr 
+                                INNER JOIN Procedures pr ON pr.Id = dpr.ProcedureId 
+                                INNER JOIN Processes proc ON proc.Id = pr.ProcessId 
+                                WHERE proc.PilotUserId = @RestrictedUserId
+                            )
                         ) ");
                     }
                     else
