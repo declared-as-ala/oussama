@@ -21,6 +21,8 @@ namespace DocApi.Services
         private readonly INotificationRepository _notificationRepository;
         private readonly IEmailService _emailService;
         private readonly IMemoryCache _cache;
+        private readonly SignalRNotificationService _signalRNotificationService;
+        private readonly IPushNotificationService _pushNotificationService;
         private readonly ILogger<PublicService> _logger;
 
         public PublicService(
@@ -28,12 +30,16 @@ namespace DocApi.Services
             INotificationRepository notificationRepository,
             IEmailService emailService,
             IMemoryCache cache,
+            SignalRNotificationService signalRNotificationService,
+            IPushNotificationService pushNotificationService,
             ILogger<PublicService> logger)
         {
             _userRepository = userRepository;
             _notificationRepository = notificationRepository;
             _emailService = emailService;
             _cache = cache;
+            _signalRNotificationService = signalRNotificationService;
+            _pushNotificationService = pushNotificationService;
             _logger = logger;
         }
 
@@ -56,11 +62,18 @@ namespace DocApi.Services
                     $"<p style='font-size: 12px; color: #64748b;'>Ce code expirera dans 10 minutes.</p>" +
                     $"</div>");
 
-                return new SubmitOrganizationRequestResponse { Success = true, Message = "Code envoyé avec succès." };
+                var isDev = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
+                var devMsgSuffix = isDev ? $" (Dev code: {code})" : "";
+                return new SubmitOrganizationRequestResponse { Success = true, Message = $"Code envoyé avec succès.{devMsgSuffix}" };
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Erreur lors de l'envoi du code de validation à {Email}", email);
+                var isDev = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
+                if (isDev)
+                {
+                    return new SubmitOrganizationRequestResponse { Success = true, Message = $"Code généré (Dev mode SMTP échec) : {code}" };
+                }
                 return new SubmitOrganizationRequestResponse { Success = false, Message = "Erreur lors de l'envoi du code." };
             }
         }
@@ -150,12 +163,44 @@ namespace DocApi.Services
                     Channel = "INAPP",
                     IsArchived = false,
                     ReferenceType = "ORGANIZATION_REQUEST",
-                    ReferenceId = null,
+                    ReferenceId = request.Email,
                     ActionUrl = "/super-admin/dashboard",
                     CreatedAt = DateTime.UtcNow
                 };
 
-                await _notificationRepository.CreateAsync(notification);
+                notification.Id = await _notificationRepository.CreateAsync(notification);
+
+                if (notification.Id > 0)
+                {
+                    try
+                    {
+                        var unreadCount = await _notificationRepository.GetUnreadCountAsync(notification.UserId, notification.OrganizationId);
+                        await _signalRNotificationService.SendToUserAsync(notification, unreadCount);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Échec envoi notification temps réel via SignalR pour {UserId}", notification.UserId);
+                    }
+
+                    try
+                    {
+                        var pushDispatch = await _pushNotificationService.SendAsync(notification);
+                        if (pushDispatch.IsSent)
+                        {
+                            notification.IsPushSent = true;
+                            notification.Channel = pushDispatch.Channel;
+                            notification.ExternalProviderId = pushDispatch.ExternalProviderId;
+                            await _notificationRepository.MarkPushSentAsync(
+                                notification.Id,
+                                pushDispatch.ExternalProviderId,
+                                pushDispatch.Channel);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Échec envoi notification push pour {UserId}", notification.UserId);
+                    }
+                }
 
                 // Email notification to administrators
                 try

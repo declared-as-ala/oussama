@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
@@ -233,6 +233,44 @@ namespace DocApi.Repositories
                 Severity = "INFO",
                 ReferenceId = item.Id.ToString(),
                 CreatedAt = item.CreatedAt
+            }));
+
+            // Include pending organization requests (ReferenceType = 'ORGANIZATION_REQUEST')
+            var orgRequestsSql = @"
+                SELECT Id, Title, Message, CreatedAt
+                FROM Notifications
+                WHERE ReferenceType = 'ORGANIZATION_REQUEST'
+                  AND IsArchived = FALSE
+                  AND (@OrganizationId IS NULL OR OrganizationId = @OrganizationId)
+                ORDER BY CreatedAt DESC
+                LIMIT 20";
+
+            var orgRequests = await connection.QueryAsync<(int Id, string Title, string Message, System.DateTime CreatedAt)>(orgRequestsSql, parameters);
+            alerts.AddRange(orgRequests.Select(item => {
+                var orgName = "Inconnue";
+                if (!string.IsNullOrEmpty(item.Message)) {
+                    var lines = item.Message.Split('\n');
+                    foreach (var line in lines) {
+                        var idx = line.IndexOf(':');
+                        if (idx != -1) {
+                            var key = line.Substring(0, idx).Trim().ToLower();
+                            var value = line.Substring(idx + 1).Trim();
+                            if (key == "organisation" || key == "organization" || key == "nom") {
+                                orgName = value;
+                                break;
+                            }
+                        }
+                    }
+                }
+                return new DashboardAlertResponse
+                {
+                    Type = "ORGANIZATION_REQUEST",
+                    Title = item.Title ?? "Demande d'organisation",
+                    Description = $"Nouvelle demande d'inscription pour l'organisation : {orgName}",
+                    Severity = "HIGH",
+                    ReferenceId = item.Id.ToString(),
+                    CreatedAt = item.CreatedAt
+                };
             }));
 
             return alerts.OrderByDescending(a => a.CreatedAt).Take(50).ToList();

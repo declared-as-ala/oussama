@@ -34,10 +34,12 @@ namespace DocApi.Controllers
             {
                 using var connection = _connectionFactory.CreateConnection();
                 var sql = @"
-                    SELECT * 
-                    FROM Notifications 
-                    WHERE ReferenceType = 'ORGANIZATION_REQUEST' 
-                    ORDER BY CreatedAt DESC";
+                    SELECT * FROM (
+                        SELECT DISTINCT ON (COALESCE(ReferenceId, Id::text)) * 
+                        FROM Notifications 
+                        WHERE ReferenceType = 'ORGANIZATION_REQUEST' 
+                        ORDER BY COALESCE(ReferenceId, Id::text), CreatedAt DESC
+                    ) t ORDER BY CreatedAt DESC";
                 
                 var results = await connection.QueryAsync<DocApi.Domain.Entities.Notification>(sql);
                 return Ok(results);
@@ -55,11 +57,27 @@ namespace DocApi.Controllers
             try
             {
                 using var connection = _connectionFactory.CreateConnection();
-                var sql = @"
-                    DELETE FROM Notifications 
-                    WHERE Id = @Id AND ReferenceType = 'ORGANIZATION_REQUEST'";
                 
-                var rowsAffected = await connection.ExecuteAsync(sql, new { Id = id });
+                var refId = await connection.QueryFirstOrDefaultAsync<string>(
+                    "SELECT ReferenceId FROM Notifications WHERE Id = @Id AND ReferenceType = 'ORGANIZATION_REQUEST'",
+                    new { Id = id });
+
+                int rowsAffected;
+                if (!string.IsNullOrEmpty(refId))
+                {
+                    // Delete all notifications for the same request
+                    rowsAffected = await connection.ExecuteAsync(
+                        "DELETE FROM Notifications WHERE ReferenceType = 'ORGANIZATION_REQUEST' AND ReferenceId = @ReferenceId",
+                        new { ReferenceId = refId });
+                }
+                else
+                {
+                    // Fallback to deleting just this notification
+                    rowsAffected = await connection.ExecuteAsync(
+                        "DELETE FROM Notifications WHERE Id = @Id AND ReferenceType = 'ORGANIZATION_REQUEST'",
+                        new { Id = id });
+                }
+
                 if (rowsAffected == 0)
                 {
                     return NotFound(new { message = "Demande introuvable ou déjà traitée." });
