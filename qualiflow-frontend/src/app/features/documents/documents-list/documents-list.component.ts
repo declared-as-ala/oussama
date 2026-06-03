@@ -78,6 +78,11 @@ export class DocumentsListComponent implements OnInit {
   pageNumber = 1;
   pageSize = 10;
   showingTrash = false;
+  viewMode: 'list' | 'card' = 'list';
+
+  setViewMode(mode: 'list' | 'card'): void {
+    this.viewMode = mode;
+  }
 
   constructor(
     private readonly fb: FormBuilder,

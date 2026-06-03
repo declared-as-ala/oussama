@@ -670,12 +670,12 @@ namespace DocApi.Repositories
 
             if (pendingValidationOnly)
             {
-                conditions.Add("COALESCE(cv.Status, 'BROUILLON') = 'EN_REVISION'");
-                conditions.Add("COALESCE(eu.Role, '') = 'UTILISATEUR'");
+                conditions.Add("COALESCE(cv.Status, 'BROUILLON') IN ('BROUILLON', 'EN_REVISION')");
+                conditions.Add("cv.ExpiryDate IS NOT NULL AND cv.ExpiryDate < NOW()");
             }
             else if (hidePendingValidationFromGlobal)
             {
-                conditions.Add("NOT (COALESCE(cv.Status, 'BROUILLON') = 'EN_REVISION' AND COALESCE(eu.Role, '') = 'UTILISATEUR')");
+                conditions.Add("NOT (COALESCE(cv.Status, 'BROUILLON') IN ('BROUILLON', 'EN_REVISION') AND cv.ExpiryDate IS NOT NULL AND cv.ExpiryDate < NOW())");
             }
 
             if (processId.HasValue)
