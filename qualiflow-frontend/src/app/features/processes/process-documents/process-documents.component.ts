@@ -105,7 +105,13 @@ export class ProcessDocumentsComponent implements OnInit {
       next: ({ details, procedures, documents }) => {
         this.details = details;
         this.procedures = procedures;
-        this.allDocuments = documents.items.filter(d => d.processId === this.processId || (d.processIds && d.processIds.includes(this.processId)));
+        const procIds = new Set(this.procedures.map(p => p.id));
+        this.allDocuments = documents.items.filter(d => 
+          d.processId === this.processId || 
+          (d.processIds && d.processIds.includes(this.processId)) ||
+          (d.procedureId && procIds.has(d.procedureId)) ||
+          (d.procedureIds && d.procedureIds.some(id => procIds.has(id)))
+        );
         this.loading = false;
       },
       error: () => {
@@ -122,11 +128,14 @@ export class ProcessDocumentsComponent implements OnInit {
     this.selectedProcedureIdToLink = id;
   }
 
-  /** Filtered document list shown in the table */
   get visibleDocuments(): DocumentListItemResponse[] {
-    let docs = this.selectedProcedureId === null
+    const selectedId = this.selectedProcedureId;
+    let docs = selectedId === null
       ? this.allDocuments
-      : this.allDocuments.filter(d => d.procedureId === this.selectedProcedureId);
+      : this.allDocuments.filter(d => 
+          d.procedureId === selectedId || 
+          (d.procedureIds && d.procedureIds.includes(selectedId))
+        );
 
     const term = this.searchTerm.toLowerCase().trim();
     if (term) {
@@ -147,9 +156,14 @@ export class ProcessDocumentsComponent implements OnInit {
   }
 
   getDocumentCount(procedureId: number | null): number {
-    return procedureId === null
-      ? this.allDocuments.length
-      : this.allDocuments.filter(d => d.procedureId === procedureId).length;
+    if (procedureId === null) {
+      return this.allDocuments.length;
+    }
+    const targetId = procedureId;
+    return this.allDocuments.filter(d => 
+      d.procedureId === targetId || 
+      (d.procedureIds && d.procedureIds.includes(targetId))
+    ).length;
   }
 
   getDocumentStatusClass(status?: string | null): string {

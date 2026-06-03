@@ -659,7 +659,23 @@ namespace DocApi.Repositories
             {
                 if (string.Equals(status.Trim(), "__APPROVED_OR_PUBLISHED__", StringComparison.OrdinalIgnoreCase))
                 {
-                    conditions.Add("COALESCE(cv.Status, 'BROUILLON') IN ('APPROUVE', 'PUBLIE')");
+                    if (restrictedUserId.HasValue)
+                    {
+                        conditions.Add(@" (
+                            COALESCE(cv.Status, 'BROUILLON') IN ('APPROUVE', 'PUBLIE')
+                            OR p.PilotUserId = @RestrictedUserId
+                            OR d.Id IN (
+                                SELECT dp.DocumentId 
+                                FROM DocumentProcesses dp 
+                                INNER JOIN Processes pr ON pr.Id = dp.ProcessId 
+                                WHERE pr.PilotUserId = @RestrictedUserId
+                            )
+                        ) ");
+                    }
+                    else
+                    {
+                        conditions.Add("COALESCE(cv.Status, 'BROUILLON') IN ('APPROUVE', 'PUBLIE')");
+                    }
                 }
                 else
                 {
@@ -680,7 +696,12 @@ namespace DocApi.Repositories
 
             if (processId.HasValue)
             {
-                conditions.Add("(d.ProcessId = @ProcessId OR d.Id IN (SELECT DocumentId FROM DocumentProcesses WHERE ProcessId = @ProcessId))");
+                conditions.Add(@" (
+                    d.ProcessId = @ProcessId 
+                    OR d.Id IN (SELECT DocumentId FROM DocumentProcesses WHERE ProcessId = @ProcessId)
+                    OR d.ProcedureId IN (SELECT Id FROM Procedures WHERE ProcessId = @ProcessId)
+                    OR d.Id IN (SELECT dp.DocumentId FROM DocumentProcedures dp INNER JOIN Procedures pr ON dp.ProcedureId = pr.Id WHERE pr.ProcessId = @ProcessId)
+                ) ");
                 parameters.Add("@ProcessId", processId.Value);
             }
 

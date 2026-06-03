@@ -15,20 +15,20 @@ class Program
             connection.Open();
             Console.WriteLine("Connection successful!");
 
-            var usersCount = connection.QueryFirstOrDefault<int>("SELECT COUNT(*) FROM \"Users\"");
+            var usersCount = connection.QueryFirstOrDefault<int>("SELECT COUNT(*) FROM users");
             Console.WriteLine($"Total users: {usersCount}");
 
-            var superAdmins = connection.Query<dynamic>("SELECT \"Id\", \"Email\", \"Role\", \"IsActive\", \"OrganizationId\" FROM \"Users\" WHERE \"Role\" = 'SUPER_ADMIN'");
+            var superAdmins = connection.Query<dynamic>("SELECT id AS \"Id\", email AS \"Email\", role AS \"Role\", isactive AS \"IsActive\", organizationid AS \"OrganizationId\" FROM users WHERE role = 'SUPER_ADMIN'");
             Console.WriteLine($"Super admins found: {superAdmins.AsList().Count}");
             foreach (var sa in superAdmins)
             {
                 Console.WriteLine($"- Id: {sa.Id}, Email: {sa.Email}, Active: {sa.IsActive}, OrgId: {sa.OrganizationId}");
             }
 
-            var notificationsCount = connection.QueryFirstOrDefault<int>("SELECT COUNT(*) FROM \"Notifications\"");
+            var notificationsCount = connection.QueryFirstOrDefault<int>("SELECT COUNT(*) FROM notifications");
             Console.WriteLine($"Total notifications: {notificationsCount}");
 
-            var orgReqNotifications = connection.Query<dynamic>("SELECT * FROM \"Notifications\" WHERE \"ReferenceType\" = 'ORGANIZATION_REQUEST'");
+            var orgReqNotifications = connection.Query<dynamic>("SELECT id AS \"Id\", userid AS \"UserId\", title AS \"Title\", message AS \"Message\", createdat AS \"CreatedAt\" FROM notifications WHERE referencetype = 'ORGANIZATION_REQUEST'");
             Console.WriteLine($"Organization requests in Notifications: {orgReqNotifications.AsList().Count}");
             foreach (var n in orgReqNotifications)
             {

@@ -138,7 +138,7 @@ namespace DocApi.Services
             EnsureCanRead(userContext);
 
             var document = await GetDocumentOrThrowAsync(id);
-            EnsureDocumentAccess(userContext, document.OrganizationId);
+            await EnsureDocumentReadAccessAsync(document, userContext);
 
             var details = await _documentRepository.GetDetailsByIdAsync(id);
             if (details == null)
@@ -156,25 +156,6 @@ namespace DocApi.Services
             }
 
             var status = currentVersion?.Status ?? DocumentConstants.StatusBrouillon;
-
-            if (userContext.Role == UserRoles.UTILISATEUR)
-            {
-                if (document.ProcessId.HasValue)
-                {
-                    var process = await _processRepository.GetByIdAsync(document.ProcessId.Value);
-                    if (process == null)
-                    {
-                        throw new ForbiddenException("Acces refuse a ce document.");
-                    }
-
-                    var isPilot = process.PilotUserId == userContext.UserId;
-                    var isActor = await _processActorRepository.HasActorAsync(process.Id, userContext.UserId);
-                    if (!isPilot && !isActor)
-                    {
-                        throw new ForbiddenException("Vous n'avez pas acces a ce document car vous n'etes ni le pilote ni un acteur de son processus associe.");
-                    }
-                }
-            }
 
             var processIds = (await _documentRepository.GetProcessIdsByDocumentIdAsync(id)).ToList();
             var procedureIds = (await _documentRepository.GetProcedureIdsByDocumentIdAsync(id)).ToList();
@@ -1171,7 +1152,7 @@ namespace DocApi.Services
             EnsureCanRead(userContext);
 
             var document = await GetDocumentOrThrowAsync(documentId);
-            EnsureDocumentAccess(userContext, document.OrganizationId);
+            await EnsureDocumentReadAccessAsync(document, userContext);
 
             var current = await _documentVersionRepository.GetCurrentByDocumentIdAsync(documentId);
             if (current == null)
@@ -1236,7 +1217,7 @@ namespace DocApi.Services
             EnsureCanRead(userContext);
 
             var document = await GetDocumentOrThrowAsync(documentId);
-            EnsureDocumentAccess(userContext, document.OrganizationId);
+            await EnsureDocumentReadAccessAsync(document, userContext);
 
             var version = await _documentVersionRepository.GetDetailsByIdAsync(versionId);
             if (version == null || version.DocumentId != documentId)
@@ -1301,7 +1282,7 @@ namespace DocApi.Services
             EnsureCanRead(userContext);
 
             var document = await GetDocumentOrThrowAsync(documentId);
-            EnsureDocumentAccess(userContext, document.OrganizationId);
+            await EnsureDocumentReadAccessAsync(document, userContext);
 
             var current = await _documentVersionRepository.GetCurrentByDocumentIdAsync(documentId);
             if (current == null)
@@ -1865,6 +1846,45 @@ namespace DocApi.Services
                 PerformedByUserId = performedByUserId,
                 PerformedAt = DateTime.UtcNow
             });
+        }
+
+        private async Task EnsureDocumentReadAccessAsync(Document document, UserContext userContext)
+        {
+            EnsureDocumentAccess(userContext, document.OrganizationId);
+
+            if (userContext.Role == UserRoles.UTILISATEUR)
+            {
+                var processIds = (await _documentRepository.GetProcessIdsByDocumentIdAsync(document.Id)).ToList();
+                if (document.ProcessId.HasValue)
+                {
+                    processIds.Add(document.ProcessId.Value);
+                }
+                processIds = processIds.Distinct().ToList();
+
+                if (processIds.Any())
+                {
+                    bool hasAccess = false;
+                    foreach (var pid in processIds)
+                    {
+                        var process = await _processRepository.GetByIdAsync(pid);
+                        if (process != null)
+                        {
+                            var isPilot = process.PilotUserId == userContext.UserId;
+                            var isActor = await _processActorRepository.HasActorAsync(process.Id, userContext.UserId);
+                            if (isPilot || isActor)
+                            {
+                                hasAccess = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!hasAccess)
+                    {
+                        throw new ForbiddenException("Vous n'avez pas acces a ce document car vous n'etes ni le pilote ni un acteur de son processus associe.");
+                    }
+                }
+            }
         }
 
         private static void EnsureCanRead(UserContext userContext)
