@@ -725,7 +725,34 @@ namespace DocApi.Repositories
 
             if (restrictedUserId.HasValue)
             {
-                conditions.Add("(d.ProcessId IS NULL OR p.PilotUserId = @RestrictedUserId OR d.ProcessId IN (SELECT ProcessId FROM ProcessActors WHERE UserId = @RestrictedUserId))");
+                conditions.Add(@" (
+                    d.ProcessId IS NULL 
+                    OR p.PilotUserId = @RestrictedUserId 
+                    OR d.ProcessId IN (SELECT ProcessId FROM ProcessActors WHERE UserId = @RestrictedUserId)
+                    OR d.OwnerUserId = @RestrictedUserId
+                    OR d.Id IN (
+                        SELECT dp.DocumentId 
+                        FROM DocumentProcesses dp 
+                        INNER JOIN Processes pr ON pr.Id = dp.ProcessId 
+                        WHERE pr.PilotUserId = @RestrictedUserId 
+                           OR pr.Id IN (SELECT ProcessId FROM ProcessActors WHERE UserId = @RestrictedUserId)
+                    )
+                    OR d.ProcedureId IN (
+                        SELECT pr.Id 
+                        FROM Procedures pr 
+                        INNER JOIN Processes proc ON proc.Id = pr.ProcessId 
+                        WHERE proc.PilotUserId = @RestrictedUserId 
+                           OR proc.Id IN (SELECT ProcessId FROM ProcessActors WHERE UserId = @RestrictedUserId)
+                    )
+                    OR d.Id IN (
+                        SELECT dpr.DocumentId 
+                        FROM DocumentProcedures dpr 
+                        INNER JOIN Procedures pr ON pr.Id = dpr.ProcedureId 
+                        INNER JOIN Processes proc ON proc.Id = pr.ProcessId 
+                        WHERE proc.PilotUserId = @RestrictedUserId 
+                           OR proc.Id IN (SELECT ProcessId FROM ProcessActors WHERE UserId = @RestrictedUserId)
+                    )
+                ) ");
                 parameters.Add("@RestrictedUserId", restrictedUserId.Value);
             }
 

@@ -34,6 +34,7 @@ import { ProcessHistoryComponent } from '../process-history/process-history.comp
 import { ProcessDocumentsComponent } from '../process-documents/process-documents.component';
 import { IndicatorService } from '../../indicators/services/indicator.service';
 import { IndicatorListItemResponse } from '../../indicators/models/indicator.models';
+import { DocumentService } from '../../documents/services/document.service';
 
 @Component({
   selector: 'app-process-details',
@@ -67,6 +68,7 @@ export class ProcessDetailsComponent implements OnInit {
   users: UserResponse[] = [];
   procedures: ProcedureListItemResponse[] = [];
   indicators: IndicatorListItemResponse[] = [];
+  documentsCount = 0;
 
   // Procedure Popper state
   allAvailableProcedures: ProcedureListItemResponse[] = [];
@@ -83,7 +85,8 @@ export class ProcessDetailsComponent implements OnInit {
     private readonly userService: UserService,
     private readonly authService: AuthService,
     private readonly notificationService: NotificationService,
-    private readonly dialog: MatDialog
+    private readonly dialog: MatDialog,
+    private readonly documentService: DocumentService
   ) { }
 
   ngOnInit(): void {
@@ -133,13 +136,21 @@ export class ProcessDetailsComponent implements OnInit {
       details: this.processService.getProcessById(this.processId),
       users: this.userService.getAll(1, 300),
       procedures: this.procedureService.getProceduresByProcess(this.processId),
-      indicators: this.indicatorService.getIndicatorsByProcess(this.processId)
+      indicators: this.indicatorService.getIndicatorsByProcess(this.processId),
+      documents: this.documentService.getDocuments({ pageNumber: 1, pageSize: 500, processId: this.processId })
     }).subscribe({
-      next: ({ details, users, procedures, indicators }) => {
+      next: ({ details, users, procedures, indicators, documents }) => {
         this.details = details;
         this.users = users.items;
         this.procedures = procedures;
         this.indicators = indicators;
+        const procIds = new Set(this.procedures.map(p => p.id));
+        this.documentsCount = documents.items.filter(d => 
+          d.processId === this.processId || 
+          (d.processIds && d.processIds.includes(this.processId)) ||
+          (d.procedureId && procIds.has(d.procedureId)) ||
+          (d.procedureIds && d.procedureIds.some(id => procIds.has(id)))
+        ).length;
         this.loading = false;
       },
       error: () => {

@@ -44,7 +44,7 @@
       </button>
       <button type="button" class="tab-button" [class.active]="activeTab === 1" (click)="setActiveTab(1)">
         <mat-icon>description</mat-icon>
-        <span>2. Documentation</span>
+        <span>2. Documentation <span *ngIf="documentsCount > 0" class="tab-badge">{{ documentsCount }}</span></span>
       </button>
       <button type="button" class="tab-button" [class.active]="activeTab === 2" (click)="setActiveTab(2)">
         <mat-icon>group</mat-icon>
@@ -89,6 +89,10 @@
             <div class="pilote-avatar">{{ details.process.pilotFullName?.charAt(0) || '?' }}</div>
             <span>{{ details.process.pilotFullName || ('common.toDefine' | t) }}</span>
           </div>
+        </div>
+        <div class="summary-card" (click)="goToDocuments()" style="cursor: pointer;">
+          <div class="sc-label">Documents</div>
+          <div class="sc-value">{{ documentsCount }}</div>
         </div>
         <div class="summary-card">
           <div class="sc-label">{{ 'list.procedures.title' | t }}</div>
