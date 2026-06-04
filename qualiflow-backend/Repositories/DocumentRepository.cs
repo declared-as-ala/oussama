@@ -716,6 +716,14 @@ namespace DocApi.Repositories
                         conditions.Add("COALESCE(cv.Status, 'BROUILLON') IN ('APPROUVE', 'PUBLIE')");
                     }
                 }
+                else if (string.Equals(status.Trim(), "__DRAFT_OR_REVISION__", StringComparison.OrdinalIgnoreCase))
+                {
+                    conditions.Add("COALESCE(cv.Status, 'BROUILLON') IN ('BROUILLON', 'EN_REVISION')");
+                }
+                else if (string.Equals(status.Trim(), "__EXCLUDE_DRAFT_AND_REVISION__", StringComparison.OrdinalIgnoreCase))
+                {
+                    conditions.Add("COALESCE(cv.Status, 'BROUILLON') NOT IN ('BROUILLON', 'EN_REVISION')");
+                }
                 else
                 {
                     conditions.Add("COALESCE(cv.Status, 'BROUILLON') = @Status");
