@@ -171,7 +171,7 @@ namespace DocApi.Repositories
             return count > 0;
         }
 
-        public async Task<int> CreateAsync(Procedure procedure)
+        public async Task<int> CreateAsync(Procedure procedure, IEnumerable<int>? additionalProcessIds = null)
         {
             using var connection = _connectionFactory.CreateConnection();
 
@@ -189,7 +189,17 @@ namespace DocApi.Repositories
                 VALUES (@ProcessId, @ProcedureId)
                 ON CONFLICT (ProcessId, ProcedureId) DO NOTHING;";
 
+            // Always link the primary process
             await connection.ExecuteAsync(linkSql, new { ProcessId = procedure.ProcessId, ProcedureId = id });
+
+            // Link any additional processes
+            if (additionalProcessIds != null)
+            {
+                foreach (var pid in additionalProcessIds.Where(pid => pid != procedure.ProcessId))
+                {
+                    await connection.ExecuteAsync(linkSql, new { ProcessId = pid, ProcedureId = id });
+                }
+            }
 
             return id;
         }
@@ -340,6 +350,14 @@ namespace DocApi.Repositories
                 WHERE ProcessId = @ProcessId AND ProcedureId = @ProcedureId;";
             var rows = await connection.ExecuteAsync(sql, new { ProcessId = processId, ProcedureId = procedureId });
             return rows > 0;
+        }
+
+        public async Task<bool> ClearProcessLinksAsync(int procedureId)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = "DELETE FROM ProcessProcedures WHERE ProcedureId = @ProcedureId;";
+            var rows = await connection.ExecuteAsync(sql, new { ProcedureId = procedureId });
+            return rows >= 0;
         }
 
         public async Task<bool> AddDocumentLinkAsync(int procedureId, int documentId)

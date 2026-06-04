@@ -12,7 +12,7 @@
         </div>
 
         <div class="page-header-right">
-            <span class="form-status-hint">Moderne & Épuré</span>
+            <span class="form-status-hint">Moderne &amp; Épuré</span>
         </div>
     </div>
 
@@ -24,11 +24,11 @@
         </button>
         <button type="button" class="tab-button" [class.active]="activeTab === 1" (click)="setActiveTab(1)">
             <mat-icon>person</mat-icon>
-            <span>2. Responsabilité & Statut</span>
+            <span>2. Responsabilité &amp; Statut</span>
         </button>
         <button type="button" class="tab-button" [class.active]="activeTab === 2" (click)="setActiveTab(2)">
             <mat-icon>assignment</mat-icon>
-            <span>3. Cadre & Contenu</span>
+            <span>3. Cadre &amp; Contenu</span>
         </button>
     </div>
 
@@ -40,7 +40,7 @@
 
         <form *ngIf="!loading" [formGroup]="procedureForm" (ngSubmit)="submit()" class="form-container">
 
-            <!-- SECTION 1: IDENTité -->
+            <!-- SECTION 1: IDENTIFICATION -->
             <div class="form-section-clean" *ngIf="activeTab === 0">
                 <div class="section-header">
                     <mat-icon>fingerprint</mat-icon>
@@ -50,6 +50,7 @@
                     </div>
                 </div>
 
+                <!-- Titre + Code -->
                 <div class="section-content grid-two">
                     <mat-form-field appearance="outline">
                         <mat-label>{{ 'form.procedure.titleLabel' | t }}</mat-label>
@@ -58,20 +59,86 @@
                     </mat-form-field>
 
                     <mat-form-field appearance="outline">
-                        <mat-label>{{ 'form.procedure.parentProcess' | t }}</mat-label>
-                        <mat-select formControlName="processId">
-                            <mat-option *ngFor="let p of processes" [value]="p.id">{{ p.code }} — {{ p.name
-                                }}</mat-option>
-                        </mat-select>
-                        <mat-error *ngIf="isInvalid('processId')">{{ 'form.procedure.selectionRequired' | t }}</mat-error>
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline" class="full-width">
                         <mat-label>{{ 'common.code' | t }}</mat-label>
                         <input matInput formControlName="code" placeholder="Ex: PROC-QUAL-001" />
                         <mat-error *ngIf="procedureForm.controls.code.hasError('duplicateCode')">Ce code de procédure existe déjà.</mat-error>
                         <mat-error *ngIf="isInvalid('code') && !procedureForm.controls.code.hasError('duplicateCode')">{{ 'form.procedure.codeError' | t }}</mat-error>
                     </mat-form-field>
+                </div>
+
+                <!-- PROCESS MULTI-PICKER -->
+                <div class="process-picker-block" [class.has-error]="isInvalid('processIds')">
+
+                    <div class="process-picker-header">
+                        <div class="process-picker-title">
+                            <mat-icon>account_tree</mat-icon>
+                            <span>Processus liés</span>
+                            <span class="badge-count" *ngIf="selectedProcessIds.length > 0">{{ selectedProcessIds.length }}</span>
+                        </div>
+                        <p class="process-picker-subtitle">
+                            Cliquez sur les cartes pour associer cette procédure à un ou plusieurs processus.
+                        </p>
+                    </div>
+
+                    <!-- Chips des processus sélectionnés -->
+                    <div class="selected-chips" *ngIf="selectedProcessIds.length > 0">
+                        <div class="chips-row">
+                            <span class="process-chip" *ngFor="let pid of selectedProcessIds">
+                                <mat-icon class="chip-icon">account_tree</mat-icon>
+                                <span class="chip-code">{{ getProcessById(pid)?.code }}</span>
+                                <span class="chip-sep">—</span>
+                                <span class="chip-name">{{ getProcessById(pid)?.name }}</span>
+                                <button type="button" class="chip-remove" (click)="toggleProcess(pid)" title="Retirer ce processus">
+                                    <mat-icon>close</mat-icon>
+                                </button>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Barre de recherche -->
+                    <div class="process-search-bar">
+                        <mat-icon class="search-icon">search</mat-icon>
+                        <input
+                            type="text"
+                            [(ngModel)]="processSearch"
+                            [ngModelOptions]="{standalone: true}"
+                            placeholder="Rechercher un processus par code ou nom…"
+                            class="process-search-input"
+                        />
+                        <button type="button" class="search-clear-btn" *ngIf="processSearch" (click)="processSearch = ''">
+                            <mat-icon>close</mat-icon>
+                        </button>
+                    </div>
+
+                    <!-- Grille de cartes -->
+                    <div class="process-cards-grid">
+                        <button
+                            type="button"
+                            class="process-card"
+                            *ngFor="let p of filteredProcesses"
+                            [class.selected]="isProcessSelected(p.id)"
+                            (click)="toggleProcess(p.id)"
+                            [title]="p.code + ' — ' + p.name"
+                        >
+                            <div class="process-card-top">
+                                <span class="process-type-badge">{{ p.type }}</span>
+                                <mat-icon class="card-check-icon">check_circle</mat-icon>
+                            </div>
+                            <div class="process-card-code">{{ p.code }}</div>
+                            <div class="process-card-name">{{ p.name }}</div>
+                        </button>
+
+                        <div class="no-results" *ngIf="filteredProcesses.length === 0">
+                            <mat-icon>search_off</mat-icon>
+                            <span>Aucun processus trouvé pour "{{ processSearch }}"</span>
+                        </div>
+                    </div>
+
+                    <!-- Message d'erreur validation -->
+                    <div class="process-picker-error" *ngIf="isInvalid('processIds')">
+                        <mat-icon>error_outline</mat-icon>
+                        <span>Veuillez sélectionner au moins un processus.</span>
+                    </div>
                 </div>
             </div>
 
@@ -80,7 +147,7 @@
                 <div class="section-header">
                     <mat-icon>person</mat-icon>
                     <div>
-                        <h2>Responsabilité & Statut</h2>
+                        <h2>Responsabilité &amp; Statut</h2>
                         <p>Assigne un responsable (Responsable Qualité ou Admin) et définit l'état de la procédure.</p>
                     </div>
                 </div>

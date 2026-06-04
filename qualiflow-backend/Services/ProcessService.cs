@@ -121,7 +121,7 @@ namespace DocApi.Services
                     ? ProcessConstants.StatusActif
                     : request.Status.Trim().ToUpperInvariant(),
                 VersionNumber = string.IsNullOrWhiteSpace(request.VersionNumber) ? "1.0" : request.VersionNumber.Trim(),
-                RevisionComment = string.IsNullOrWhiteSpace(request.RevisionComment) ? "CrÃƒÂ©ation initiale" : request.RevisionComment.Trim(),
+                RevisionComment = string.IsNullOrWhiteSpace(request.RevisionComment) ? "Création initiale" : request.RevisionComment.Trim(),
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -135,7 +135,7 @@ namespace DocApi.Services
                 "PROCESS_CREATED",
                 null,
                 created.Code,
-                $"Processus crÃƒÂ©ÃƒÂ© : '{created.Name}'.",
+                $"Processus créé : '{created.Name}'.",
                 userContext.UserId);
 
             return await MapToProcessResponseAsync(created);
@@ -210,19 +210,19 @@ namespace DocApi.Services
             await _processRepository.UpdateAsync(process);
 
             var changesList = new List<string>();
-            if (oldCode != process.Code) changesList.Add($"Code : '{oldCode}' Ã¢â€ â€™ '{process.Code}'");
-            if (oldName != process.Name) changesList.Add($"Nom : '{oldName}' Ã¢â€ â€™ '{process.Name}'");
-            if (oldDescription != process.Description) changesList.Add($"Description : '{(string.IsNullOrWhiteSpace(oldDescription) ? "aucune" : oldDescription)}' Ã¢â€ â€™ '{(string.IsNullOrWhiteSpace(process.Description) ? "aucune" : process.Description)}'");
-            if (oldType != process.Type) changesList.Add($"Type : '{oldType}' Ã¢â€ â€™ '{process.Type}'");
-            if (oldStatus != process.Status) changesList.Add($"Statut : '{oldStatus}' Ã¢â€ â€™ '{process.Status}'");
-            if (oldVersionNumber != process.VersionNumber) changesList.Add($"Version : '{oldVersionNumber}' Ã¢â€ â€™ '{process.VersionNumber}'");
-            if (oldRevisionComment != process.RevisionComment) changesList.Add($"Commentaire : '{oldRevisionComment}' Ã¢â€ â€™ '{process.RevisionComment}'");
+            if (oldCode != process.Code) changesList.Add($"Code : '{oldCode}' → '{process.Code}'");
+            if (oldName != process.Name) changesList.Add($"Nom : '{oldName}' → '{process.Name}'");
+            if (oldDescription != process.Description) changesList.Add($"Description : '{(string.IsNullOrWhiteSpace(oldDescription) ? "aucune" : oldDescription)}' → '{(string.IsNullOrWhiteSpace(process.Description) ? "aucune" : process.Description)}'");
+            if (oldType != process.Type) changesList.Add($"Type : '{oldType}' → '{process.Type}'");
+            if (oldStatus != process.Status) changesList.Add($"Statut : '{oldStatus}' → '{process.Status}'");
+            if (oldVersionNumber != process.VersionNumber) changesList.Add($"Version : '{oldVersionNumber}' → '{process.VersionNumber}'");
+            if (oldRevisionComment != process.RevisionComment) changesList.Add($"Commentaire : '{oldRevisionComment}' → '{process.RevisionComment}'");
             
             if (oldPilotId != process.PilotUserId)
             {
                 var oldPilotName = await GetPilotFullNameAsync(oldPilotId) ?? "aucun";
                 var newPilotName = await GetPilotFullNameAsync(process.PilotUserId) ?? "aucun";
-                changesList.Add($"Pilote : '{oldPilotName}' Ã¢â€ â€™ '{newPilotName}'");
+                changesList.Add($"Pilote : '{oldPilotName}' → '{newPilotName}'");
             }
 
             var oldObjectives = DeserializeList(oldObjectivesSer);
@@ -230,26 +230,26 @@ namespace DocApi.Services
             var newObjectives = DeserializeList(process.Objectives);
             if (!oldObjectives.SequenceEqual(newObjectives))
             {
-                changesList.Add($"Objectifs : '{(oldObjectives.Any() ? string.Join(", ", oldObjectives) : "aucun")}' Ã¢â€ â€™ '{(newObjectives.Any() ? string.Join(", ", newObjectives) : "aucun")}'");
+                changesList.Add($"Objectifs : '{(oldObjectives.Any() ? string.Join(", ", oldObjectives) : "aucun")}' → '{(newObjectives.Any() ? string.Join(", ", newObjectives) : "aucun")}'");
             }
 
             var oldFinalities = DeserializeList(oldFinalitiesSer);
             var newFinalities = DeserializeList(process.Finalities);
             if (!oldFinalities.SequenceEqual(newFinalities))
             {
-                changesList.Add($"FinalitÃƒÂ©s : '{(oldFinalities.Any() ? string.Join(", ", oldFinalities) : "aucune")}' Ã¢â€ â€™ '{(newFinalities.Any() ? string.Join(", ", newFinalities) : "aucune")}'");
+                changesList.Add($"Finalités : '{(oldFinalities.Any() ? string.Join(", ", oldFinalities) : "aucune")}' → '{(newFinalities.Any() ? string.Join(", ", newFinalities) : "aucune")}'");
             }
 
             var oldScope = DeserializeList(oldScopeSer);
             var newScope = DeserializeList(process.Scope);
             if (!oldScope.SequenceEqual(newScope))
             {
-                changesList.Add($"PÃƒÂ©rimÃƒÂ¨tre : '{(oldScope.Any() ? string.Join(", ", oldScope) : "aucun")}' Ã¢â€ â€™ '{(newScope.Any() ? string.Join(", ", newScope) : "aucun")}'");
+                changesList.Add($"Périmètre : '{(oldScope.Any() ? string.Join(", ", oldScope) : "aucun")}' → '{(newScope.Any() ? string.Join(", ", newScope) : "aucun")}'");
             }
 
             var detailedComment = changesList.Any()
                 ? "Modifications : " + string.Join(" | ", changesList)
-                : "MÃƒÂ©tadonnÃƒÂ©es du processus modifiÃƒÂ©es sans changement de contenu.";
+                : "Métadonnées du processus modifiées sans changement de contenu.";
 
             await LogProcessActionAsync(
                 process,
@@ -281,7 +281,7 @@ namespace DocApi.Services
                     "PROCESS_DELETED",
                     process.Code,
                     null,
-                    $"Processus '{process.Name}' supprimÃƒÂ©.",
+                    $"Processus '{process.Name}' supprimé.",
                     userContext.UserId);
             }
             return result;
@@ -309,7 +309,7 @@ namespace DocApi.Services
                 "STATUS_TOGGLED",
                 prevStatus,
                 nextStatus,
-                $"Statut changÃƒÂ© de {prevStatus} ÃƒÂ  {nextStatus}.",
+                $"Statut changé de {prevStatus} à {nextStatus}.",
                 userContext.UserId);
 
             return await MapToProcessResponseAsync(process);
@@ -341,7 +341,7 @@ namespace DocApi.Services
                 "PILOT_UPDATED",
                 $"ID: {oldPilotId}, Nom: {oldPilotName}",
                 $"ID: {request.PilotUserId}, Nom: {newPilotName}",
-                $"Pilote mis ÃƒÂ  jour : de '{oldPilotName}' ÃƒÂ  '{newPilotName}'.",
+                $"Pilote mis à jour : de '{oldPilotName}' à '{newPilotName}'.",
                 userContext.UserId);
 
             return await MapToProcessResponseAsync(process);
@@ -475,7 +475,7 @@ namespace DocApi.Services
             {
                 if (pilotActors[0].UserId != process.PilotUserId.Value)
                 {
-                    throw new ServiceException("Le pilote dÃƒÂ©fini dans la liste des acteurs doit correspondre au pilote principal du processus.");
+                    throw new ServiceException("Le pilote défini dans la liste des acteurs doit correspondre au pilote principal du processus.");
                 }
             }
 
@@ -506,11 +506,11 @@ namespace DocApi.Services
                 var actorFullName = $"{newActor.FirstName} {newActor.LastName}".Trim();
                 if (!oldActorsDict.TryGetValue(newActor.UserId, out var oldActor))
                 {
-                    actorChanges.Add($"L'acteur '{actorFullName}' a ÃƒÂ©tÃƒÂ© ajoutÃƒÂ© avec le rÃƒÂ´le '{TranslateActorType(newActor.ActorType)}'");
+                    actorChanges.Add($"L'acteur '{actorFullName}' a été ajouté avec le rôle '{TranslateActorType(newActor.ActorType)}'");
                 }
                 else if (oldActor.ActorType != newActor.ActorType)
                 {
-                    actorChanges.Add($"Le rÃƒÂ´le de l'acteur '{actorFullName}' a changÃƒÂ© de '{TranslateActorType(oldActor.ActorType)}' ÃƒÂ  '{TranslateActorType(newActor.ActorType)}'");
+                    actorChanges.Add($"Le rôle de l'acteur '{actorFullName}' a changé de '{TranslateActorType(oldActor.ActorType)}' à '{TranslateActorType(newActor.ActorType)}'");
                 }
             }
 
@@ -520,13 +520,13 @@ namespace DocApi.Services
                 if (!newActorsDict.ContainsKey(oldActor.UserId))
                 {
                     var actorFullName = $"{oldActor.FirstName} {oldActor.LastName}".Trim();
-                    actorChanges.Add($"L'acteur '{actorFullName}' a ÃƒÂ©tÃƒÂ© retirÃƒÂ© (rÃƒÂ´le prÃƒÂ©cÃƒÂ©dent : '{TranslateActorType(oldActor.ActorType)}')");
+                    actorChanges.Add($"L'acteur '{actorFullName}' a été retiré (rôle précédent : '{TranslateActorType(oldActor.ActorType)}')");
                 }
             }
 
             var detailedComment = actorChanges.Any()
                 ? "Changements d'acteurs : " + string.Join(" | ", actorChanges)
-                : "Acteurs enregistrÃƒÂ©s sans changement.";
+                : "Acteurs enregistrés sans changement.";
 
             await LogProcessActionAsync(
                 process,
@@ -549,7 +549,7 @@ namespace DocApi.Services
 
             if (process.PilotUserId == userId)
             {
-                throw new ServiceException("Le pilote principal du processus ne peut pas Ãªtre retirÃ© de la liste des acteurs. Veuillez modifier le pilote dans les dÃ©tails du processus.");
+                throw new ServiceException("Le pilote principal du processus ne peut pas être retiré de la liste des acteurs. Veuillez modifier le pilote dans les détails du processus.");
             }
 
             var currentActors = await _processActorRepository.GetActorsByProcessIdAsync(processId);
@@ -575,7 +575,7 @@ namespace DocApi.Services
                     "ACTOR_REMOVED",
                     actorName,
                     null,
-                    $"Acteur '{actorName}' retirÃƒÂ© du processus.",
+                    $"Acteur '{actorName}' retiré du processus.",
                     userContext.UserId);
             }
 
@@ -1005,7 +1005,7 @@ namespace DocApi.Services
             try
             {
                 var user = await _userRepository.GetByIdAsync(performedByUserId);
-                var actorName = user != null ? $"{user.FirstName} {user.LastName}".Trim() : "SystÃƒÂ¨me";
+                var actorName = user != null ? $"{user.FirstName} {user.LastName}".Trim() : "Système";
                 await _actionLogger.LogActionAsync(
                     process.OrganizationId,
                     performedByUserId,
@@ -1013,7 +1013,7 @@ namespace DocApi.Services
                     "PROCESS",
                     actionType.Replace("PROCESS_", ""),
                     $"Processus {process.Code} : {actionType}",
-                    comment ?? $"Action {actionType} effectuÃƒÂ©e sur le processus '{process.Name}'.");
+                    comment ?? $"Action {actionType} effectuée sur le processus '{process.Name}'.");
             }
             catch
             {

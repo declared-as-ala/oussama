@@ -291,3 +291,323 @@ mat-form-field {
     }
   }
 }
+
+/* -------------------------------------------
+   PROCESS MULTI-PICKER
+------------------------------------------- */
+
+.process-picker-block {
+  background: #ffffff;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  transition: border-color 0.2s;
+
+  &.has-error {
+    border-color: #ef4444;
+  }
+
+  .process-picker-header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .process-picker-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111827;
+
+    mat-icon {
+      color: var(--xl-green-mid);
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+
+    .badge-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--xl-green-mid);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      margin-left: 2px;
+    }
+  }
+
+  .process-picker-subtitle {
+    margin: 0;
+    font-size: 0.82rem;
+    color: #6b7280;
+  }
+
+  .selected-chips {
+    background: rgba(16, 185, 129, 0.05);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 10px;
+    padding: 10px 14px;
+
+    .chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .process-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #fff;
+      border: 1.5px solid #10b981;
+      border-radius: 20px;
+      padding: 4px 8px 4px 10px;
+      font-size: 0.8rem;
+      color: #065f46;
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(16, 185, 129, 0.15);
+
+      .chip-icon {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+        color: #10b981;
+      }
+
+      .chip-code {
+        font-weight: 700;
+        color: #059669;
+      }
+
+      .chip-sep {
+        color: #9ca3af;
+        font-weight: 400;
+      }
+
+      .chip-name {
+        color: #374151;
+        font-weight: 500;
+        max-width: 140px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .chip-remove {
+        background: none;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        padding: 0;
+        color: #9ca3af;
+        border-radius: 50%;
+        transition: color 0.15s, background 0.15s;
+        width: 18px;
+        height: 18px;
+
+        mat-icon {
+          font-size: 14px;
+          width: 14px;
+          height: 14px;
+        }
+
+        &:hover {
+          color: #ef4444;
+          background: rgba(239, 68, 68, 0.08);
+        }
+      }
+    }
+  }
+
+  .process-search-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #f9fafb;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 8px 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+
+    &:focus-within {
+      border-color: var(--xl-green-mid);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+      background: #fff;
+    }
+
+    .search-icon {
+      color: #9ca3af;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .process-search-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 0.9rem;
+      color: #111827;
+      font-family: inherit;
+
+      &::placeholder {
+        color: #9ca3af;
+      }
+    }
+
+    .search-clear-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      padding: 2px;
+      color: #9ca3af;
+      border-radius: 50%;
+      transition: color 0.15s;
+
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+
+      &:hover { color: #374151; }
+    }
+  }
+
+  .process-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+    gap: 12px;
+
+    @media (max-width: 600px) {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .process-card {
+    background: #f9fafb;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 14px 16px;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: all 0.18s ease;
+    position: relative;
+    outline: none;
+    font-family: inherit;
+
+    &:hover {
+      border-color: #10b981;
+      background: rgba(16, 185, 129, 0.04);
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.12);
+      transform: translateY(-1px);
+    }
+
+    &.selected {
+      background: rgba(16, 185, 129, 0.06);
+      border-color: #10b981;
+      border-width: 2px;
+      box-shadow: 0 2px 12px rgba(16, 185, 129, 0.18);
+
+      .card-check-icon {
+        opacity: 1;
+        color: #10b981;
+      }
+
+      .process-card-code {
+        color: #059669;
+      }
+    }
+
+    .process-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .process-type-badge {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background: rgba(16, 185, 129, 0.1);
+      color: #059669;
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+
+    .card-check-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      opacity: 0;
+      transition: opacity 0.18s;
+    }
+
+    .process-card-code {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #111827;
+      transition: color 0.18s;
+    }
+
+    .process-card-name {
+      font-size: 0.78rem;
+      color: #6b7280;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .no-results {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 32px 0;
+    color: #9ca3af;
+    font-size: 0.88rem;
+
+    mat-icon {
+      font-size: 36px;
+      width: 36px;
+      height: 36px;
+    }
+  }
+
+  .process-picker-error {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #ef4444;
+    font-size: 0.8rem;
+    font-weight: 600;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+  }
+}

@@ -145,12 +145,21 @@ namespace DocApi.Services
         public async Task<ProcedureResponse> CreateAsync(CreateProcedureRequest request, UserContext userContext)
         {
             EnsureCanWrite(userContext);
-            await VerifyProcedureWritePermissionAsync(request.ProcessId, userContext);
+
+            if (request.ProcessIds == null || !request.ProcessIds.Any())
+            {
+                throw new ServiceException("Au moins un processus doit être sélectionné.");
+            }
+
+            await VerifyProcedureWritePermissionAsync(request.ProcessIds, userContext);
 
             var organizationId = ResolveOrganizationScopeForWrite(userContext);
 
+            var primaryProcessId = request.ProcessIds.First();
+
             await ValidateProcedurePayloadAsync(
-                request.ProcessId,
+                primaryProcessId,
+                request.ProcessIds,
                 request.Code,
                 request.Title,
                 request.Status,
@@ -161,7 +170,7 @@ namespace DocApi.Services
             var procedure = new Procedure
             {
                 OrganizationId = organizationId,
-                ProcessId = request.ProcessId,
+                ProcessId = primaryProcessId,
                 Code = request.Code.Trim(),
                 Title = request.Title.Trim(),
                 Objective = NormalizeNullable(request.Objective),
@@ -176,9 +185,14 @@ namespace DocApi.Services
                 CreatedAt = DateTime.UtcNow
             };
 
-            var id = await _procedureRepository.CreateAsync(procedure);
+            var id = await _procedureRepository.CreateAsync(procedure, request.ProcessIds);
             var created = await GetProcedureOrThrowAsync(id);
-            await EnsureResponsibleIsProcessActorAsync(created.ProcessId, created.OrganizationId, created.ResponsibleUserId);
+
+            // Ensure responsible is actor in all linked processes
+            foreach (var pid in request.ProcessIds)
+            {
+                await EnsureResponsibleIsProcessActorAsync(pid, organizationId, created.ResponsibleUserId);
+            }
 
             await LogProcedureActionAsync(
                 created,
@@ -197,7 +211,13 @@ namespace DocApi.Services
 
             var procedure = await GetProcedureOrThrowAsync(id);
             EnsureProcedureWriteAccess(userContext, procedure.OrganizationId);
-            await VerifyProcedureWritePermissionAsync(procedure.ProcessId, userContext);
+
+            if (request.ProcessIds == null || !request.ProcessIds.Any())
+            {
+                throw new ServiceException("Au moins un processus doit être sélectionné.");
+            }
+
+            await VerifyProcedureWritePermissionAsync(request.ProcessIds, userContext);
 
             // Seuls ADMIN_ORG, RESPONSABLE_QUALITE et SUPER_ADMIN peuvent changer le responsable
             var canChangeResponsible = userContext.IsSuperAdmin
@@ -205,8 +225,11 @@ namespace DocApi.Services
                 || userContext.Role == UserRoles.RESPONSABLE_QUALITE;
             var effectiveResponsibleId = canChangeResponsible ? request.ResponsibleUserId : procedure.ResponsibleUserId;
 
+            var primaryProcessId = request.ProcessIds.First();
+
             await ValidateProcedurePayloadAsync(
-                request.ProcessId,
+                primaryProcessId,
+                request.ProcessIds,
                 request.Code,
                 request.Title,
                 request.Status,
@@ -220,7 +243,7 @@ namespace DocApi.Services
             var oldVersionNumber = procedure.VersionNumber;
             var oldRevisionComment = procedure.RevisionComment;
 
-            procedure.ProcessId = request.ProcessId;
+            procedure.ProcessId = primaryProcessId;
             procedure.Code = request.Code.Trim();
             procedure.Title = request.Title.Trim();
             procedure.Objective = NormalizeNullable(request.Objective);
@@ -244,7 +267,14 @@ namespace DocApi.Services
             procedure.UpdatedAt = DateTime.UtcNow;
 
             await _procedureRepository.UpdateAsync(procedure);
-            await EnsureResponsibleIsProcessActorAsync(procedure.ProcessId, procedure.OrganizationId, procedure.ResponsibleUserId);
+
+            // Re-synchronize process links: clear old ones then insert all selected
+            await _procedureRepository.ClearProcessLinksAsync(procedure.Id);
+            foreach (var pid in request.ProcessIds)
+            {
+                await _procedureRepository.AddProcessLinkAsync(pid, procedure.Id);
+                await EnsureResponsibleIsProcessActorAsync(pid, procedure.OrganizationId, procedure.ResponsibleUserId);
+            }
 
             var changesList = new List<string>();
             if (oldCode != procedure.Code) changesList.Add($"Code : '{oldCode}' → '{procedure.Code}'");
@@ -274,7 +304,7 @@ namespace DocApi.Services
 
             var procedure = await GetProcedureOrThrowAsync(id);
             EnsureProcedureWriteAccess(userContext, procedure.OrganizationId);
-            await VerifyProcedureWritePermissionAsync(procedure.ProcessId, userContext);
+            await VerifyProcedureWritePermissionAsync(new[] { procedure.ProcessId }, userContext);
 
             var deleted = await _procedureRepository.DeleteAsync(id);
             if (deleted)
@@ -297,7 +327,7 @@ namespace DocApi.Services
 
             var procedure = await GetProcedureOrThrowAsync(id);
             EnsureProcedureWriteAccess(userContext, procedure.OrganizationId);
-            await VerifyProcedureWritePermissionAsync(procedure.ProcessId, userContext);
+            await VerifyProcedureWritePermissionAsync(new[] { procedure.ProcessId }, userContext);
 
             var nextStatus = procedure.Status == ProcedureConstants.StatusActif
                 ? ProcedureConstants.StatusInactif
@@ -383,7 +413,7 @@ namespace DocApi.Services
 
             var procedure = await GetProcedureOrThrowAsync(procedureId);
             EnsureProcedureWriteAccess(userContext, procedure.OrganizationId);
-            await VerifyProcedureWritePermissionAsync(procedure.ProcessId, userContext);
+            await VerifyProcedureWritePermissionAsync(new[] { procedure.ProcessId }, userContext);
 
             await ValidateInstructionPayloadAsync(procedureId, request.Code, request.Title, request.Status, null);
 
@@ -429,7 +459,7 @@ namespace DocApi.Services
 
             var procedure = await GetProcedureOrThrowAsync(procedureId);
             EnsureProcedureWriteAccess(userContext, procedure.OrganizationId);
-            await VerifyProcedureWritePermissionAsync(procedure.ProcessId, userContext);
+            await VerifyProcedureWritePermissionAsync(new[] { procedure.ProcessId }, userContext);
 
             var instruction = await _instructionRepository.GetByIdAsync(instructionId);
             if (instruction == null)
@@ -477,7 +507,7 @@ namespace DocApi.Services
 
             var procedure = await GetProcedureOrThrowAsync(procedureId);
             EnsureProcedureWriteAccess(userContext, procedure.OrganizationId);
-            await VerifyProcedureWritePermissionAsync(procedure.ProcessId, userContext);
+            await VerifyProcedureWritePermissionAsync(new[] { procedure.ProcessId }, userContext);
 
             var instruction = await _instructionRepository.GetByIdAsync(instructionId);
             if (instruction == null)
@@ -506,7 +536,8 @@ namespace DocApi.Services
         }
 
         private async Task ValidateProcedurePayloadAsync(
-            int processId,
+            int primaryProcessId,
+            List<int> processIds,
             string code,
             string title,
             string status,
@@ -514,9 +545,9 @@ namespace DocApi.Services
             int organizationId,
             int? excludeProcedureId)
         {
-            if (processId <= 0)
+            if (processIds == null || !processIds.Any())
             {
-                throw new ServiceException("Le processus est obligatoire.");
+                throw new ServiceException("Au moins un processus est obligatoire.");
             }
 
             if (string.IsNullOrWhiteSpace(code))
@@ -535,15 +566,19 @@ namespace DocApi.Services
                 throw new ServiceException("Le statut de la procedure est invalide.");
             }
 
-            var process = await _processRepository.GetByIdAsync(processId);
-            if (process == null)
+            // Validate each selected process belongs to the same organisation
+            foreach (var pid in processIds)
             {
-                throw new ServiceException("Le processus selectionne est introuvable.");
-            }
+                var process = await _processRepository.GetByIdAsync(pid);
+                if (process == null)
+                {
+                    throw new ServiceException($"Le processus sélectionné (ID: {pid}) est introuvable.");
+                }
 
-            if (process.OrganizationId != organizationId)
-            {
-                throw new ForbiddenException("Le processus doit appartenir a la meme organisation.");
+                if (process.OrganizationId != organizationId)
+                {
+                    throw new ForbiddenException($"Le processus (ID: {pid}) doit appartenir à la même organisation.");
+                }
             }
 
             var codeExists = await _procedureRepository.ExistsCodeAsync(organizationId, code.Trim(), excludeProcedureId);
@@ -852,7 +887,7 @@ namespace DocApi.Services
             }
         }
 
-        private async Task VerifyProcedureWritePermissionAsync(int processId, UserContext userContext)
+        private async Task VerifyProcedureWritePermissionAsync(IEnumerable<int> processIds, UserContext userContext)
         {
             if (userContext.IsSuperAdmin || userContext.Role == UserRoles.RESPONSABLE_QUALITE || userContext.Role == UserRoles.ADMIN_ORG)
             {
@@ -861,29 +896,30 @@ namespace DocApi.Services
 
             if (userContext.Role == UserRoles.UTILISATEUR)
             {
-                var process = await _processRepository.GetByIdAsync(processId);
-            if (process == null)
+                // Allow if user has write permission on at least one of the linked processes
+                foreach (var processId in processIds)
                 {
-                    throw new NotFoundException("Processus associe introuvable.");
-                }
+                    var process = await _processRepository.GetByIdAsync(processId);
+                    if (process == null) continue;
 
-                if (process.PilotUserId == userContext.UserId)
-                {
-                    return;
-                }
-
-                var actors = await _processActorRepository.GetActorsByProcessIdAsync(processId);
-                var userActor = actors.FirstOrDefault(a => a.UserId == userContext.UserId);
-                if (userActor != null)
-                {
-                    var type = userActor.ActorType.Trim().ToUpperInvariant();
-                    if (type == ProcessConstants.ActorPilote || type == ProcessConstants.ActorCopilote || type == ProcessConstants.ActorContributeur)
+                    if (process.PilotUserId == userContext.UserId)
                     {
                         return;
                     }
+
+                    var actors = await _processActorRepository.GetActorsByProcessIdAsync(processId);
+                    var userActor = actors.FirstOrDefault(a => a.UserId == userContext.UserId);
+                    if (userActor != null)
+                    {
+                        var type = userActor.ActorType.Trim().ToUpperInvariant();
+                        if (type == ProcessConstants.ActorPilote || type == ProcessConstants.ActorCopilote || type == ProcessConstants.ActorContributeur)
+                        {
+                            return;
+                        }
+                    }
                 }
 
-                throw new ForbiddenException("Vous n'avez pas les droits de modification sur les procedures de ce processus car les observateurs ne peuvent pas modifier.");
+                throw new ForbiddenException("Vous n'avez pas les droits de modification sur les procedures de ces processus.");
             }
         }
 
@@ -945,7 +981,7 @@ namespace DocApi.Services
 
             var procedure = await GetProcedureOrThrowAsync(log.ProcedureId);
             EnsureProcedureWriteAccess(userContext, procedure.OrganizationId);
-            await VerifyProcedureWritePermissionAsync(procedure.ProcessId, userContext);
+            await VerifyProcedureWritePermissionAsync(new[] { procedure.ProcessId }, userContext);
 
             return await _procedureActionLogRepository.DeleteAsync(logId, userContext.OrganizationId.Value);
         }
@@ -1011,7 +1047,7 @@ namespace DocApi.Services
             EnsureCanWrite(userContext);
             var procedure = await GetProcedureOrThrowAsync(procedureId);
             EnsureProcedureWriteAccess(userContext, procedure.OrganizationId);
-            await VerifyProcedureWritePermissionAsync(processId, userContext);
+            await VerifyProcedureWritePermissionAsync(new[] { processId }, userContext);
 
             var process = await _processRepository.GetByIdAsync(processId);
             if (process == null)
@@ -1061,7 +1097,7 @@ namespace DocApi.Services
             EnsureCanWrite(userContext);
             var procedure = await GetProcedureOrThrowAsync(procedureId);
             EnsureProcedureWriteAccess(userContext, procedure.OrganizationId);
-            await VerifyProcedureWritePermissionAsync(processId, userContext);
+            await VerifyProcedureWritePermissionAsync(new[] { processId }, userContext);
 
             var process = await _processRepository.GetByIdAsync(processId);
             if (process == null)

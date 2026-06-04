@@ -11,7 +11,7 @@ export interface ProcedureQueryParams {
 }
 
 export interface CreateProcedureRequest {
-  processId: number;
+  processIds: number[];
   code: string;
   title: string;
   objective?: string | null;

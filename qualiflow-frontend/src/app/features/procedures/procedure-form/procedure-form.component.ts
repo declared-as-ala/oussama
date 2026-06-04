@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -31,6 +31,7 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     ReactiveFormsModule,
     RouterModule,
     MatCardModule,
@@ -49,7 +50,7 @@ export class ProcedureFormComponent implements OnInit {
   readonly statusOptions = PROCEDURE_STATUS_OPTIONS;
 
   readonly procedureForm = this.fb.group({
-    processId: this.fb.nonNullable.control<number>(0, [Validators.required, Validators.min(1)]),
+    processIds: this.fb.nonNullable.control<number[]>([], [Validators.required, Validators.minLength(1)]),
     code: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(2), Validators.maxLength(30), Validators.pattern(/^[A-Za-z0-9_\-/]+$/)]),
     title: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(3), Validators.maxLength(255)]),
     objective: this.fb.control<string>('', [Validators.maxLength(1200)]),
@@ -70,6 +71,47 @@ export class ProcedureFormComponent implements OnInit {
   existingProcedures: ProcedureListItemResponse[] = [];
   activeTab = 0;
 
+  /** Search string for the process picker */
+  processSearch = '';
+
+  /** Selected process IDs (mirror of the form control) */
+  get selectedProcessIds(): number[] {
+    return this.procedureForm.controls.processIds.value ?? [];
+  }
+
+  /** Processes filtered by the search input */
+  get filteredProcesses(): ProcessListItemResponse[] {
+    const q = this.processSearch.trim().toLowerCase();
+    if (!q) return this.processes;
+    return this.processes.filter(
+      p => p.code.toLowerCase().includes(q) || p.name.toLowerCase().includes(q)
+    );
+  }
+
+  /** Toggle a process in/out of the selection */
+  toggleProcess(id: number): void {
+    const current = [...this.selectedProcessIds];
+    const idx = current.indexOf(id);
+    if (idx >= 0) {
+      current.splice(idx, 1);
+    } else {
+      current.push(id);
+    }
+    this.procedureForm.controls.processIds.setValue(current);
+    this.procedureForm.controls.processIds.markAsTouched();
+    this.autoGenerateCode();
+  }
+
+  /** Whether a process is currently selected */
+  isProcessSelected(id: number): boolean {
+    return this.selectedProcessIds.includes(id);
+  }
+
+  /** Find a process by ID */
+  getProcessById(id: number): ProcessListItemResponse | undefined {
+    return this.processes.find(p => p.id === id);
+  }
+
   constructor(
     private readonly fb: FormBuilder,
     private readonly route: ActivatedRoute,
@@ -86,8 +128,8 @@ export class ProcedureFormComponent implements OnInit {
     this.procedureId = idParam ? Number(idParam) : null;
     this.isEdit = this.procedureId !== null && !Number.isNaN(this.procedureId);
 
-    // Auto-generate code when processId or title changes
-    this.procedureForm.controls.processId.valueChanges.subscribe(() => this.autoGenerateCode());
+    // Auto-generate code when processIds or title changes
+    this.procedureForm.controls.processIds.valueChanges.subscribe(() => this.autoGenerateCode());
     this.procedureForm.controls.title.valueChanges.subscribe(() => this.autoGenerateCode());
 
     // Add duplicate code validator
@@ -152,15 +194,16 @@ export class ProcedureFormComponent implements OnInit {
   }
 
   get completionPercent(): number {
+    const processIds = this.procedureForm.controls.processIds.value;
     const requiredControls = [
-      this.procedureForm.controls.processId,
       this.procedureForm.controls.code,
       this.procedureForm.controls.title,
       this.procedureForm.controls.status
     ];
 
+    const processValid = Array.isArray(processIds) && processIds.length > 0 ? 1 : 0;
     const done = requiredControls.filter(control => control.valid && `${control.value ?? ''}`.toString().trim().length > 0).length;
-    return Math.round((done / requiredControls.length) * 100);
+    return Math.round(((done + processValid) / (requiredControls.length + 1)) * 100);
   }
 
   get nextVersion(): string {
@@ -169,7 +212,7 @@ export class ProcedureFormComponent implements OnInit {
     return isNaN(num) ? current : (num + 0.1).toFixed(1);
   }
 
-  isInvalid(fieldName: 'processId' | 'code' | 'title' | 'objective' | 'scope' | 'description' | 'versionNumber'): boolean {
+  isInvalid(fieldName: 'processIds' | 'code' | 'title' | 'objective' | 'scope' | 'description' | 'versionNumber'): boolean {
     const control = this.procedureForm.controls[fieldName];
     return !!control && control.invalid && (control.dirty || control.touched);
   }
@@ -220,8 +263,13 @@ export class ProcedureFormComponent implements OnInit {
   }
 
   private patchForm(procedure: ProcedureResponse): void {
+    // Build the list of processIds from the linked processes array
+    const processIds = procedure.processes && procedure.processes.length > 0
+      ? procedure.processes.map(p => p.id)
+      : (procedure.processId ? [procedure.processId] : []);
+
     this.procedureForm.patchValue({
-      processId: procedure.processId,
+      processIds,
       code: procedure.code,
       title: procedure.title,
       objective: procedure.objective ?? '',
@@ -238,7 +286,7 @@ export class ProcedureFormComponent implements OnInit {
     const raw = this.procedureForm.getRawValue();
 
     return {
-      processId: raw.processId,
+      processIds: raw.processIds,
       code: raw.code.trim(),
       title: raw.title.trim(),
       objective: raw.objective?.trim() || null,
@@ -288,15 +336,17 @@ export class ProcedureFormComponent implements OnInit {
       return;
     }
 
-    const processId = this.procedureForm.controls.processId.value;
+    const processIds = this.procedureForm.controls.processIds.value;
     const title = this.procedureForm.controls.title.value;
 
-    if (!processId || !title) {
+    if (!processIds || processIds.length === 0 || !title) {
       codeCtrl.setValue('', { emitEvent: false });
       return;
     }
 
-    const selectedProcess = this.processes.find(p => p.id === processId);
+    // Use the first selected process for code generation
+    const primaryProcessId = processIds[0];
+    const selectedProcess = this.processes.find(p => p.id === primaryProcessId);
     if (!selectedProcess) {
       codeCtrl.setValue('', { emitEvent: false });
       return;
