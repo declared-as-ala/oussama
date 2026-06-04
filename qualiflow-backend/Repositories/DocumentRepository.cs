@@ -779,8 +779,7 @@ namespace DocApi.Repositories
             if (restrictedUserId.HasValue)
             {
                 conditions.Add(@" (
-                    d.ProcessId IS NULL 
-                    OR p.PilotUserId = @RestrictedUserId 
+                    p.PilotUserId = @RestrictedUserId 
                     OR d.ProcessId IN (SELECT ProcessId FROM ProcessActors WHERE UserId = @RestrictedUserId)
                     OR d.OwnerUserId = @RestrictedUserId
                     OR d.Id IN (

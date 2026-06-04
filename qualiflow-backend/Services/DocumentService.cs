@@ -90,11 +90,11 @@ namespace DocApi.Services
             var pageSize = query.PageSize <= 0 ? 10 : Math.Min(query.PageSize, 100);
             var organizationScope = ResolveOrganizationScopeForRead(userContext, query.OrganizationId);
             var pendingValidationOnly = userContext.Role == UserRoles.RESPONSABLE_QUALITE && query.PendingValidationOnly;
-            var hidePendingValidationFromGlobal = userContext.Role == UserRoles.RESPONSABLE_QUALITE && !query.PendingValidationOnly;
+            var hidePendingValidationFromGlobal = false;
 
             var statusFilter = ResolveReadableStatusFilter(query.Status, userContext);
 
-            int? restrictedUserId = (userContext.Role == UserRoles.UTILISATEUR)
+            int? restrictedUserId = (userContext.Role == UserRoles.UTILISATEUR || userContext.Role == UserRoles.CHEF_SERVICE)
                 ? userContext.UserId
                 : null;
 
@@ -2062,7 +2062,7 @@ namespace DocApi.Services
 
         private static string? ResolveReadableStatusFilter(string? requestedStatus, UserContext userContext)
         {
-            if (userContext.Role == UserRoles.ADMIN_ORG || userContext.Role == UserRoles.RESPONSABLE_QUALITE)
+            if (userContext.Role == UserRoles.SUPER_ADMIN || userContext.Role == UserRoles.ADMIN_ORG || userContext.Role == UserRoles.RESPONSABLE_QUALITE)
             {
                 return NormalizeUpper(requestedStatus);
             }
