@@ -40,7 +40,8 @@ namespace DocApi.Services
         {
             ".pdf",
             ".docx",
-            ".xlsx"
+            ".xlsx",
+            ".txt"
         };
         private readonly HashSet<string> _allowedDocumentExtensions;
         private readonly long _maxDocumentFileSizeBytes;

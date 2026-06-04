@@ -226,8 +226,17 @@
             placeholder="Notes sur cette version spécifique..."></textarea>
         </mat-form-field>
 
+        <!-- MODE DE SAISIE SELECT -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Mode de saisie du document</mat-label>
+          <mat-select formControlName="inputMode">
+            <mat-option value="upload">Téléverser un fichier local (PDF, Word, Excel, Texte)</mat-option>
+            <mat-option value="online">Saisir / Remplir directement en ligne</mat-option>
+          </mat-select>
+        </mat-form-field>
+
         <!-- UPLOAD ZONE -->
-        <div class="upload-zone full-width" [class.has-file]="selectedFile">
+        <div class="upload-zone full-width" *ngIf="documentForm.get('inputMode')?.value === 'upload'" [class.has-file]="selectedFile">
           <input type="file" id="file-input" (change)="onFileSelected($event)" class="file-input-hidden"
             [attr.accept]="acceptedFileTypes" />
           <label for="file-input" class="upload-label">
@@ -249,6 +258,222 @@
               <mat-icon>close</mat-icon>
             </button>
           </label>
+        </div>
+
+        <!-- ONLINE MODE FIELDS -->
+        <mat-form-field appearance="outline" class="full-width" *ngIf="documentForm.get('inputMode')?.value === 'online'">
+          <mat-label>Modèle de document</mat-label>
+          <mat-select formControlName="onlineTemplate">
+            <mat-option value="simple">Enregistrement Qualité (Texte libre)</mat-option>
+            <mat-option value="attendance">Liste de présence des enseignants</mat-option>
+            <mat-option value="announcement">Annonce</mat-option>
+            <mat-option value="meeting">Compte-rendu de réunion</mat-option>
+            <mat-option value="evaluation">Fiche d'évaluation qualité</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Template simple (Enregistrement libre) -->
+        <div class="online-template-box full-width" *ngIf="documentForm.get('inputMode')?.value === 'online' && documentForm.get('onlineTemplate')?.value === 'simple'">
+          <h4>Contenu de l'enregistrement</h4>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Saisir l'enregistrement *</mat-label>
+            <textarea matInput rows="10" formControlName="description" placeholder="Écrivez le contenu de votre enregistrement qualité ici..."></textarea>
+          </mat-form-field>
+        </div>
+
+        <!-- Template attendance (Liste de présence des enseignants) -->
+        <div class="online-template-box full-width" *ngIf="documentForm.get('inputMode')?.value === 'online' && documentForm.get('onlineTemplate')?.value === 'attendance'">
+          <h4>Détails de la liste de présence</h4>
+          
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Date de la liste de présence *</mat-label>
+            <input matInput [matDatepicker]="attendanceDatePicker" formControlName="attendanceDate" />
+            <mat-datepicker-toggle matSuffix [for]="attendanceDatePicker"></mat-datepicker-toggle>
+            <mat-datepicker #attendanceDatePicker></mat-datepicker>
+          </mat-form-field>
+
+          <div class="attendance-table-container">
+            <div class="attendance-table-header">
+              <span>Nom de l'enseignant</span>
+              <span>Statut de présence</span>
+              <span>Action</span>
+            </div>
+            
+            <div formArrayName="attendanceRows" class="attendance-rows-list">
+              <div *ngFor="let row of attendanceRows.controls; let idx = index" [formGroupName]="idx" class="attendance-row-item">
+                <mat-form-field appearance="outline">
+                  <input matInput formControlName="teacherName" placeholder="Nom de l'enseignant" />
+                </mat-form-field>
+                
+                <mat-form-field appearance="outline">
+                  <mat-select formControlName="status">
+                    <mat-option value="PRESENT">Présent</mat-option>
+                    <mat-option value="ABSENT">Absent</mat-option>
+                    <mat-option value="LATE">En retard</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                
+                <button mat-icon-button color="warn" type="button" (click)="removeTeacherRow(idx)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+            
+            <button mat-stroked-button color="primary" type="button" class="add-teacher-btn" (click)="addTeacherRow()">
+              <mat-icon>add</mat-icon> Ajouter un enseignant
+            </button>
+          </div>
+          
+          <mat-form-field appearance="outline" class="full-width" style="margin-top: 15px;">
+            <mat-label>Observations / Commentaires additionnels</mat-label>
+            <textarea matInput rows="3" formControlName="description" placeholder="Renseignez d'éventuelles remarques ou observations..."></textarea>
+          </mat-form-field>
+        </div>
+
+        <!-- Template announcement (Annonce) -->
+        <div class="online-template-box full-width" *ngIf="documentForm.get('inputMode')?.value === 'online' && documentForm.get('onlineTemplate')?.value === 'announcement'">
+          <h4>Détails de l'annonce</h4>
+          
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Sujet / Titre de l'annonce *</mat-label>
+            <input matInput formControlName="announcementSubject" placeholder="ex: Fermeture exceptionnelle, Réunion d'information..." />
+          </mat-form-field>
+          
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Cible / Destinataire(s)</mat-label>
+            <input matInput formControlName="announcementTarget" placeholder="ex: Enseignants, Administration, Tout le personnel..." />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Contenu de l'annonce *</mat-label>
+            <textarea matInput rows="6" formControlName="announcementBody" placeholder="Écrivez le message de l'annonce..."></textarea>
+          </mat-form-field>
+          
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Remarques ou notes de révision internes</mat-label>
+            <textarea matInput rows="2" formControlName="description" placeholder="Notes visibles pour la GED uniquement..."></textarea>
+          </mat-form-field>
+        </div>
+
+        <!-- Template meeting (Compte-rendu de réunion) -->
+        <div class="online-template-box full-width" *ngIf="documentForm.get('inputMode')?.value === 'online' && documentForm.get('onlineTemplate')?.value === 'meeting'">
+          <h4>Détails du compte-rendu de réunion</h4>
+          
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Sujet / Objet de la réunion *</mat-label>
+            <input matInput formControlName="meetingSubject" placeholder="ex: Comité de pilotage SMQ" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Date de la réunion</mat-label>
+            <input matInput [matDatepicker]="meetingDatePicker" formControlName="meetingDate" />
+            <mat-datepicker-toggle matSuffix [for]="meetingDatePicker"></mat-datepicker-toggle>
+            <mat-datepicker #meetingDatePicker></mat-datepicker>
+          </mat-form-field>
+
+          <div class="attendance-table-container">
+            <div class="attendance-table-header" style="grid-template-columns: 1fr 50px;">
+              <span>Nom du participant</span>
+              <span>Action</span>
+            </div>
+            
+            <div formArrayName="meetingParticipants" class="attendance-rows-list">
+              <div *ngFor="let row of meetingParticipants.controls; let idx = index" [formGroupName]="idx" class="attendance-row-item" style="grid-template-columns: 1fr 50px;">
+                <mat-form-field appearance="outline">
+                  <input matInput formControlName="name" placeholder="Nom du participant" />
+                </mat-form-field>
+                
+                <button mat-icon-button color="warn" type="button" (click)="removeParticipantRow(idx)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+            
+            <button mat-stroked-button color="primary" type="button" class="add-teacher-btn" (click)="addParticipantRow()">
+              <mat-icon>add</mat-icon> Ajouter un participant
+            </button>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width" style="margin-top: 15px;">
+            <mat-label>Ordre du jour *</mat-label>
+            <textarea matInput rows="4" formControlName="meetingAgenda" placeholder="Points abordés lors de la réunion..."></textarea>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Délibérations & Décisions prises *</mat-label>
+            <textarea matInput rows="6" formControlName="meetingDecisions" placeholder="Détails des décisions et actions convenues..."></textarea>
+          </mat-form-field>
+          
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Remarques ou notes de révision internes</mat-label>
+            <textarea matInput rows="2" formControlName="description" placeholder="Notes visibles pour la GED uniquement..."></textarea>
+          </mat-form-field>
+        </div>
+
+        <!-- Template evaluation (Fiche d'évaluation qualité) -->
+        <div class="online-template-box full-width" *ngIf="documentForm.get('inputMode')?.value === 'online' && documentForm.get('onlineTemplate')?.value === 'evaluation'">
+          <h4>Détails de la fiche d'évaluation</h4>
+          
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Objet de l'évaluation *</mat-label>
+            <input matInput formControlName="evaluationSubject" placeholder="ex: Évaluation de la formation ISO 21001" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Date de l'évaluation</mat-label>
+            <input matInput [matDatepicker]="evaluationDatePicker" formControlName="evaluationDate" />
+            <mat-datepicker-toggle matSuffix [for]="evaluationDatePicker"></mat-datepicker-toggle>
+            <mat-datepicker #evaluationDatePicker></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Nom de l'évaluateur</mat-label>
+            <input matInput formControlName="evaluationEvaluator" placeholder="ex: Nom du responsable qualité" />
+          </mat-form-field>
+
+          <div class="attendance-table-container">
+            <div class="attendance-table-header" style="grid-template-columns: 1fr 100px 50px;">
+              <span>Critère d'évaluation</span>
+              <span>Note (1-5)</span>
+              <span>Action</span>
+            </div>
+            
+            <div formArrayName="evaluationCriteria" class="attendance-rows-list">
+              <div *ngFor="let row of evaluationCriteria.controls; let idx = index" [formGroupName]="idx" class="attendance-row-item" style="grid-template-columns: 1fr 100px 50px;">
+                <mat-form-field appearance="outline">
+                  <input matInput formControlName="criterion" placeholder="ex: Contenu pédagogique, logistique..." />
+                </mat-form-field>
+                
+                <mat-form-field appearance="outline">
+                  <mat-select formControlName="rating">
+                    <mat-option [value]="1">1/5</mat-option>
+                    <mat-option [value]="2">2/5</mat-option>
+                    <mat-option [value]="3">3/5</mat-option>
+                    <mat-option [value]="4">4/5</mat-option>
+                    <mat-option [value]="5">5/5</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                
+                <button mat-icon-button color="warn" type="button" (click)="removeCriterionRow(idx)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+            
+            <button mat-stroked-button color="primary" type="button" class="add-teacher-btn" (click)="addCriterionRow()">
+              <mat-icon>add</mat-icon> Ajouter un critère
+            </button>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width" style="margin-top: 15px;">
+            <mat-label>Recommandations / Actions d'amélioration *</mat-label>
+            <textarea matInput rows="4" formControlName="evaluationRecommendations" placeholder="Actions correctives ou préventives recommandées..."></textarea>
+          </mat-form-field>
+          
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Remarques complémentaires</mat-label>
+            <textarea matInput rows="2" formControlName="description" placeholder="Observations GED..."></textarea>
+          </mat-form-field>
         </div>
       </div>
     </mat-card>

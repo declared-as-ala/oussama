@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators, FormArray, FormGroup } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -71,8 +71,8 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
   isCanvasEmpty = true;
   readonly typeOptions = DOCUMENT_TYPE_OPTIONS;
   readonly statusOptions = DOCUMENT_STATUS_OPTIONS;
-  readonly acceptedFileTypes = '.pdf,.docx,.xlsx';
-  readonly allowedFileFormatsLabel = 'PDF, Word (.docx) ou Excel (.xlsx)';
+  readonly acceptedFileTypes = '.pdf,.docx,.xlsx,.txt';
+  readonly allowedFileFormatsLabel = 'PDF, Word (.docx), Excel (.xlsx) ou Texte (.txt)';
 
   readonly documentForm = this.fb.group({
     code: this.fb.nonNullable.control('', [
@@ -96,7 +96,24 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
     initialRevisionComment: this.fb.control<string>(''),
     initialEffectiveDate: this.fb.control<Date | null>(null),
     initialExpiryDate: this.fb.control<Date | null>(null),
-    signature: this.fb.control<string | null>(null)
+    signature: this.fb.control<string | null>(null),
+    inputMode: this.fb.nonNullable.control<'upload' | 'online'>('upload'),
+    onlineTemplate: this.fb.nonNullable.control<'simple' | 'attendance' | 'announcement' | 'meeting' | 'evaluation'>('simple'),
+    announcementSubject: this.fb.control<string>(''),
+    announcementBody: this.fb.control<string>(''),
+    announcementTarget: this.fb.control<string>(''),
+    attendanceDate: this.fb.control<Date | null>(null),
+    attendanceRows: this.fb.array([]),
+    meetingSubject: this.fb.control<string>(''),
+    meetingDate: this.fb.control<Date | null>(null),
+    meetingAgenda: this.fb.control<string>(''),
+    meetingDecisions: this.fb.control<string>(''),
+    meetingParticipants: this.fb.array([]),
+    evaluationSubject: this.fb.control<string>(''),
+    evaluationDate: this.fb.control<Date | null>(null),
+    evaluationEvaluator: this.fb.control<string>(''),
+    evaluationRecommendations: this.fb.control<string>(''),
+    evaluationCriteria: this.fb.array([])
   });
 
   loading = false;
@@ -365,6 +382,167 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
     });
   }
 
+  get attendanceRows(): FormArray {
+    return this.documentForm.get('attendanceRows') as FormArray;
+  }
+
+  get meetingParticipants(): FormArray {
+    return this.documentForm.get('meetingParticipants') as FormArray;
+  }
+
+  get evaluationCriteria(): FormArray {
+    return this.documentForm.get('evaluationCriteria') as FormArray;
+  }
+
+  addTeacherRow(name = '', status: 'PRESENT' | 'ABSENT' | 'LATE' = 'PRESENT'): void {
+    this.attendanceRows.push(
+      this.fb.group({
+        teacherName: [name, Validators.required],
+        status: [status, Validators.required]
+      })
+    );
+  }
+
+  removeTeacherRow(index: number): void {
+    this.attendanceRows.removeAt(index);
+  }
+
+  addParticipantRow(name = ''): void {
+    this.meetingParticipants.push(
+      this.fb.group({
+        name: [name, Validators.required]
+      })
+    );
+  }
+
+  removeParticipantRow(index: number): void {
+    this.meetingParticipants.removeAt(index);
+  }
+
+  addCriterionRow(criterion = '', rating = 5, comment = ''): void {
+    this.evaluationCriteria.push(
+      this.fb.group({
+        criterion: [criterion, Validators.required],
+        rating: [rating, [Validators.required, Validators.min(1), Validators.max(5)]],
+        comment: [comment]
+      })
+    );
+  }
+
+  removeCriterionRow(index: number): void {
+    this.evaluationCriteria.removeAt(index);
+  }
+
+  generateTextFileFromForm(): File | null {
+    const raw = this.documentForm.getRawValue() as any;
+    if (raw.inputMode !== 'online') {
+      return null;
+    }
+
+    let text = '';
+    const nowStr = new Date().toLocaleDateString('fr-FR');
+
+    if (raw.onlineTemplate === 'attendance') {
+      const dateVal = raw.attendanceDate ? new Date(raw.attendanceDate).toLocaleDateString('fr-FR') : nowStr;
+      text += `LISTE DE PRESENCE DES ENSEIGNANTS\n`;
+      text += `Date : ${dateVal}\n\n`;
+      text += `------------------------------------------------------------\n`;
+      text += `| Enseignant                           | Statut            |\n`;
+      text += `------------------------------------------------------------\n`;
+
+      const rows = this.attendanceRows.value || [];
+      if (rows.length === 0) {
+        text += `| Aucun enseignant répertorié          |                   |\n`;
+      } else {
+        rows.forEach((row: any) => {
+          const name = (row.teacherName || '').padEnd(36);
+          const status = (row.status === 'PRESENT' ? 'Présent' : row.status === 'ABSENT' ? 'Absent' : 'En retard').padEnd(17);
+          text += `| ${name} | ${status} |\n`;
+        });
+      }
+      text += `------------------------------------------------------------\n\n`;
+      if (raw.description) {
+        text += `Commentaires / Observations :\n${raw.description}\n`;
+      }
+    } else if (raw.onlineTemplate === 'announcement') {
+      text += `ANNONCE OFFICIELLE\n`;
+      text += `Sujet : ${raw.announcementSubject || 'Sans sujet'}\n`;
+      text += `Date de publication : ${nowStr}\n`;
+      text += `Destinataire : ${raw.announcementTarget || 'Tout le personnel'}\n\n`;
+      text += `Contenu :\n`;
+      text += `${raw.announcementBody || ''}\n\n`;
+      if (raw.description) {
+        text += `Notes additionnelles :\n${raw.description}\n`;
+      }
+    } else if (raw.onlineTemplate === 'meeting') {
+      const dateVal = raw.meetingDate ? new Date(raw.meetingDate).toLocaleDateString('fr-FR') : nowStr;
+      text += `COMPTE-RENDU DE REUNION\n`;
+      text += `Sujet : ${raw.meetingSubject || 'Sans objet'}\n`;
+      text += `Date de la réunion : ${dateVal}\n\n`;
+
+      text += `PARTICIPANTS :\n`;
+      const parts = this.meetingParticipants.value || [];
+      if (parts.length === 0) {
+        text += `- Aucun participant enregistré\n`;
+      } else {
+        parts.forEach((p: any) => {
+          text += `- ${p.name || ''}\n`;
+        });
+      }
+      text += `\n`;
+
+      text += `ORDRE DU JOUR :\n`;
+      text += `${raw.meetingAgenda || 'Non défini'}\n\n`;
+
+      text += `DELIBERATIONS & DECISIONS :\n`;
+      text += `${raw.meetingDecisions || 'Non définies'}\n\n`;
+
+      if (raw.description) {
+        text += `Remarques additionnelles :\n${raw.description}\n`;
+      }
+    } else if (raw.onlineTemplate === 'evaluation') {
+      const dateVal = raw.evaluationDate ? new Date(raw.evaluationDate).toLocaleDateString('fr-FR') : nowStr;
+      text += `FICHE D'EVALUATION QUALITE\n`;
+      text += `Objet de l'évaluation : ${raw.evaluationSubject || 'Non spécifié'}\n`;
+      text += `Date de l'évaluation : ${dateVal}\n`;
+      text += `Évaluateur : ${raw.evaluationEvaluator || 'Non spécifié'}\n\n`;
+
+      text += `CRITERES D'EVALUATION :\n`;
+      text += `--------------------------------------------------------------------------------\n`;
+      text += `| Critère                                   | Note      | Commentaires          |\n`;
+      text += `--------------------------------------------------------------------------------\n`;
+
+      const criteria = this.evaluationCriteria.value || [];
+      if (criteria.length === 0) {
+        text += `| Aucun critère évalué                      | -         | -                     |\n`;
+      } else {
+        criteria.forEach((c: any) => {
+          const crit = (c.criterion || '').padEnd(41);
+          const rat = `${c.rating}/5`.padEnd(9);
+          const comm = (c.comment || '').padEnd(21);
+          text += `| ${crit} | ${rat} | ${comm} |\n`;
+        });
+      }
+      text += `--------------------------------------------------------------------------------\n\n`;
+
+      text += `RECOMMANDATIONS / ACTIONS A MENER :\n`;
+      text += `${raw.evaluationRecommendations || 'Aucune recommandation'}\n\n`;
+
+      if (raw.description) {
+        text += `Observations :\n${raw.description}\n`;
+      }
+    } else {
+      // Simple template
+      text += `ENREGISTREMENT DE QUALITE\n`;
+      text += `Date : ${nowStr}\n\n`;
+      text += `Contenu :\n`;
+      text += `${raw.description || 'Aucun contenu fourni.'}\n`;
+    }
+
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    return new File([blob], `${raw.code || 'document'}.txt`, { type: 'text/plain;charset=utf-8' });
+  }
+
   get title(): string {
     return this.isEdit ? 'Modifier un document' : 'Nouveau document';
   }
@@ -464,9 +642,38 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
       return;
     }
 
+    if (this.documentForm.controls.inputMode.value === 'online') {
+      const raw = this.documentForm.getRawValue() as any;
+      if (raw.onlineTemplate === 'attendance' && this.attendanceRows.length === 0) {
+        this.notificationService.showWarning("Veuillez ajouter au moins un enseignant à la liste de présence.");
+        return;
+      }
+      if (raw.onlineTemplate === 'announcement' && (!raw.announcementSubject || !raw.announcementBody)) {
+        this.notificationService.showWarning("Veuillez remplir le sujet et le contenu de l'annonce.");
+        return;
+      }
+      if (raw.onlineTemplate === 'meeting' && (!raw.meetingSubject || !raw.meetingAgenda || this.meetingParticipants.length === 0)) {
+        this.notificationService.showWarning("Veuillez remplir le sujet, l'ordre du jour et ajouter au moins un participant pour la réunion.");
+        return;
+      }
+      if (raw.onlineTemplate === 'evaluation' && (!raw.evaluationSubject || this.evaluationCriteria.length === 0)) {
+        this.notificationService.showWarning("Veuillez remplir le sujet de l'évaluation et ajouter au moins un critère.");
+        return;
+      }
+      if (raw.onlineTemplate === 'simple' && !raw.description) {
+        this.notificationService.showWarning("Veuillez saisir le contenu de l'enregistrement.");
+        return;
+      }
+
+      const generated = this.generateTextFileFromForm();
+      if (generated) {
+        this.selectedFile = generated;
+      }
+    }
+
     if (!this.isEdit && !this.selectedFile) {
       this.activeTab = 3;
-      this.notificationService.showWarning('Veuillez deposer un fichier PDF, Word ou Excel pour creer le document.');
+      this.notificationService.showWarning('Veuillez déposer un fichier ou remplir le document en ligne.');
       return;
     }
 
@@ -548,7 +755,7 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
 
   private isAllowedDocumentFile(file: File): boolean {
     const name = file.name.toLowerCase();
-    return name.endsWith('.pdf') || name.endsWith('.docx') || name.endsWith('.xlsx');
+    return name.endsWith('.pdf') || name.endsWith('.docx') || name.endsWith('.xlsx') || name.endsWith('.txt');
   }
 
   private buildDocumentPayload(): CreateDocumentRequest {
