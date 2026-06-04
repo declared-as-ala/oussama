@@ -33,6 +33,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Configure Git Safe Directory
+        run: git config --global --add safe.directory '*'
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v4
         with:

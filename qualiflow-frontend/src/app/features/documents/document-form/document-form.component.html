@@ -104,6 +104,12 @@
 
       <div class="section-content grid-2-cols">
 
+        <mat-form-field appearance="outline">
+          <mat-label>Processus associés</mat-label>
+          <mat-select formControlName="processIds" (selectionChange)="onProcessChanged()" multiple>
+            <mat-option *ngFor="let p of processes" [value]="p.id">{{ p.code }} - {{ p.name }}</mat-option>
+          </mat-select>
+        </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Procédures liées</mat-label>
@@ -121,8 +127,10 @@
               {{ user.firstName }} {{ user.lastName }}
             </mat-option>
           </mat-select>
-          <mat-icon matSuffix style="color: #9e9e9e;">lock</mat-icon>
-          <mat-hint style="color: #757575; font-size: 11px;">Sélectionné automatiquement (Pilote du processus)</mat-hint>
+          <mat-icon matSuffix [style.color]="canSelectOwner ? '#4caf50' : '#9e9e9e'">{{ canSelectOwner ? 'lock_open' : 'lock' }}</mat-icon>
+          <mat-hint style="color: #757575; font-size: 11px;">
+            {{ canSelectOwner ? 'Vous pouvez modifier le responsable' : 'Sélectionné automatiquement (Pilote du processus)' }}
+          </mat-hint>
         </mat-form-field>
 
         <div class="toggle-control">

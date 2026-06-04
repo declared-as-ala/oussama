@@ -301,8 +301,10 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
             this.ensureCurrentUserAsOwnerOption(currentUser);
           }
 
-          // Disable ownerUserId control so it is read-only and cannot be modified
-          this.documentForm.controls.ownerUserId.disable({ emitEvent: false });
+          // Disable ownerUserId control only if user cannot select owner
+          if (!this.canSelectOwner) {
+            this.documentForm.controls.ownerUserId.disable({ emitEvent: false });
+          }
 
           const pIds = details.document.processIds && details.document.processIds.length > 0
             ? details.document.processIds
@@ -357,8 +359,10 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
           this.ensureCurrentUserAsOwnerOption(currentUser);
         }
 
-        // Disable ownerUserId control so it is read-only and cannot be modified
-        this.documentForm.controls.ownerUserId.disable({ emitEvent: false });
+        // Disable ownerUserId control only if user cannot select owner
+        if (!this.canSelectOwner) {
+          this.documentForm.controls.ownerUserId.disable({ emitEvent: false });
+        }
         this.documentForm.controls.procedureIds.disable({ emitEvent: false });
 
         this.loading = false;
