@@ -22,7 +22,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR,CHEF_SERVICE")]
         public async Task<ActionResult<PagedProcessResponse>> GetProcesses([FromQuery] ProcessListQueryParameters query)
         {
             try
@@ -41,7 +41,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("map")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR,CHEF_SERVICE")]
         public async Task<ActionResult<ProcessMapResponse>> GetMap()
         {
             try
@@ -60,7 +60,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("statistics")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR,CHEF_SERVICE")]
         public async Task<ActionResult<ProcessStatisticsResponse>> GetStatistics()
         {
             try
@@ -79,7 +79,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("{id:int}")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR,CHEF_SERVICE")]
         public async Task<ActionResult<ProcessDetailsResponse>> GetById(int id)
         {
             try
@@ -102,7 +102,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("{id:int}/action-logs")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR,CHEF_SERVICE")]
         public async Task<ActionResult<List<ProcessActionLogResponse>>> GetActionLogs(int id)
         {
             try
@@ -269,7 +269,7 @@ namespace DocApi.Controllers
         }
 
         [HttpGet("{id:int}/actors")]
-        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
+        [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR,CHEF_SERVICE")]
         public async Task<ActionResult<ProcessActorResponse>> GetActors(int id)
         {
             try

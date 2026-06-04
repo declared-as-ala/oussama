@@ -44,7 +44,7 @@ namespace DocApi.Services
             var pageSize = query.PageSize <= 0 ? 10 : Math.Min(query.PageSize, 100);
             var organizationFilter = ResolveOrganizationScopeForRead(userContext, query.OrganizationId);
 
-            int? restrictedUserId = (userContext.Role == UserRoles.UTILISATEUR)
+            int? restrictedUserId = (userContext.Role == UserRoles.UTILISATEUR || query.MyProcessesOnly == true)
                 ? userContext.UserId
                 : null;
 

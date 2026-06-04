@@ -1,4 +1,4 @@
-﻿namespace DocApi.DTOs.Processes
+namespace DocApi.DTOs.Processes
 {
     public class ProcessListQueryParameters
     {
@@ -9,5 +9,6 @@
         public string? Status { get; set; }
         public int? PilotUserId { get; set; }
         public int? OrganizationId { get; set; }
+        public bool? MyProcessesOnly { get; set; }
     }
 }

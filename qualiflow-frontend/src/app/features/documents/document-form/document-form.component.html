@@ -54,21 +54,6 @@
       </div>
 
       <div class="section-content grid-2-cols">
-        <!-- MODÈLES PRÉ-REMPLIS (FACULTATIF) -->
-        <mat-form-field appearance="outline" class="full-width" *ngIf="!isEdit">
-          <mat-label>Utiliser un modèle d'enregistrement pré-rempli (Facultatif)</mat-label>
-          <mat-select (selectionChange)="onTemplateSelected($event.value)">
-            <mat-option [value]="null">-- Aucun modèle (Saisie manuelle vide) --</mat-option>
-            <mat-option value="presence">Liste de présence (Émargement)</mat-option>
-            <mat-option value="annexe">Annexe / Pièce jointe standard</mat-option>
-            <mat-option value="cours">Gestion des cours (Fiche de cours / Syllabus)</mat-option>
-            <mat-option value="enseignants">Suivi des enseignants (Fiche de suivi / Évaluation)</mat-option>
-            <mat-option value="reclamations">Réclamations des étudiants (Formulaire de réclamation)</mat-option>
-            <mat-option value="formations">Évaluation des formations (Questionnaire de satisfaction)</mat-option>
-          </mat-select>
-          <mat-icon matSuffix style="color: #6200ee;">assignment</mat-icon>
-        </mat-form-field>
-
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Titre du document *</mat-label>
           <input matInput formControlName="title" placeholder="ex: Manuel de Management de la Qualité" />
