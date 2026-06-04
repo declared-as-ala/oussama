@@ -602,6 +602,32 @@ namespace DocApi.Repositories
             return await connection.QueryAsync<int>(sql, new { DocumentId = documentId });
         }
 
+        public async Task<ILookup<int, int>> GetProcessIdsForDocumentsAsync(IEnumerable<int> documentIds)
+        {
+            if (documentIds == null || !documentIds.Any())
+            {
+                return Enumerable.Empty<(int DocumentId, int ProcessId)>().ToLookup(x => x.DocumentId, x => x.ProcessId);
+            }
+            using var connection = _connectionFactory.CreateConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await ((System.Data.Common.DbConnection)connection).OpenAsync();
+            const string sql = "SELECT DocumentId, ProcessId FROM DocumentProcesses WHERE DocumentId = ANY(@DocumentIds);";
+            var result = await connection.QueryAsync<(int DocumentId, int ProcessId)>(sql, new { DocumentIds = documentIds.ToArray() });
+            return result.ToLookup(x => x.DocumentId, x => x.ProcessId);
+        }
+
+        public async Task<ILookup<int, int>> GetProcedureIdsForDocumentsAsync(IEnumerable<int> documentIds)
+        {
+            if (documentIds == null || !documentIds.Any())
+            {
+                return Enumerable.Empty<(int DocumentId, int ProcedureId)>().ToLookup(x => x.DocumentId, x => x.ProcedureId);
+            }
+            using var connection = _connectionFactory.CreateConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await ((System.Data.Common.DbConnection)connection).OpenAsync();
+            const string sql = "SELECT DocumentId, ProcedureId FROM DocumentProcedures WHERE DocumentId = ANY(@DocumentIds);";
+            var result = await connection.QueryAsync<(int DocumentId, int ProcedureId)>(sql, new { DocumentIds = documentIds.ToArray() });
+            return result.ToLookup(x => x.DocumentId, x => x.ProcedureId);
+        }
+
         public async Task<bool> AddProcessLinkAsync(int documentId, int processId)
         {
             using var connection = _connectionFactory.CreateConnection();
@@ -712,8 +738,14 @@ namespace DocApi.Repositories
                 conditions.Add(@" (
                     d.ProcessId = @ProcessId 
                     OR d.Id IN (SELECT DocumentId FROM DocumentProcesses WHERE ProcessId = @ProcessId)
-                    OR d.ProcedureId IN (SELECT Id FROM Procedures WHERE ProcessId = @ProcessId)
-                    OR d.Id IN (SELECT dp.DocumentId FROM DocumentProcedures dp INNER JOIN Procedures pr ON dp.ProcedureId = pr.Id WHERE pr.ProcessId = @ProcessId)
+                    OR d.ProcedureId IN (SELECT Id FROM Procedures WHERE ProcessId = @ProcessId OR Id IN (SELECT ProcedureId FROM ProcessProcedures WHERE ProcessId = @ProcessId))
+                    OR d.Id IN (
+                        SELECT dp.DocumentId 
+                        FROM DocumentProcedures dp 
+                        INNER JOIN Procedures pr ON dp.ProcedureId = pr.Id 
+                        WHERE pr.ProcessId = @ProcessId 
+                           OR pr.Id IN (SELECT ProcedureId FROM ProcessProcedures WHERE ProcessId = @ProcessId)
+                    )
                 ) ");
                 parameters.Add("@ProcessId", processId.Value);
             }

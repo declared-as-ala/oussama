@@ -129,7 +129,30 @@ namespace DocApi.Services
                 Total = total,
                 PageNumber = pageNumber,
                 PageSize = pageSize,
-                Items = items.Select(MapToListItemResponse).ToList()
+                Items = (await Task.Run(async () => {
+                    var documentIds = items.Select(i => i.Id).ToList();
+                    var processLookup = await _documentRepository.GetProcessIdsForDocumentsAsync(documentIds);
+                    var procedureLookup = await _documentRepository.GetProcedureIdsForDocumentsAsync(documentIds);
+                    
+                    return items.Select(item => {
+                        var response = MapToListItemResponse(item);
+                        var procIds = processLookup[item.Id].ToList();
+                        var prodIds = procedureLookup[item.Id].ToList();
+                        
+                        if (item.ProcessId.HasValue && !procIds.Contains(item.ProcessId.Value))
+                        {
+                            procIds.Add(item.ProcessId.Value);
+                        }
+                        if (item.ProcedureId.HasValue && !prodIds.Contains(item.ProcedureId.Value))
+                        {
+                            prodIds.Add(item.ProcedureId.Value);
+                        }
+                        
+                        response.ProcessIds = procIds;
+                        response.ProcedureIds = prodIds;
+                        return response;
+                    }).ToList();
+                }))
             };
         }
 

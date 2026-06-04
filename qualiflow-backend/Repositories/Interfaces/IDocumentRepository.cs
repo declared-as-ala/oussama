@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using DocApi.Domain.Entities;
 
@@ -53,6 +54,8 @@ namespace DocApi.Repositories.Interfaces
         Task<IEnumerable<DocumentExpiringData>> GetExpiringAsync(int organizationId, int withinDays);
         Task<IEnumerable<int>> GetProcessIdsByDocumentIdAsync(int documentId);
         Task<IEnumerable<int>> GetProcedureIdsByDocumentIdAsync(int documentId);
+        Task<ILookup<int, int>> GetProcessIdsForDocumentsAsync(IEnumerable<int> documentIds);
+        Task<ILookup<int, int>> GetProcedureIdsForDocumentsAsync(IEnumerable<int> documentIds);
         Task<bool> AddProcessLinkAsync(int documentId, int processId);
         Task<bool> RemoveProcessLinkAsync(int documentId, int processId);
     }
