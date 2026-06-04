@@ -101,6 +101,11 @@ export class IndicatorFormComponent implements OnInit {
     }
   }
 
+  isInvalid(fieldName: string): boolean {
+    const control = this.form.get(fieldName);
+    return !!control && control.invalid && (control.dirty || control.touched);
+  }
+
   processes: ProcessListItemResponse[] = [];
   users: UserResponse[] = [];
   processActors: { userId: number; fullName: string }[] = [];

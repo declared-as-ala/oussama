@@ -1,142 +1,190 @@
-<div class="page-container">
-    <!-- PAGE HEADER -->
+<section class="indicator-form-page">
+    <!-- PAGE HEADER BAR -->
     <div class="page-header-bar">
-        <div class="ph-title-group">
-            <button class="btn-sub-back" (click)="goBack()" [title]="'common.cancel' | t">
-                <mat-icon>close</mat-icon>
-            </button>
-            <div>
-                <h1>{{ isEdit ? ('form.indicator.editTitle' | t) : ('form.indicator.newTitle' | t) }}</h1>
-                <div class="sub">{{ 'form.indicator.subtitle' | t }}</div>
+        <div class="page-header-left">
+            <div class="page-subtitle" style="margin-bottom: 12px;">
+                <button type="button" class="back-link-btn" (click)="goBack()" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; color: #10b981; font-weight: 600; padding: 0; font-family: inherit; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                    <mat-icon style="font-size: 20px; width: 20px; height: 20px;">arrow_back</mat-icon> 
+                    <span>{{ 'common.back' | t }}</span>
+                </button>
             </div>
+            <h1 class="page-title">{{ isEdit ? ('form.indicator.editTitle' | t) : ('form.indicator.newTitle' | t) }}</h1>
+        </div>
+
+        <div class="page-header-right">
+            <span class="form-status-hint">Moderne &amp; Épuré</span>
         </div>
     </div>
 
-    <div class="content-scroll">
-        <div class="loading-overlay" *ngIf="loading">
-            <mat-spinner diameter="40"></mat-spinner>
+    <!-- WIZARD STEPPERS/TABS -->
+    <div class="form-tabs-container" *ngIf="!loading">
+        <button type="button" class="tab-button" [class.active]="activeTab === 0" (click)="setActiveTab(0)">
+            <mat-icon>info</mat-icon>
+            <span>1. Identification &amp; Contexte</span>
+        </button>
+        <button type="button" class="tab-button" [class.active]="activeTab === 1" (click)="setActiveTab(1)">
+            <mat-icon>trending_up</mat-icon>
+            <span>2. Objectifs &amp; Suivi</span>
+        </button>
+    </div>
+
+    <div class="form-body">
+        <div class="loading-box" *ngIf="loading">
+            <mat-spinner diameter="38"></mat-spinner>
+            <span>{{ 'common.loadingForm' | t }}</span>
         </div>
 
-        <!-- WIZARD STEPPERS/TABS -->
-        <div class="form-tabs-container" *ngIf="!loading">
-            <button type="button" class="tab-button" [class.active]="activeTab === 0" (click)="setActiveTab(0)">
-                <mat-icon>info_outline</mat-icon>
-                <span>1. Identification & Contexte</span>
-            </button>
-            <button type="button" class="tab-button" [class.active]="activeTab === 1" (click)="setActiveTab(1)">
-                <mat-icon>trending_up</mat-icon>
-                <span>2. Objectifs & Suivi</span>
-            </button>
-        </div>
+        <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="submit()" class="form-container">
+            
+            <!-- SECTION 1: IDENTIFICATION & CONTEXTE -->
+            <div class="form-section-clean" *ngIf="activeTab === 0">
+                <div class="section-header">
+                    <mat-icon>info</mat-icon>
+                    <div>
+                        <h2>{{ 'form.indicator.generalInfo' | t }}</h2>
+                        <p>Définissez les informations de base de l'indicateur KPI.</p>
+                    </div>
+                </div>
 
-        <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="submit()" class="flat-form">
-            <div class="form-section" *ngIf="activeTab === 0">
-                <div class="form-section-title">{{ 'form.indicator.generalInfo' | t }}</div>
-                <div class="form-grid">
-                    <div class="form-group full">
-                        <label>{{ 'form.indicator.designation' | t }} <span class="req">*</span></label>
-                        <input type="text" formControlName="name" [placeholder]="'form.indicator.namePlaceholder' | t">
-                    </div>
-                    <div class="form-group">
-                        <label>{{ 'form.indicator.processOwner' | t }} <span class="req">*</span></label>
-                        <select formControlName="processId">
-                            <option [ngValue]="null">{{ 'form.indicator.select' | t }}</option>
-                            <option *ngFor="let p of processes" [ngValue]="p.id">{{p.code}} - {{p.name}}</option>
-                        </select>
-                        <div class="field-hint" *ngIf="selectedProcessPilotName">
-                            <mat-icon>person_outline</mat-icon>
-                            Pilote&nbsp;: <strong>{{ selectedProcessPilotName }}</strong>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>{{ 'form.indicator.codeRef' | t }} <span class="req">*</span></label>
-                        <input type="text" formControlName="code" placeholder="Ex: IND-SUP-GRH-TSC-2026">
-                        <div class="field-error" *ngIf="form.controls.code.hasError('duplicateCode')" style="color: #ef4444; font-size: 12px; margin-top: 4px; font-weight: 500;">
-                            Ce code d'indicateur existe déjà.
-                        </div>
-                        <div class="field-error" *ngIf="form.controls.code.invalid && !form.controls.code.hasError('duplicateCode') && (form.controls.code.dirty || form.controls.code.touched)" style="color: #ef4444; font-size: 12px; margin-top: 4px; font-weight: 500;">
-                            Code obligatoire.
-                        </div>
-                    </div>
-                    <div class="form-group full">
-                        <label>{{ 'form.indicator.descObjective' | t }}</label>
-                        <textarea formControlName="description" rows="3"
-                            [placeholder]="'form.indicator.descPlaceholder' | t"></textarea>
-                    </div>
-                    <div class="form-group full">
-                        <label>{{ 'form.indicator.calcMethod' | t }}</label>
-                        <textarea formControlName="calculationMethod" rows="2"
-                            [placeholder]="'form.indicator.calcPlaceholder' | t"></textarea>
-                    </div>
+                <div class="section-content grid-two">
+                    <!-- Designation (Désignation) -->
+                    <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>{{ 'form.indicator.designation' | t }}</mat-label>
+                        <input matInput formControlName="name" [placeholder]="'form.indicator.namePlaceholder' | t" />
+                        <mat-error *ngIf="isInvalid('name')">La désignation est obligatoire.</mat-error>
+                    </mat-form-field>
+
+                    <!-- Processus -->
+                    <mat-form-field appearance="outline">
+                        <mat-label>{{ 'form.indicator.processOwner' | t }}</mat-label>
+                        <mat-select formControlName="processId">
+                            <mat-option [value]="0">{{ 'form.indicator.select' | t }}</mat-option>
+                            <mat-option *ngFor="let p of processes" [value]="p.id">{{p.code}} - {{p.name}}</mat-option>
+                        </mat-select>
+                        <mat-error *ngIf="isInvalid('processId')">Le processus est obligatoire.</mat-error>
+                        <mat-hint *ngIf="selectedProcessPilotName" style="color: #2e7d32; font-weight: 500;">
+                            Pilote : <strong>{{ selectedProcessPilotName }}</strong>
+                        </mat-hint>
+                    </mat-form-field>
+
+                    <!-- Code -->
+                    <mat-form-field appearance="outline">
+                        <mat-label>{{ 'form.indicator.codeRef' | t }}</mat-label>
+                        <input matInput formControlName="code" placeholder="Ex: IND-SUP-GRH-TSC-2026" />
+                        <mat-error *ngIf="form.controls.code.hasError('duplicateCode')">Ce code d'indicateur existe déjà.</mat-error>
+                        <mat-error *ngIf="isInvalid('code') && !form.controls.code.hasError('duplicateCode')">Le code est obligatoire.</mat-error>
+                    </mat-form-field>
+
+                    <!-- Description -->
+                    <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>{{ 'form.indicator.descObjective' | t }}</mat-label>
+                        <textarea matInput rows="3" formControlName="description" [placeholder]="'form.indicator.descPlaceholder' | t"></textarea>
+                    </mat-form-field>
+
+                    <!-- Methode de calcul -->
+                    <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>{{ 'form.indicator.calcMethod' | t }}</mat-label>
+                        <textarea matInput rows="2" formControlName="calculationMethod" [placeholder]="'form.indicator.calcPlaceholder' | t"></textarea>
+                    </mat-form-field>
                 </div>
             </div>
 
-            <div class="form-section" *ngIf="activeTab === 1">
-                <div class="form-section-title">{{ 'form.indicator.pilotObjectives' | t }}</div>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>{{ 'form.indicator.unit' | t }}</label>
-                        <input type="text" formControlName="unit" [placeholder]="'form.indicator.unitPlaceholder' | t">
+            <!-- SECTION 2: OBJECTIFS & SUIVI -->
+            <div class="form-section-clean" *ngIf="activeTab === 1">
+                <div class="section-header">
+                    <mat-icon>trending_up</mat-icon>
+                    <div>
+                        <h2>{{ 'form.indicator.pilotObjectives' | t }}</h2>
+                        <p>Définissez les objectifs, seuils d'alerte, fréquence et responsable de suivi.</p>
                     </div>
-                    <div class="form-group">
-                        <label>{{ 'form.indicator.targetValue' | t }} <span class="req">*</span></label>
-                        <input type="number" formControlName="targetValue">
-                    </div>
-                    <div class="form-group">
-                        <label>{{ 'form.indicator.alertThreshold' | t }} <span class="req">*</span></label>
-                        <input type="number" formControlName="alertThreshold">
-                    </div>
-                    <div class="form-group">
-                        <label>{{ 'form.indicator.measureFrequency' | t }} <span class="req">*</span></label>
-                        <select formControlName="measurementFrequency">
-                            <option *ngFor="let o of frequencyOptions" [value]="o.value">{{o.label}}</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>{{ 'form.indicator.followUpOwner' | t }} <span class="req">*</span></label>
-                        <div *ngIf="loadingActors" style="display:flex;align-items:center;gap:8px;padding:10px 0;color:#78909c;font-size:13px;">
-                            <mat-spinner diameter="16"></mat-spinner>
-                            <span>Chargement des acteurs du processus...</span>
-                        </div>
-                        <select *ngIf="!loadingActors" formControlName="responsibleUserId">
-                            <option [value]="0">{{ 'form.indicator.select' | t }}</option>
-                            <option *ngFor="let u of responsibleUsers" [value]="u.id">{{u.firstName}} {{u.lastName}}</option>
-                        </select>
-                        <div class="field-hint" *ngIf="!loadingActors && processActors.length > 0">
-                            <mat-icon>group</mat-icon>
+                </div>
+
+                <div class="section-content grid-two">
+                    <!-- Unité de mesure -->
+                    <mat-form-field appearance="outline">
+                        <mat-label>{{ 'form.indicator.unit' | t }}</mat-label>
+                        <input matInput formControlName="unit" [placeholder]="'form.indicator.unitPlaceholder' | t" />
+                    </mat-form-field>
+
+                    <!-- Valeur cible -->
+                    <mat-form-field appearance="outline">
+                        <mat-label>{{ 'form.indicator.targetValue' | t }}</mat-label>
+                        <input matInput type="number" formControlName="targetValue" />
+                        <mat-error *ngIf="isInvalid('targetValue')">La valeur cible est obligatoire.</mat-error>
+                    </mat-form-field>
+
+                    <!-- Seuil d'alerte -->
+                    <mat-form-field appearance="outline">
+                        <mat-label>{{ 'form.indicator.alertThreshold' | t }}</mat-label>
+                        <input matInput type="number" formControlName="alertThreshold" />
+                        <mat-error *ngIf="isInvalid('alertThreshold')">Le seuil d'alerte est obligatoire.</mat-error>
+                    </mat-form-field>
+
+                    <!-- Fréquence de mesure -->
+                    <mat-form-field appearance="outline">
+                        <mat-label>{{ 'form.indicator.measureFrequency' | t }}</mat-label>
+                        <mat-select formControlName="measurementFrequency">
+                            <mat-option *ngFor="let o of frequencyOptions" [value]="o.value">{{o.label}}</mat-option>
+                        </mat-select>
+                        <mat-error *ngIf="isInvalid('measurementFrequency')">La fréquence est obligatoire.</mat-error>
+                    </mat-form-field>
+
+                    <!-- Responsable du suivi -->
+                    <mat-form-field appearance="outline">
+                        <mat-label>{{ 'form.indicator.followUpOwner' | t }}</mat-label>
+                        <mat-select formControlName="responsibleUserId">
+                            <mat-option [value]="0">{{ 'form.indicator.select' | t }}</mat-option>
+                            <mat-option *ngFor="let u of responsibleUsers" [value]="u.id">{{u.firstName}} {{u.lastName}}</mat-option>
+                        </mat-select>
+                        <mat-error *ngIf="isInvalid('responsibleUserId')">Le responsable est obligatoire.</mat-error>
+                        <mat-hint *ngIf="!loadingActors && processActors.length > 0" style="color: #6b7280;">
+                            <mat-icon style="font-size: 14px; width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;">group</mat-icon>
                             {{ processActors.length }} acteur(s) du processus sélectionné
-                        </div>
-                        <div class="field-notice" *ngIf="selectedProcess && form.getRawValue().responsibleUserId && form.getRawValue().responsibleUserId !== selectedProcess?.pilotUserId">
-                            <mat-icon>info_outline</mat-icon>
-                            Ce responsable sera automatiquement ajouté comme acteur du processus avec le rôle <strong>Responsable indicateur</strong>.
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>{{ 'form.indicator.initialStatus' | t }}</label>
-                        <select formControlName="status">
-                            <option value="ACTIF">{{ 'form.indicator.operational' | t }}</option>
-                            <option value="INACTIF">{{ 'form.indicator.disabledDraft' | t }}</option>
-                        </select>
+                        </mat-hint>
+                        <mat-hint *ngIf="loadingActors" style="color: #78909c;">
+                            <mat-spinner diameter="12" style="display: inline-block; margin-right: 4px; vertical-align: middle;"></mat-spinner>
+                            Chargement des acteurs...
+                        </mat-hint>
+                    </mat-form-field>
+
+                    <!-- Statut initial -->
+                    <mat-form-field appearance="outline">
+                        <mat-label>{{ 'form.indicator.initialStatus' | t }}</mat-label>
+                        <mat-select formControlName="status">
+                            <mat-option value="ACTIF">{{ 'form.indicator.operational' | t }}</mat-option>
+                            <mat-option value="INACTIF">{{ 'form.indicator.disabledDraft' | t }}</mat-option>
+                        </mat-select>
+                        <mat-error *ngIf="isInvalid('status')">Le statut est obligatoire.</mat-error>
+                    </mat-form-field>
+
+                    <!-- Info notice -->
+                    <div class="full-width" *ngIf="selectedProcess && form.getRawValue().responsibleUserId && form.getRawValue().responsibleUserId !== selectedProcess?.pilotUserId" style="display: flex; align-items: flex-start; gap: 8px; margin-top: 4px; padding: 12px; background: rgba(33, 150, 243, 0.05); border: 1px solid rgba(33, 150, 243, 0.2); border-radius: 8px; font-size: 12.5px; color: #1565c0; font-weight: 500; line-height: 1.5;">
+                        <mat-icon style="font-size: 18px; width: 18px; height: 18px; flex-shrink: 0; color: #2196f3;">info_outline</mat-icon>
+                        <span>Ce responsable sera automatiquement ajouté comme acteur du processus avec le rôle <strong>Responsable indicateur</strong>.</span>
                     </div>
                 </div>
             </div>
 
-            <div class="form-actions-bar">
-                <button type="button" class="btn btn-ghost" (click)="goBack()" [disabled]="saving" *ngIf="activeTab === 0">{{ 'common.cancel' | t }}</button>
-                <button type="button" class="btn btn-ghost" (click)="prevTab()" [disabled]="saving" *ngIf="activeTab > 0">
+            <!-- FORM ACTIONS BAR -->
+            <div class="form-actions-bar" style="margin-top: 24px;">
+                <button mat-button type="button" (click)="goBack()" [disabled]="saving" *ngIf="activeTab === 0">
+                    {{ 'common.cancel' | t }}
+                </button>
+                <button mat-button type="button" (click)="prevTab()" [disabled]="saving" *ngIf="activeTab > 0">
                     <mat-icon>navigate_before</mat-icon> Précédent
                 </button>
                 <div class="spacer"></div>
-                <button type="button" class="btn btn-primary submit-btn" (click)="nextTab()" *ngIf="activeTab < 1">
+                <button mat-flat-button color="primary" type="button" class="submit-btn" (click)="nextTab()" *ngIf="activeTab < 1">
                     <span>Suivant</span>
                     <mat-icon>navigate_next</mat-icon>
                 </button>
-                <button type="submit" class="btn btn-primary submit-btn" [disabled]="saving || form.invalid" *ngIf="activeTab === 1">
+                <button mat-flat-button color="primary" type="submit" class="submit-btn" [disabled]="saving || form.invalid" *ngIf="activeTab === 1">
                     <mat-spinner *ngIf="saving" diameter="18" style="margin-right: 8px;"></mat-spinner>
                     <mat-icon *ngIf="!saving">check_circle</mat-icon>
                     <span>{{ isEdit ? ('form.document.saveChanges' | t) : ('form.indicator.create' | t) }}</span>
                 </button>
             </div>
+
         </form>
     </div>
-</div>
+</section>
