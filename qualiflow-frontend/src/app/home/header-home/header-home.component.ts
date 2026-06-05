@@ -24,6 +24,17 @@ export class HeaderHomeComponent {
     this.isScrolled = window.scrollY > 40;
   }
 
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (this.isLangOpen && !target.closest('.lang-selector')) {
+      this.isLangOpen = false;
+    }
+    if (this.isMenuOpen && !target.closest('.topbar')) {
+      this.isMenuOpen = false;
+    }
+  }
+
   languages = [
     { code: 'fr', label: 'FR', name: 'Français', flag: '🇫🇷' },
     { code: 'en', label: 'EN', name: 'English', flag: '🇬🇧' },
