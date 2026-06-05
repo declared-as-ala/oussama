@@ -15,10 +15,12 @@ namespace DocApi.Controllers
     public class DocumentsController : ControllerBase
     {
         private readonly IDocumentService _documentService;
+        private readonly IConversionService _conversionService;
 
-        public DocumentsController(IDocumentService documentService)
+        public DocumentsController(IDocumentService documentService, IConversionService conversionService)
         {
             _documentService = documentService;
+            _conversionService = conversionService;
         }
 
         [HttpGet]
@@ -433,11 +435,24 @@ namespace DocApi.Controllers
 
         [HttpGet("{documentId:int}/download-current")]
         [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
-        public async Task<IActionResult> DownloadCurrent(int documentId)
+        public async Task<IActionResult> DownloadCurrent(int documentId, [FromQuery] string? format = null)
         {
             try
             {
                 var result = await _documentService.DownloadCurrentAsync(documentId, GetUserContext());
+                if (!string.IsNullOrWhiteSpace(format))
+                {
+                    try
+                    {
+                        var conversion = await _conversionService.ConvertAsync(result.Stream, result.ContentType, result.FileName, format);
+                        result.Stream.Dispose();
+                        return File(conversion.Stream, conversion.ContentType, conversion.FileName);
+                    }
+                    catch (Exception ex)
+                    {
+                        return BadRequest(new { message = $"Erreur de conversion: {ex.Message}" });
+                    }
+                }
                 return File(result.Stream, result.ContentType, result.FileName);
             }
             catch (ForbiddenException)
@@ -456,11 +471,24 @@ namespace DocApi.Controllers
 
         [HttpGet("{documentId:int}/versions/{versionId:int}/download")]
         [Authorize(Roles = "ADMIN_ORG,RESPONSABLE_QUALITE,UTILISATEUR")]
-        public async Task<IActionResult> DownloadVersion(int documentId, int versionId)
+        public async Task<IActionResult> DownloadVersion(int documentId, int versionId, [FromQuery] string? format = null)
         {
             try
             {
                 var result = await _documentService.DownloadVersionAsync(documentId, versionId, GetUserContext());
+                if (!string.IsNullOrWhiteSpace(format))
+                {
+                    try
+                    {
+                        var conversion = await _conversionService.ConvertAsync(result.Stream, result.ContentType, result.FileName, format);
+                        result.Stream.Dispose();
+                        return File(conversion.Stream, conversion.ContentType, conversion.FileName);
+                    }
+                    catch (Exception ex)
+                    {
+                        return BadRequest(new { message = $"Erreur de conversion: {ex.Message}" });
+                    }
+                }
                 return File(result.Stream, result.ContentType, result.FileName);
             }
             catch (ForbiddenException)

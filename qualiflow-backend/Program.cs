@@ -41,6 +41,7 @@ builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpS
 builder.Services.Configure<RabbitMqSettings>(builder.Configuration.GetSection("RabbitMqSettings"));
 builder.Services.Configure<FirebaseSettings>(builder.Configuration.GetSection("Firebase"));
 builder.Services.Configure<OpenRouterSettings>(builder.Configuration.GetSection("OpenRouter"));
+builder.Services.Configure<ILovePdfSettings>(builder.Configuration.GetSection("ILovePdf"));
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -185,6 +186,7 @@ builder.Services.AddScoped<IActionLogger, ActionLogger>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IDeviceTokenService, DeviceTokenService>();
 
+builder.Services.AddScoped<IConversionService, ILovePdfService>();
 builder.Services.AddScoped<INotificationRecipientService, NotificationRecipientService>();
 builder.Services.AddScoped<INotificationEventPublisher, NotificationEventPublisher>();
 builder.Services.AddScoped<IAlertRuleService, AlertRuleService>();
@@ -375,6 +377,10 @@ static Dictionary<string, string?> BuildEnvironmentConfiguration(IConfiguration 
     AddIfPresent("OPENROUTER_API_KEY", "OpenRouter:ApiKey");
     AddIfPresent("OPENROUTER_MODEL", "OpenRouter:Model");
     AddIfPresent("OPENROUTER_URL", "OpenRouter:ApiBaseUrl");
+
+    // iLovePDF Settings
+    AddIfPresent("ILOVEPDF_PUBLIC_KEY", "ILovePdf:PublicKey");
+    AddIfPresent("ILOVEPDF_SECRET_KEY", "ILovePdf:SecretKey");
 
     return configuration;
 

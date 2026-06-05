@@ -372,8 +372,20 @@ export class DocumentVersionsComponent implements OnInit {
         const fileName = this.buildDownloadFileName(this.documentCode, version.versionNumber, sourceName);
         this.saveBlob(blob, fileName);
       },
-      error: () => {
-        this.notificationService.showError('Telechargement impossible.');
+      error: async (err: any) => {
+        let errorMsg = 'Téléchargement impossible.';
+        if (err?.error instanceof Blob) {
+          try {
+            const text = await err.error.text();
+            const errorObj = JSON.parse(text);
+            errorMsg = errorObj?.message || errorMsg;
+          } catch (e) {
+            // failed to parse
+          }
+        } else if (err?.error?.message) {
+          errorMsg = err.error.message;
+        }
+        this.notificationService.showError(errorMsg);
       }
     });
   }

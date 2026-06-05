@@ -370,14 +370,34 @@ export class DocumentsListComponent implements OnInit {
   }
 
   downloadCurrent(item: DocumentListItemResponse): void {
-    this.documentService.downloadLatest(item.id).subscribe({
+    this.downloadCurrentWithFormat(item);
+  }
+
+  downloadCurrentWithFormat(item: DocumentListItemResponse, format?: string): void {
+    this.documentService.downloadLatest(item.id, format).subscribe({
       next: ({ blob, version }) => {
         const sourceName = version.originalFileName ?? version.fileName ?? item.fileName ?? undefined;
-        const fileName = this.buildDownloadFileName(item.code, version.versionNumber, sourceName);
+        let fileName = this.buildDownloadFileName(item.code, version.versionNumber, sourceName);
+        if (format) {
+          const ext = format === 'word' ? '.docx' : (format === 'excel' ? '.xlsx' : `.${format}`);
+          fileName = fileName.substring(0, fileName.lastIndexOf('.')) + ext;
+        }
         this.saveBlob(blob, fileName);
       },
-      error: () => {
-        this.notificationService.showError('Telechargement impossible.');
+      error: async (err: any) => {
+        let errorMsg = 'Téléchargement impossible.';
+        if (err?.error instanceof Blob) {
+          try {
+            const text = await err.error.text();
+            const errorObj = JSON.parse(text);
+            errorMsg = errorObj?.message || errorMsg;
+          } catch (e) {
+            // failed to parse
+          }
+        } else if (err?.error?.message) {
+          errorMsg = err.error.message;
+        }
+        this.notificationService.showError(errorMsg);
       }
     });
   }

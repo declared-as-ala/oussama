@@ -131,26 +131,27 @@ export class DocumentService {
     return this.apiService.patch<DocumentVersionResponse>(`${this.endpoint}/${documentId}/versions/${versionId}/status`, payload);
   }
 
-  downloadLatest(documentId: number): Observable<{ blob: Blob; version: DocumentVersionResponse }> {
+  downloadLatest(documentId: number, format?: string): Observable<{ blob: Blob; version: DocumentVersionResponse }> {
     return this.getLatestVersion(documentId).pipe(
       switchMap(latest => {
         if (!latest) {
           return throwError(() => ({ status: 404 }));
         }
 
-        return this.downloadVersion(documentId, latest.id).pipe(
+        return this.downloadVersion(documentId, latest.id, format).pipe(
           map(blob => ({ blob, version: latest }))
         );
       })
     );
   }
 
-  downloadCurrent(documentId: number): Observable<Blob> {
-    return this.downloadLatest(documentId).pipe(map(result => result.blob));
+  downloadCurrent(documentId: number, format?: string): Observable<Blob> {
+    return this.downloadLatest(documentId, format).pipe(map(result => result.blob));
   }
 
-  downloadVersion(documentId: number, versionId: number): Observable<Blob> {
-    return this.http.get(`${this.apiBase}/${this.endpoint}/${documentId}/versions/${versionId}/download`, {
+  downloadVersion(documentId: number, versionId: number, format?: string): Observable<Blob> {
+    const url = `${this.apiBase}/${this.endpoint}/${documentId}/versions/${versionId}/download` + (format ? `?format=${format}` : '');
+    return this.http.get(url, {
       responseType: 'blob'
     });
   }

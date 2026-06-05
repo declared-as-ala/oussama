@@ -265,7 +265,7 @@
                   <mat-icon>sync</mat-icon>
                 </button>
                 <button mat-icon-button class="action-btn dl-btn" matTooltip="Télécharger"
-                  (click)="$event.stopPropagation(); downloadCurrent(item)">
+                  [matMenuTriggerFor]="downloadMenu" (click)="$event.stopPropagation()">
                   <mat-icon>download</mat-icon>
                 </button>
                 <button *ngIf="canWrite" mat-icon-button class="action-btn delete-btn" matTooltip="Supprimer"
@@ -273,6 +273,27 @@
                   <mat-icon>delete_outline</mat-icon>
                 </button>
                 </ng-container>
+
+                <!-- Download Formats Menu -->
+                <mat-menu #downloadMenu="matMenu" class="modern-download-menu">
+                  <div class="menu-label">Format de téléchargement</div>
+                  <button mat-menu-item (click)="downloadCurrentWithFormat(item)">
+                    <mat-icon>file_present</mat-icon>
+                    <span>Format d'origine</span>
+                  </button>
+                  <button mat-menu-item (click)="downloadCurrentWithFormat(item, 'pdf')">
+                    <mat-icon>picture_as_pdf</mat-icon>
+                    <span>Document PDF (.pdf)</span>
+                  </button>
+                  <button mat-menu-item (click)="downloadCurrentWithFormat(item, 'word')">
+                    <mat-icon>description</mat-icon>
+                    <span>Document Word (.docx)</span>
+                  </button>
+                  <button mat-menu-item (click)="downloadCurrentWithFormat(item, 'excel')">
+                    <mat-icon>table_view</mat-icon>
+                    <span>Document Excel (.xlsx)</span>
+                  </button>
+                </mat-menu>
 
                 <ng-template #trashActions>
                   <button mat-icon-button class="action-btn restore-btn" matTooltip="Restaurer"

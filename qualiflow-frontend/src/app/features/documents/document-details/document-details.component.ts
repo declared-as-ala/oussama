@@ -8,6 +8,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatMenuModule } from '@angular/material/menu';
 import { forkJoin } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -40,6 +41,7 @@ import { VersionStatusDialogComponent } from '../document-versions/version-statu
     MatProgressSpinnerModule,
     MatTooltipModule,
     MatDialogModule,
+    MatMenuModule,
     TranslatePipe
   ],
   templateUrl: './document-details.component.html',
@@ -190,17 +192,33 @@ export class DocumentDetailsComponent implements OnInit {
     });
   }
 
-  downloadCurrent(): void {
-    this.documentService.downloadLatest(this.documentId).subscribe({
+  downloadCurrent(format?: string): void {
+    this.documentService.downloadLatest(this.documentId, format).subscribe({
       next: ({ blob, version }) => {
         const code = this.details?.document.code ?? 'document';
         const sourceName = version.originalFileName ?? version.fileName ?? undefined;
-        const fileName = this.buildDownloadFileName(code, version.versionNumber, sourceName);
+        let fileName = this.buildDownloadFileName(code, version.versionNumber, sourceName);
+        if (format) {
+          const ext = format === 'word' ? '.docx' : (format === 'excel' ? '.xlsx' : `.${format}`);
+          fileName = fileName.substring(0, fileName.lastIndexOf('.')) + ext;
+        }
         this.saveBlob(blob, fileName);
         this.loadActionLogs();
       },
-      error: () => {
-        this.notificationService.showError('Telechargement impossible.');
+      error: async (err: any) => {
+        let errorMsg = 'Téléchargement impossible.';
+        if (err?.error instanceof Blob) {
+          try {
+            const text = await err.error.text();
+            const errorObj = JSON.parse(text);
+            errorMsg = errorObj?.message || errorMsg;
+          } catch (e) {
+            // failed to parse
+          }
+        } else if (err?.error?.message) {
+          errorMsg = err.error.message;
+        }
+        this.notificationService.showError(errorMsg);
       }
     });
   }
@@ -244,17 +262,33 @@ export class DocumentDetailsComponent implements OnInit {
     });
   }
 
-  downloadVersion(version: DocumentVersionResponse): void {
-    this.documentService.downloadVersion(this.documentId, version.id).subscribe({
+  downloadVersion(version: DocumentVersionResponse, format?: string): void {
+    this.documentService.downloadVersion(this.documentId, version.id, format).subscribe({
       next: (blob) => {
         const code = this.details?.document.code ?? 'document';
         const sourceName = version.originalFileName ?? version.fileName ?? undefined;
-        const fileName = this.buildDownloadFileName(code, version.versionNumber, sourceName);
+        let fileName = this.buildDownloadFileName(code, version.versionNumber, sourceName);
+        if (format) {
+          const ext = format === 'word' ? '.docx' : (format === 'excel' ? '.xlsx' : `.${format}`);
+          fileName = fileName.substring(0, fileName.lastIndexOf('.')) + ext;
+        }
         this.saveBlob(blob, fileName);
         this.loadActionLogs();
       },
-      error: () => {
-        this.notificationService.showError('Telechargement de la version impossible.');
+      error: async (err: any) => {
+        let errorMsg = 'Téléchargement de la version impossible.';
+        if (err?.error instanceof Blob) {
+          try {
+            const text = await err.error.text();
+            const errorObj = JSON.parse(text);
+            errorMsg = errorObj?.message || errorMsg;
+          } catch (e) {
+            // failed to parse
+          }
+        } else if (err?.error?.message) {
+          errorMsg = err.error.message;
+        }
+        this.notificationService.showError(errorMsg);
       }
     });
   }
