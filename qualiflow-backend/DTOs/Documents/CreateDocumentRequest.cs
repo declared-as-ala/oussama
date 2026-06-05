@@ -27,5 +27,7 @@ namespace DocApi.DTOs.Documents
         public string? Signature { get; set; }
         public int? OwnerUserId { get; set; }
         public bool IsActive { get; set; } = true;
+        public System.DateTime? EffectiveDate { get; set; }
+        public System.DateTime? ExpiryDate { get; set; }
     }
 }

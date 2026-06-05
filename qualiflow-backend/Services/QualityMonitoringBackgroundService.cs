@@ -75,7 +75,7 @@ namespace DocApi.Services
         {
             using var connection = connectionFactory.CreateConnection();
             
-            // Find all active documents that are expired (either Status is PERIME or ExpiryDate < NOW)
+            // Find all active documents that are expired (Status is not PERIME/ARCHIVE and ExpiryDate < NOW)
             var expiredDocuments = (await connection.QueryAsync<ExpiredDocumentDto>(@"
                 SELECT
                     d.Id AS DocumentId,
@@ -85,21 +85,28 @@ namespace DocApi.Services
                     d.OwnerUserId,
                     d.ProcessId,
                     d.ProcedureId,
+                    dv.Id AS VersionId,
                     dv.VersionNumber,
                     dv.Status,
                     dv.ExpiryDate
                 FROM Documents d
                 INNER JOIN DocumentVersions dv ON dv.Id = d.CurrentVersionId
                 WHERE d.IsActive = TRUE
-                  AND (
-                      dv.Status = 'PERIME'
-                      OR (dv.ExpiryDate IS NOT NULL AND dv.ExpiryDate < NOW())
-                  )
+                  AND dv.Status <> 'PERIME'
+                  AND dv.Status <> 'ARCHIVE'
+                  AND dv.ExpiryDate IS NOT NULL 
+                  AND dv.ExpiryDate < NOW()
                 ORDER BY d.Id DESC")).ToList();
 
             foreach (var doc in expiredDocuments)
             {
                 cancellationToken.ThrowIfCancellationRequested();
+
+                // Update the status of the version to 'PERIME' in the DB so it is marked as expired
+                await connection.ExecuteAsync(@"
+                    UPDATE DocumentVersions
+                    SET Status = 'PERIME', UpdatedAt = NOW()
+                    WHERE Id = @VersionId", new { VersionId = doc.VersionId });
 
                 var ncTitle = $"[Système] Expiration du document {doc.Code}".Trim();
                 
@@ -266,6 +273,7 @@ namespace DocApi.Services
             public int? OwnerUserId { get; set; }
             public int? ProcessId { get; set; }
             public int? ProcedureId { get; set; }
+            public int VersionId { get; set; }
             public string? VersionNumber { get; set; }
             public string? Status { get; set; }
             public DateTime? ExpiryDate { get; set; }

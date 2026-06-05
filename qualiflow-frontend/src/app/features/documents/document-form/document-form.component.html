@@ -70,8 +70,11 @@
         <mat-form-field appearance="outline">
           <mat-label>Code Document *</mat-label>
           <input matInput formControlName="code" placeholder="ex: DOC-QUA-001" />
-          <mat-error *ngIf="documentForm.get('code')?.hasError('duplicateCode')">Ce code de document existe déjà.</mat-error>
-          <mat-error *ngIf="documentForm.get('code')?.invalid && !documentForm.get('code')?.hasError('duplicateCode')">Code requis (lettres, chiffres, -, _)</mat-error>
+          <mat-error *ngIf="documentForm.get('code')?.hasError('duplicateCode')">Ce code de document existe
+            déjà.</mat-error>
+          <mat-error
+            *ngIf="documentForm.get('code')?.invalid && !documentForm.get('code')?.hasError('duplicateCode')">Code
+            requis (lettres, chiffres, -, _)</mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full-width">
@@ -116,7 +119,8 @@
           <mat-label>Procédure liée</mat-label>
           <mat-select formControlName="procedureId">
             <mat-option [value]="null">-- Aucune --</mat-option>
-            <mat-option *ngFor="let proc of procedures" [value]="proc.id">{{ proc.code }} - {{ proc.title }}</mat-option>
+            <mat-option *ngFor="let proc of procedures" [value]="proc.id">{{ proc.code }} - {{ proc.title
+              }}</mat-option>
           </mat-select>
         </mat-form-field>
 
@@ -128,9 +132,11 @@
               {{ user.firstName }} {{ user.lastName }}
             </mat-option>
           </mat-select>
-          <mat-icon matSuffix [style.color]="canSelectOwner ? '#4caf50' : '#9e9e9e'">{{ canSelectOwner ? 'lock_open' : 'lock' }}</mat-icon>
+          <mat-icon matSuffix [style.color]="canSelectOwner ? '#4caf50' : '#9e9e9e'">{{ canSelectOwner ? 'lock_open' :
+            'lock' }}</mat-icon>
           <mat-hint style="color: #757575; font-size: 11px;">
-            {{ canSelectOwner ? 'Vous pouvez modifier le responsable' : 'Sélectionné automatiquement (Pilote du processus)' }}
+            {{ canSelectOwner ? 'Vous pouvez modifier le responsable' : 'Sélectionné automatiquement (Pilote du
+            processus)' }}
           </mat-hint>
         </mat-form-field>
 
@@ -216,17 +222,21 @@
         </p>
 
         <mat-form-field appearance="outline">
-          <mat-label>Date d'effet</mat-label>
-          <input matInput [matDatepicker]="effectiveDatePicker" formControlName="initialEffectiveDate" />
+          <mat-label>Date d'effet *</mat-label>
+          <input matInput [matDatepicker]="effectiveDatePicker" formControlName="initialEffectiveDate" required />
           <mat-datepicker-toggle matSuffix [for]="effectiveDatePicker"></mat-datepicker-toggle>
           <mat-datepicker #effectiveDatePicker></mat-datepicker>
+          <mat-error *ngIf="documentForm.get('initialEffectiveDate')?.invalid">La date d'effet est
+            obligatoire</mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>Date d'expiration</mat-label>
-          <input matInput [matDatepicker]="expiryDatePicker" formControlName="initialExpiryDate" />
+          <mat-label>Date d'expiration *</mat-label>
+          <input matInput [matDatepicker]="expiryDatePicker" formControlName="initialExpiryDate" required />
           <mat-datepicker-toggle matSuffix [for]="expiryDatePicker"></mat-datepicker-toggle>
           <mat-datepicker #expiryDatePicker></mat-datepicker>
+          <mat-error *ngIf="documentForm.get('initialExpiryDate')?.invalid">La date d'expiration est
+            obligatoire</mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full-width">
@@ -245,7 +255,8 @@
         </mat-form-field>
 
         <!-- UPLOAD ZONE -->
-        <div class="upload-zone full-width" *ngIf="documentForm.get('inputMode')?.value === 'upload'" [class.has-file]="selectedFile">
+        <div class="upload-zone full-width" *ngIf="documentForm.get('inputMode')?.value === 'upload'"
+          [class.has-file]="selectedFile">
           <input type="file" id="file-input" (change)="onFileSelected($event)" class="file-input-hidden"
             [attr.accept]="acceptedFileTypes" />
           <label for="file-input" class="upload-label">
@@ -270,7 +281,8 @@
         </div>
 
         <!-- ONLINE MODE FIELDS -->
-        <mat-form-field appearance="outline" class="full-width" *ngIf="documentForm.get('inputMode')?.value === 'online'">
+        <mat-form-field appearance="outline" class="full-width"
+          *ngIf="documentForm.get('inputMode')?.value === 'online'">
           <mat-label>Modèle de document</mat-label>
           <mat-select formControlName="onlineTemplate">
             <mat-option value="simple">Enregistrement Qualité (Texte libre)</mat-option>
@@ -282,18 +294,21 @@
         </mat-form-field>
 
         <!-- Template simple (Enregistrement libre) -->
-        <div class="online-template-box full-width" *ngIf="documentForm.get('inputMode')?.value === 'online' && documentForm.get('onlineTemplate')?.value === 'simple'">
+        <div class="online-template-box full-width"
+          *ngIf="documentForm.get('inputMode')?.value === 'online' && documentForm.get('onlineTemplate')?.value === 'simple'">
           <h4>Contenu de l'enregistrement</h4>
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Saisir l'enregistrement *</mat-label>
-            <textarea matInput rows="10" formControlName="description" placeholder="Écrivez le contenu de votre enregistrement qualité ici..."></textarea>
+            <textarea matInput rows="10" formControlName="description"
+              placeholder="Écrivez le contenu de votre enregistrement qualité ici..."></textarea>
           </mat-form-field>
         </div>
 
         <!-- Template attendance (Liste de présence des enseignants) -->
-        <div class="online-template-box full-width" *ngIf="documentForm.get('inputMode')?.value === 'online' && documentForm.get('onlineTemplate')?.value === 'attendance'">
+        <div class="online-template-box full-width"
+          *ngIf="documentForm.get('inputMode')?.value === 'online' && documentForm.get('onlineTemplate')?.value === 'attendance'">
           <h4>Détails de la liste de présence</h4>
-          
+
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Date de la liste de présence *</mat-label>
             <input matInput [matDatepicker]="attendanceDatePicker" formControlName="attendanceDate" />
@@ -307,13 +322,14 @@
               <span>Statut de présence</span>
               <span>Action</span>
             </div>
-            
+
             <div formArrayName="attendanceRows" class="attendance-rows-list">
-              <div *ngFor="let row of attendanceRows.controls; let idx = index" [formGroupName]="idx" class="attendance-row-item">
+              <div *ngFor="let row of attendanceRows.controls; let idx = index" [formGroupName]="idx"
+                class="attendance-row-item">
                 <mat-form-field appearance="outline">
                   <input matInput formControlName="teacherName" placeholder="Nom de l'enseignant" />
                 </mat-form-field>
-                
+
                 <mat-form-field appearance="outline">
                   <mat-select formControlName="status">
                     <mat-option value="PRESENT">Présent</mat-option>
@@ -321,53 +337,60 @@
                     <mat-option value="LATE">En retard</mat-option>
                   </mat-select>
                 </mat-form-field>
-                
+
                 <button mat-icon-button color="warn" type="button" (click)="removeTeacherRow(idx)">
                   <mat-icon>delete</mat-icon>
                 </button>
               </div>
             </div>
-            
+
             <button mat-stroked-button color="primary" type="button" class="add-teacher-btn" (click)="addTeacherRow()">
               <mat-icon>add</mat-icon> Ajouter un enseignant
             </button>
           </div>
-          
+
           <mat-form-field appearance="outline" class="full-width" style="margin-top: 15px;">
             <mat-label>Observations / Commentaires additionnels</mat-label>
-            <textarea matInput rows="3" formControlName="description" placeholder="Renseignez d'éventuelles remarques ou observations..."></textarea>
+            <textarea matInput rows="3" formControlName="description"
+              placeholder="Renseignez d'éventuelles remarques ou observations..."></textarea>
           </mat-form-field>
         </div>
 
         <!-- Template announcement (Annonce) -->
-        <div class="online-template-box full-width" *ngIf="documentForm.get('inputMode')?.value === 'online' && documentForm.get('onlineTemplate')?.value === 'announcement'">
+        <div class="online-template-box full-width"
+          *ngIf="documentForm.get('inputMode')?.value === 'online' && documentForm.get('onlineTemplate')?.value === 'announcement'">
           <h4>Détails de l'annonce</h4>
-          
+
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Sujet / Titre de l'annonce *</mat-label>
-            <input matInput formControlName="announcementSubject" placeholder="ex: Fermeture exceptionnelle, Réunion d'information..." />
+            <input matInput formControlName="announcementSubject"
+              placeholder="ex: Fermeture exceptionnelle, Réunion d'information..." />
           </mat-form-field>
-          
+
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Cible / Destinataire(s)</mat-label>
-            <input matInput formControlName="announcementTarget" placeholder="ex: Enseignants, Administration, Tout le personnel..." />
+            <input matInput formControlName="announcementTarget"
+              placeholder="ex: Enseignants, Administration, Tout le personnel..." />
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Contenu de l'annonce *</mat-label>
-            <textarea matInput rows="6" formControlName="announcementBody" placeholder="Écrivez le message de l'annonce..."></textarea>
+            <textarea matInput rows="6" formControlName="announcementBody"
+              placeholder="Écrivez le message de l'annonce..."></textarea>
           </mat-form-field>
-          
+
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Remarques ou notes de révision internes</mat-label>
-            <textarea matInput rows="2" formControlName="description" placeholder="Notes visibles pour la GED uniquement..."></textarea>
+            <textarea matInput rows="2" formControlName="description"
+              placeholder="Notes visibles pour la GED uniquement..."></textarea>
           </mat-form-field>
         </div>
 
         <!-- Template meeting (Compte-rendu de réunion) -->
-        <div class="online-template-box full-width" *ngIf="documentForm.get('inputMode')?.value === 'online' && documentForm.get('onlineTemplate')?.value === 'meeting'">
+        <div class="online-template-box full-width"
+          *ngIf="documentForm.get('inputMode')?.value === 'online' && documentForm.get('onlineTemplate')?.value === 'meeting'">
           <h4>Détails du compte-rendu de réunion</h4>
-          
+
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Sujet / Objet de la réunion *</mat-label>
             <input matInput formControlName="meetingSubject" placeholder="ex: Comité de pilotage SMQ" />
@@ -385,47 +408,54 @@
               <span>Nom du participant</span>
               <span>Action</span>
             </div>
-            
+
             <div formArrayName="meetingParticipants" class="attendance-rows-list">
-              <div *ngFor="let row of meetingParticipants.controls; let idx = index" [formGroupName]="idx" class="attendance-row-item" style="grid-template-columns: 1fr 50px;">
+              <div *ngFor="let row of meetingParticipants.controls; let idx = index" [formGroupName]="idx"
+                class="attendance-row-item" style="grid-template-columns: 1fr 50px;">
                 <mat-form-field appearance="outline">
                   <input matInput formControlName="name" placeholder="Nom du participant" />
                 </mat-form-field>
-                
+
                 <button mat-icon-button color="warn" type="button" (click)="removeParticipantRow(idx)">
                   <mat-icon>delete</mat-icon>
                 </button>
               </div>
             </div>
-            
-            <button mat-stroked-button color="primary" type="button" class="add-teacher-btn" (click)="addParticipantRow()">
+
+            <button mat-stroked-button color="primary" type="button" class="add-teacher-btn"
+              (click)="addParticipantRow()">
               <mat-icon>add</mat-icon> Ajouter un participant
             </button>
           </div>
 
           <mat-form-field appearance="outline" class="full-width" style="margin-top: 15px;">
             <mat-label>Ordre du jour *</mat-label>
-            <textarea matInput rows="4" formControlName="meetingAgenda" placeholder="Points abordés lors de la réunion..."></textarea>
+            <textarea matInput rows="4" formControlName="meetingAgenda"
+              placeholder="Points abordés lors de la réunion..."></textarea>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Délibérations & Décisions prises *</mat-label>
-            <textarea matInput rows="6" formControlName="meetingDecisions" placeholder="Détails des décisions et actions convenues..."></textarea>
+            <textarea matInput rows="6" formControlName="meetingDecisions"
+              placeholder="Détails des décisions et actions convenues..."></textarea>
           </mat-form-field>
-          
+
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Remarques ou notes de révision internes</mat-label>
-            <textarea matInput rows="2" formControlName="description" placeholder="Notes visibles pour la GED uniquement..."></textarea>
+            <textarea matInput rows="2" formControlName="description"
+              placeholder="Notes visibles pour la GED uniquement..."></textarea>
           </mat-form-field>
         </div>
 
         <!-- Template evaluation (Fiche d'évaluation qualité) -->
-        <div class="online-template-box full-width" *ngIf="documentForm.get('inputMode')?.value === 'online' && documentForm.get('onlineTemplate')?.value === 'evaluation'">
+        <div class="online-template-box full-width"
+          *ngIf="documentForm.get('inputMode')?.value === 'online' && documentForm.get('onlineTemplate')?.value === 'evaluation'">
           <h4>Détails de la fiche d'évaluation</h4>
-          
+
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Objet de l'évaluation *</mat-label>
-            <input matInput formControlName="evaluationSubject" placeholder="ex: Évaluation de la formation ISO 21001" />
+            <input matInput formControlName="evaluationSubject"
+              placeholder="ex: Évaluation de la formation ISO 21001" />
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
@@ -446,13 +476,14 @@
               <span>Note (1-5)</span>
               <span>Action</span>
             </div>
-            
+
             <div formArrayName="evaluationCriteria" class="attendance-rows-list">
-              <div *ngFor="let row of evaluationCriteria.controls; let idx = index" [formGroupName]="idx" class="attendance-row-item" style="grid-template-columns: 1fr 100px 50px;">
+              <div *ngFor="let row of evaluationCriteria.controls; let idx = index" [formGroupName]="idx"
+                class="attendance-row-item" style="grid-template-columns: 1fr 100px 50px;">
                 <mat-form-field appearance="outline">
                   <input matInput formControlName="criterion" placeholder="ex: Contenu pédagogique, logistique..." />
                 </mat-form-field>
-                
+
                 <mat-form-field appearance="outline">
                   <mat-select formControlName="rating">
                     <mat-option [value]="1">1/5</mat-option>
@@ -462,23 +493,25 @@
                     <mat-option [value]="5">5/5</mat-option>
                   </mat-select>
                 </mat-form-field>
-                
+
                 <button mat-icon-button color="warn" type="button" (click)="removeCriterionRow(idx)">
                   <mat-icon>delete</mat-icon>
                 </button>
               </div>
             </div>
-            
-            <button mat-stroked-button color="primary" type="button" class="add-teacher-btn" (click)="addCriterionRow()">
+
+            <button mat-stroked-button color="primary" type="button" class="add-teacher-btn"
+              (click)="addCriterionRow()">
               <mat-icon>add</mat-icon> Ajouter un critère
             </button>
           </div>
 
           <mat-form-field appearance="outline" class="full-width" style="margin-top: 15px;">
             <mat-label>Recommandations / Actions d'amélioration *</mat-label>
-            <textarea matInput rows="4" formControlName="evaluationRecommendations" placeholder="Actions correctives ou préventives recommandées..."></textarea>
+            <textarea matInput rows="4" formControlName="evaluationRecommendations"
+              placeholder="Actions correctives ou préventives recommandées..."></textarea>
           </mat-form-field>
-          
+
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Remarques complémentaires</mat-label>
             <textarea matInput rows="2" formControlName="description" placeholder="Observations GED..."></textarea>
@@ -489,16 +522,19 @@
 
     <!-- FORM ACTIONS BAR -->
     <div class="form-actions-bar">
-      <button mat-button type="button" (click)="goBack()" [disabled]="saving" *ngIf="activeTab === 0">{{ 'common.cancel' | t }}</button>
+      <button mat-button type="button" (click)="goBack()" [disabled]="saving" *ngIf="activeTab === 0">{{ 'common.cancel'
+        | t }}</button>
       <button mat-button type="button" (click)="prevTab()" [disabled]="saving" *ngIf="activeTab > 0">
         <mat-icon>navigate_before</mat-icon> Précédent
       </button>
       <div class="spacer"></div>
-      <button mat-flat-button color="primary" type="button" class="submit-btn" (click)="nextTab()" *ngIf="activeTab < 3">
+      <button mat-flat-button color="primary" type="button" class="submit-btn" (click)="nextTab()"
+        *ngIf="activeTab < 3">
         <span>Suivant</span>
         <mat-icon>navigate_next</mat-icon>
       </button>
-      <button mat-flat-button color="primary" type="submit" class="submit-btn" [disabled]="saving || documentForm.invalid" *ngIf="activeTab === 3">
+      <button mat-flat-button color="primary" type="submit" class="submit-btn"
+        [disabled]="saving || documentForm.invalid" *ngIf="activeTab === 3">
         <mat-icon *ngIf="!saving">check_circle</mat-icon>
         <mat-spinner *ngIf="saving" diameter="20"></mat-spinner>
         <span>{{ isEdit ? ('form.document.saveChanges' | t) : ('form.document.create' | t) }}</span>

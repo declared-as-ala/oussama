@@ -778,6 +778,8 @@ namespace DocApi.Repositories
 
             if (restrictedUserId.HasValue)
             {
+                conditions.Add(@" NOT (COALESCE(cv.Status, 'BROUILLON') = 'PERIME' OR (cv.ExpiryDate IS NOT NULL AND cv.ExpiryDate < NOW())) ");
+
                 conditions.Add(@" (
                     p.PilotUserId = @RestrictedUserId 
                     OR d.ProcessId IN (SELECT ProcessId FROM ProcessActors WHERE UserId = @RestrictedUserId)

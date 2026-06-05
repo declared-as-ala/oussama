@@ -42,6 +42,8 @@ export interface CreateDocumentRequest {
   signature?: string | null;
   ownerUserId?: number | null;
   isActive: boolean;
+  effectiveDate?: string | null;
+  expiryDate?: string | null;
 }
 
 export type UpdateDocumentRequest = CreateDocumentRequest;

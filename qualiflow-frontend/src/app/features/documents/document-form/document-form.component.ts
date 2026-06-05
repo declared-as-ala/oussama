@@ -28,7 +28,8 @@ import {
   DocumentResponse,
   DocumentStatus,
   DocumentType,
-  DocumentListItemResponse
+  DocumentListItemResponse,
+  DocumentVersionResponse
 } from '../models/document.models';
 import { DocumentService } from '../services/document.service';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
@@ -94,8 +95,8 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
     isActive: this.fb.nonNullable.control(true),
     initialVersionStatus: this.fb.nonNullable.control<DocumentStatus>('BROUILLON'),
     initialRevisionComment: this.fb.control<string>(''),
-    initialEffectiveDate: this.fb.control<Date | null>(null),
-    initialExpiryDate: this.fb.control<Date | null>(null),
+    initialEffectiveDate: this.fb.control<Date | null>(null, [Validators.required]),
+    initialExpiryDate: this.fb.control<Date | null>(null, [Validators.required]),
     signature: this.fb.control<string | null>(null),
     inputMode: this.fb.nonNullable.control<'upload' | 'online'>('upload'),
     onlineTemplate: this.fb.nonNullable.control<'simple' | 'attendance' | 'announcement' | 'meeting' | 'evaluation'>('simple'),
@@ -295,7 +296,7 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
             this.ensurePilotInOwners(details.document.ownerUserId, details.document.ownerFullName ?? null);
           }
 
-          this.patchDocument(details.document);
+          this.patchDocument(details.document, details.currentVersion);
 
           if (currentUser) {
             this.ensureCurrentUserAsOwnerOption(currentUser);
@@ -779,7 +780,9 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
       keywords: raw.keywords?.trim() || null,
       signature: raw.signature,
       ownerUserId: raw.ownerUserId ?? null,
-      isActive: raw.isActive
+      isActive: raw.isActive,
+      effectiveDate: this.formatDateForApi(raw.initialEffectiveDate),
+      expiryDate: this.formatDateForApi(raw.initialExpiryDate)
     };
   }
 
@@ -795,7 +798,7 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
     };
   }
 
-  private patchDocument(document: DocumentResponse): void {
+  private patchDocument(document: DocumentResponse, currentVersion?: DocumentVersionResponse | null): void {
     this.documentForm.patchValue({
       code: document.code,
       title: document.title,
@@ -811,8 +814,8 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
       isActive: document.isActive,
       initialVersionStatus: document.currentVersionStatus ?? 'BROUILLON',
       initialRevisionComment: '',
-      initialEffectiveDate: document.currentVersionNumber ? new Date() : null,
-      initialExpiryDate: null,
+      initialEffectiveDate: currentVersion?.effectiveDate ? new Date(currentVersion.effectiveDate) : null,
+      initialExpiryDate: currentVersion?.expiryDate ? new Date(currentVersion.expiryDate) : null,
       signature: document.signature ?? null
     });
     if (document.ownerUserId) {

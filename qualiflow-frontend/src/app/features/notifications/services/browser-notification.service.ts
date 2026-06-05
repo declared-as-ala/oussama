@@ -58,7 +58,7 @@ export class BrowserNotificationService {
     if (!subscription) {
       subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: this.urlBase64ToUint8Array(environment.webPushPublicKey)
+        applicationServerKey: this.urlBase64ToUint8Array(environment.webPushPublicKey) as any
       });
     }
 

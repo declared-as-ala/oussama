@@ -338,6 +338,37 @@ namespace DocApi.Services
             document.UpdatedAt = DateTime.UtcNow;
 
             await _documentRepository.UpdateAsync(document);
+
+            if (document.CurrentVersionId.HasValue)
+            {
+                var curVersion = await _documentVersionRepository.GetByIdAsync(document.CurrentVersionId.Value);
+                if (curVersion != null)
+                {
+                    bool isUpdated = false;
+                    if (request.EffectiveDate.HasValue && curVersion.EffectiveDate != request.EffectiveDate.Value)
+                    {
+                        curVersion.EffectiveDate = request.EffectiveDate.Value;
+                        isUpdated = true;
+                    }
+                    if (request.ExpiryDate.HasValue && curVersion.ExpiryDate != request.ExpiryDate.Value)
+                    {
+                        curVersion.ExpiryDate = request.ExpiryDate.Value;
+                        isUpdated = true;
+
+                        if (request.ExpiryDate.Value > DateTime.UtcNow && curVersion.Status == DocumentConstants.StatusPerime)
+                        {
+                            curVersion.Status = DocumentConstants.StatusPublie;
+                        }
+                    }
+
+                    if (isUpdated)
+                    {
+                        curVersion.UpdatedAt = DateTime.UtcNow;
+                        await _documentVersionRepository.UpdateAsync(curVersion);
+                    }
+                }
+            }
+
             await LogDocumentActionAsync(
                 document,
                 null,
@@ -1875,6 +1906,28 @@ namespace DocApi.Services
         private async Task EnsureDocumentReadAccessAsync(Document document, UserContext userContext)
         {
             EnsureDocumentAccess(userContext, document.OrganizationId);
+
+            bool isRestrictedRole = userContext.Role != UserRoles.ADMIN_ORG 
+                                 && userContext.Role != UserRoles.RESPONSABLE_QUALITE 
+                                 && !userContext.IsSuperAdmin;
+
+            if (isRestrictedRole)
+            {
+                if (document.CurrentVersionId.HasValue)
+                {
+                    var currentVersion = await _documentVersionRepository.GetByIdAsync(document.CurrentVersionId.Value);
+                    if (currentVersion != null)
+                    {
+                        bool isExpired = currentVersion.Status == DocumentConstants.StatusPerime 
+                            || (currentVersion.ExpiryDate.HasValue && currentVersion.ExpiryDate.Value < DateTime.UtcNow);
+                        
+                        if (isExpired)
+                        {
+                            throw new ForbiddenException("Ce document a expiré et n'est plus accessible aux acteurs ou pilotes. Seuls les administrateurs et responsables qualité peuvent le consulter.");
+                        }
+                    }
+                }
+            }
 
             if (userContext.Role == UserRoles.UTILISATEUR)
             {
