@@ -34,15 +34,15 @@
           <mat-icon>file_present</mat-icon>
           <span>Format d'origine</span>
         </button>
-        <button mat-menu-item (click)="downloadCurrent('pdf')">
+        <button mat-menu-item *ngIf="canDownloadAsPdf(model.currentVersion?.originalFileName || model.currentVersion?.fileName)" (click)="downloadCurrent('pdf')">
           <mat-icon>picture_as_pdf</mat-icon>
           <span>Document PDF (.pdf)</span>
         </button>
-        <button mat-menu-item (click)="downloadCurrent('word')">
+        <button mat-menu-item *ngIf="canDownloadAsWord(model.currentVersion?.originalFileName || model.currentVersion?.fileName)" (click)="downloadCurrent('word')">
           <mat-icon>description</mat-icon>
           <span>Document Word (.docx)</span>
         </button>
-        <button mat-menu-item (click)="downloadCurrent('excel')">
+        <button mat-menu-item *ngIf="canDownloadAsExcel(model.currentVersion?.originalFileName || model.currentVersion?.fileName)" (click)="downloadCurrent('excel')">
           <mat-icon>table_view</mat-icon>
           <span>Document Excel (.xlsx)</span>
         </button>
@@ -305,15 +305,15 @@
                         <mat-icon>file_present</mat-icon>
                         <span>Format d'origine</span>
                       </button>
-                      <button mat-menu-item (click)="downloadVersion(row, 'pdf')">
+                      <button mat-menu-item *ngIf="canDownloadAsPdf(row.originalFileName || row.fileName)" (click)="downloadVersion(row, 'pdf')">
                         <mat-icon>picture_as_pdf</mat-icon>
                         <span>Document PDF (.pdf)</span>
                       </button>
-                      <button mat-menu-item (click)="downloadVersion(row, 'word')">
+                      <button mat-menu-item *ngIf="canDownloadAsWord(row.originalFileName || row.fileName)" (click)="downloadVersion(row, 'word')">
                         <mat-icon>description</mat-icon>
                         <span>Document Word (.docx)</span>
                       </button>
-                      <button mat-menu-item (click)="downloadVersion(row, 'excel')">
+                      <button mat-menu-item *ngIf="canDownloadAsExcel(row.originalFileName || row.fileName)" (click)="downloadVersion(row, 'excel')">
                         <mat-icon>table_view</mat-icon>
                         <span>Document Excel (.xlsx)</span>
                       </button>

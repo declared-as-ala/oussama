@@ -498,6 +498,21 @@ export class DocumentDetailsComponent implements OnInit {
     }
   }
 
+  canDownloadAsPdf(fileName?: string | null): boolean {
+    const ext = this.extractExtension(fileName ?? undefined);
+    return ext === 'pdf' || ext === 'doc' || ext === 'docx' || ext === 'xls' || ext === 'xlsx' || ext === 'jpg' || ext === 'jpeg' || ext === 'png';
+  }
+
+  canDownloadAsWord(fileName?: string | null): boolean {
+    const ext = this.extractExtension(fileName ?? undefined);
+    return ext === 'pdf' || ext === 'doc' || ext === 'docx';
+  }
+
+  canDownloadAsExcel(fileName?: string | null): boolean {
+    const ext = this.extractExtension(fileName ?? undefined);
+    return ext === 'pdf' || ext === 'xls' || ext === 'xlsx';
+  }
+
   private saveBlob(blob: Blob, fileName: string): void {
     if (blob.type === 'application/pdf' && !fileName.toLowerCase().endsWith('.pdf')) {
       const dotIndex = fileName.lastIndexOf('.');

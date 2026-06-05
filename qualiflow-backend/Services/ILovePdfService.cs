@@ -10,8 +10,12 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using DocApi.Infrastructure;
 using DocApi.Services.Interfaces;
+using DocumentFormat.OpenXml.Packaging;
+using UglyToad.PdfPig;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Spreadsheet = DocumentFormat.OpenXml.Spreadsheet;
+using Word = DocumentFormat.OpenXml.Wordprocessing;
 
 namespace DocApi.Services
 {
@@ -48,7 +52,9 @@ namespace DocApi.Services
             var isSourcePdf = extension == ".pdf" || sourceContentType == "application/pdf";
             var isSourceWord = extension == ".docx" || extension == ".doc" || sourceContentType.Contains("word") || sourceContentType.Contains("officedocument.wordprocessingml");
             var isSourceExcel = extension == ".xlsx" || extension == ".xls" || sourceContentType.Contains("excel") || sourceContentType.Contains("officedocument.spreadsheetml");
-            var isSourceImage = extension == ".jpg" || extension == ".jpeg" || extension == ".png" || sourceContentType.StartsWith("image/");
+            var isSourceJpg = extension == ".jpg" || extension == ".jpeg" || sourceContentType == "image/jpeg";
+            var isSourcePng = extension == ".png" || sourceContentType == "image/png";
+            var isSourceImage = isSourceJpg || isSourcePng || sourceContentType.StartsWith("image/");
 
             // Standardize target format
             string targetExt = targetFormat switch
@@ -65,43 +71,61 @@ namespace DocApi.Services
             if ((targetExt == ".pdf" && isSourcePdf) ||
                 (targetExt == ".docx" && isSourceWord) ||
                 (targetExt == ".xlsx" && isSourceExcel) ||
-                ((targetExt == ".jpg" || targetExt == ".png") && isSourceImage))
+                (targetExt == ".jpg" && isSourceJpg) ||
+                (targetExt == ".png" && isSourcePng))
             {
                 return (sourceStream, sourceContentType, sourceFileName);
             }
 
             _logger.LogInformation("Converting {FileName} ({ContentType}) to {TargetFormat} via iLovePDF", sourceFileName, sourceContentType, targetFormat);
 
-            // Determine conversion tool chain
+            if (isSourcePdf && targetExt == ".docx")
+            {
+                return await ConvertPdfToWordAsync(sourceStream, sourceFileName);
+            }
+
+            if (isSourcePdf && targetExt == ".xlsx")
+            {
+                return await ConvertPdfToExcelAsync(sourceStream, sourceFileName);
+            }
+
+            if (targetExt == ".docx" || targetExt == ".xlsx")
+            {
+                throw new InvalidOperationException("La conversion vers Word/Excel est disponible uniquement depuis un fichier PDF.");
+            }
+
+            if (targetExt == ".png")
+            {
+                throw new InvalidOperationException("La conversion vers PNG n'est pas prise en charge par l'API iLovePDF actuelle. Utilisez le format JPG.");
+            }
+
+            // Determine conversion tool chain using currently available iLovePDF API v1 tools:
+            //   officepdf = Word/Excel/PowerPoint to PDF
+            //   pdfjpg    = PDF to JPG
+            //   imagepdf  = Image to PDF
             var tools = new List<string>();
             if (isSourceWord)
             {
-                tools.Add("officepdf"); // Word to PDF first
-                if (targetExt == ".xlsx") tools.Add("pdfexcel");
-                else if (targetExt == ".jpg" || targetExt == ".png") tools.Add("pdfjpg");
+                tools.Add("officepdf");
+                if (targetExt == ".jpg") tools.Add("pdfjpg");
             }
             else if (isSourceExcel)
             {
-                tools.Add("officepdf"); // Excel to PDF first
-                if (targetExt == ".docx") tools.Add("pdfword");
-                else if (targetExt == ".jpg" || targetExt == ".png") tools.Add("pdfjpg");
+                tools.Add("officepdf");
+                if (targetExt == ".jpg") tools.Add("pdfjpg");
             }
             else if (isSourceImage)
             {
-                tools.Add("imagepdf"); // Image to PDF first
-                if (targetExt == ".docx") tools.Add("pdfword");
-                else if (targetExt == ".xlsx") tools.Add("pdfexcel");
+                if (targetExt == ".pdf") tools.Add("imagepdf");
+                else throw new InvalidOperationException("La conversion d'image demandée n'est pas prise en charge par l'API iLovePDF actuelle.");
             }
             else if (isSourcePdf)
             {
-                if (targetExt == ".docx") tools.Add("pdfword");
-                else if (targetExt == ".xlsx") tools.Add("pdfexcel");
-                else if (targetExt == ".jpg" || targetExt == ".png") tools.Add("pdfjpg");
+                if (targetExt == ".jpg") tools.Add("pdfjpg");
             }
             else
             {
-                // Fallback attempt: try treating as PDF or throw
-                tools.Add("pdfword");
+                throw new InvalidOperationException("Format source non pris en charge pour la conversion iLovePDF.");
             }
 
             // Authenticate and get JWT Token
@@ -128,6 +152,172 @@ namespace DocApi.Services
 
             var finalFileName = Path.ChangeExtension(sourceFileName, Path.GetExtension(currentFileName));
             return (currentStream, currentContentType, finalFileName);
+        }
+
+        private static async Task<(Stream Stream, string ContentType, string FileName)> ConvertPdfToWordAsync(
+            Stream sourceStream,
+            string sourceFileName)
+        {
+            var pages = await ExtractPdfPagesAsync(sourceStream);
+            var result = new MemoryStream();
+
+            using (var document = WordprocessingDocument.Create(
+                result,
+                DocumentFormat.OpenXml.WordprocessingDocumentType.Document,
+                autoSave: true))
+            {
+                var mainPart = document.AddMainDocumentPart();
+                mainPart.Document = new Word.Document(new Word.Body());
+                var body = mainPart.Document.Body!;
+
+                body.Append(
+                    new Word.Paragraph(
+                        new Word.ParagraphProperties(
+                            new Word.ParagraphStyleId { Val = "Title" }),
+                        new Word.Run(
+                            new Word.RunProperties(new Word.Bold()),
+                            new Word.Text(Path.GetFileNameWithoutExtension(sourceFileName)))));
+
+                foreach (var page in pages)
+                {
+                    body.Append(
+                        new Word.Paragraph(
+                            new Word.ParagraphProperties(
+                                new Word.SpacingBetweenLines { Before = "240", After = "120" }),
+                            new Word.Run(
+                                new Word.RunProperties(new Word.Bold()),
+                                new Word.Text($"Page {page.PageNumber}"))));
+
+                    var lines = SplitTextLines(page.Text);
+                    if (lines.Count == 0)
+                    {
+                        body.Append(new Word.Paragraph(new Word.Run(new Word.Text("[Aucun texte extractible]"))));
+                        continue;
+                    }
+
+                    foreach (var line in lines)
+                    {
+                        body.Append(new Word.Paragraph(new Word.Run(new Word.Text(line) { Space = DocumentFormat.OpenXml.SpaceProcessingModeValues.Preserve })));
+                    }
+                }
+
+                mainPart.Document.Save();
+            }
+
+            result.Position = 0;
+            return (
+                result,
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                Path.ChangeExtension(sourceFileName, ".docx"));
+        }
+
+        private static async Task<(Stream Stream, string ContentType, string FileName)> ConvertPdfToExcelAsync(
+            Stream sourceStream,
+            string sourceFileName)
+        {
+            var pages = await ExtractPdfPagesAsync(sourceStream);
+            var result = new MemoryStream();
+
+            using (var document = SpreadsheetDocument.Create(
+                result,
+                DocumentFormat.OpenXml.SpreadsheetDocumentType.Workbook,
+                autoSave: true))
+            {
+                var workbookPart = document.AddWorkbookPart();
+                workbookPart.Workbook = new Spreadsheet.Workbook();
+
+                var worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
+                var sheetData = new Spreadsheet.SheetData();
+                worksheetPart.Worksheet = new Spreadsheet.Worksheet(sheetData);
+
+                var sheets = workbookPart.Workbook.AppendChild(new Spreadsheet.Sheets());
+                sheets.Append(new Spreadsheet.Sheet
+                {
+                    Id = workbookPart.GetIdOfPart(worksheetPart),
+                    SheetId = 1,
+                    Name = "PDF"
+                });
+
+                uint rowIndex = 1;
+                sheetData.Append(CreateSpreadsheetRow(rowIndex++, "Page", "Ligne", "Texte"));
+
+                foreach (var page in pages)
+                {
+                    var lines = SplitTextLines(page.Text);
+                    if (lines.Count == 0)
+                    {
+                        sheetData.Append(CreateSpreadsheetRow(rowIndex++, page.PageNumber.ToString(), "1", "[Aucun texte extractible]"));
+                        continue;
+                    }
+
+                    for (var i = 0; i < lines.Count; i++)
+                    {
+                        sheetData.Append(CreateSpreadsheetRow(rowIndex++, page.PageNumber.ToString(), (i + 1).ToString(), lines[i]));
+                    }
+                }
+
+                workbookPart.Workbook.Save();
+            }
+
+            result.Position = 0;
+            return (
+                result,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                Path.ChangeExtension(sourceFileName, ".xlsx"));
+        }
+
+        private static async Task<IReadOnlyList<PdfTextPage>> ExtractPdfPagesAsync(Stream sourceStream)
+        {
+            if (sourceStream.CanSeek)
+            {
+                sourceStream.Position = 0;
+            }
+
+            using var ms = new MemoryStream();
+            await sourceStream.CopyToAsync(ms);
+            using var document = PdfDocument.Open(ms.ToArray());
+
+            return document.GetPages()
+                .Select(page => new PdfTextPage(page.Number, page.Text ?? string.Empty))
+                .ToList();
+        }
+
+        private static List<string> SplitTextLines(string text)
+        {
+            return (text ?? string.Empty)
+                .Replace("\r\n", "\n")
+                .Replace('\r', '\n')
+                .Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                .ToList();
+        }
+
+        private static Spreadsheet.Row CreateSpreadsheetRow(uint rowIndex, params string[] values)
+        {
+            var row = new Spreadsheet.Row { RowIndex = rowIndex };
+            for (var i = 0; i < values.Length; i++)
+            {
+                row.Append(new Spreadsheet.Cell
+                {
+                    CellReference = $"{GetSpreadsheetColumnName(i + 1)}{rowIndex}",
+                    DataType = Spreadsheet.CellValues.InlineString,
+                    InlineString = new Spreadsheet.InlineString(new Spreadsheet.Text(values[i] ?? string.Empty))
+                });
+            }
+
+            return row;
+        }
+
+        private static string GetSpreadsheetColumnName(int columnNumber)
+        {
+            var name = string.Empty;
+            while (columnNumber > 0)
+            {
+                var modulo = (columnNumber - 1) % 26;
+                name = Convert.ToChar('A' + modulo) + name;
+                columnNumber = (columnNumber - modulo) / 26;
+            }
+
+            return name;
         }
 
         private async Task<string> AuthenticateAsync()
@@ -228,11 +418,10 @@ namespace DocApi.Services
                 }
             };
 
-            // If we are using pdfjpg and want png format
-            if (tool == "pdfjpg" && targetFormat == "png")
+            // Convert every PDF page to a JPG image.
+            if (tool == "pdfjpg")
             {
-                processBody["pdfjpg_format"] = "png";
-                processBody["output_format"] = "png";
+                processBody["pdfjpg_mode"] = "pages";
             }
 
             using var processRequest = new HttpRequestMessage(HttpMethod.Post, $"{serverUrl}/v1/process");
@@ -286,5 +475,7 @@ namespace DocApi.Services
             [JsonPropertyName("server_filename")]
             public string ServerFilename { get; set; } = string.Empty;
         }
+
+        private sealed record PdfTextPage(int PageNumber, string Text);
     }
 }

@@ -483,6 +483,21 @@ export class DocumentsListComponent implements OnInit {
     return `${days} jour${days > 1 ? 's' : ''} restant${days > 1 ? 's' : ''}`;
   }
 
+  canDownloadAsPdf(fileName?: string | null): boolean {
+    const ext = this.extractExtension(fileName ?? undefined);
+    return ext === 'pdf' || ext === 'doc' || ext === 'docx' || ext === 'xls' || ext === 'xlsx' || ext === 'jpg' || ext === 'jpeg' || ext === 'png';
+  }
+
+  canDownloadAsWord(fileName?: string | null): boolean {
+    const ext = this.extractExtension(fileName ?? undefined);
+    return ext === 'pdf' || ext === 'doc' || ext === 'docx';
+  }
+
+  canDownloadAsExcel(fileName?: string | null): boolean {
+    const ext = this.extractExtension(fileName ?? undefined);
+    return ext === 'pdf' || ext === 'xls' || ext === 'xlsx';
+  }
+
   getOwnerInitials(fullName?: string | null): string {
     if (!fullName) {
       return 'NA';

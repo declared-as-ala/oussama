@@ -750,7 +750,7 @@ namespace DocApi.Services
         private async Task<byte[]> StampUploadedPdfAsync(byte[] fileContent, PdfHeaderMetadata headerMetadata)
         {
             using var sourceStream = new MemoryStream(fileContent, writable: false);
-            await using var stampedStream = await _pdfHeaderStampService.AddHeaderAsync(sourceStream, headerMetadata);
+            var stampedStream = await _pdfHeaderStampService.AddHeaderAsync(sourceStream, headerMetadata);
             using var result = new MemoryStream();
             await stampedStream.CopyToAsync(result);
             return result.ToArray();

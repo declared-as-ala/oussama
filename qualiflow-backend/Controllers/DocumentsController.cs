@@ -445,7 +445,10 @@ namespace DocApi.Controllers
                     try
                     {
                         var conversion = await _conversionService.ConvertAsync(result.Stream, result.ContentType, result.FileName, format);
-                        result.Stream.Dispose();
+                        if (!ReferenceEquals(result.Stream, conversion.Stream))
+                        {
+                            result.Stream.Dispose();
+                        }
                         return File(conversion.Stream, conversion.ContentType, conversion.FileName);
                     }
                     catch (Exception ex)
@@ -481,7 +484,10 @@ namespace DocApi.Controllers
                     try
                     {
                         var conversion = await _conversionService.ConvertAsync(result.Stream, result.ContentType, result.FileName, format);
-                        result.Stream.Dispose();
+                        if (!ReferenceEquals(result.Stream, conversion.Stream))
+                        {
+                            result.Stream.Dispose();
+                        }
                         return File(conversion.Stream, conversion.ContentType, conversion.FileName);
                     }
                     catch (Exception ex)
