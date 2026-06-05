@@ -277,6 +277,8 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
       documents: this.documentService.getDocuments({ pageNumber: 1, pageSize: 500 })
     });
 
+    this.setupProcedureSelectionSync();
+
     if (this.isEdit && this.documentId) {
       forkJoin({
         base: baseData$,
@@ -308,15 +310,18 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
           }
 
           const pId = details.document.processId;
-          const currentProcId = details.document.procedureId;
+          const currentProcedureIds = details.document.procedureIds && details.document.procedureIds.length > 0
+            ? details.document.procedureIds
+            : (details.document.procedureId ? [details.document.procedureId] : []);
 
           if (pId) {
-            this.documentForm.controls.procedureId.enable({ emitEvent: false });
+            this.documentForm.controls.procedureIds.enable({ emitEvent: false });
             this.updateOwnersFromProcesses([pId]);
             this.procedureService.getProceduresByProcess(pId).subscribe({
               next: (results) => {
                 this.procedures = results;
-                this.documentForm.controls.procedureId.setValue(currentProcId ?? null);
+                this.documentForm.controls.procedureIds.setValue(currentProcedureIds);
+                this.syncPrimaryProcedure(currentProcedureIds);
                 this.loading = false;
               },
               error: () => {
@@ -326,7 +331,7 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
               }
             });
           } else {
-            this.documentForm.controls.procedureId.disable({ emitEvent: false });
+            this.documentForm.controls.procedureIds.disable({ emitEvent: false });
             this.loading = false;
           }
         },
@@ -359,7 +364,7 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
         if (!this.canSelectOwner) {
           this.documentForm.controls.ownerUserId.disable({ emitEvent: false });
         }
-        this.documentForm.controls.procedureId.disable({ emitEvent: false });
+        this.documentForm.controls.procedureIds.disable({ emitEvent: false });
 
         this.loading = false;
       },
@@ -368,14 +373,20 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
         this.notificationService.showError('Impossible de charger les donnees de formulaire.');
       }
     });
+  }
 
-    // Auto-select responsible from procedure
-    this.documentForm.controls.procedureId.valueChanges.subscribe(procedureId => {
-      if (!procedureId) {
+  private setupProcedureSelectionSync(): void {
+    // Auto-select responsible from the first selected procedure.
+    this.documentForm.controls.procedureIds.valueChanges.subscribe(procedureIds => {
+      const selectedIds = procedureIds ?? [];
+      this.syncPrimaryProcedure(selectedIds);
+
+      const primaryProcedureId = selectedIds[0];
+      if (!primaryProcedureId) {
         return;
       }
 
-      const selectedProcedure = this.procedures.find(item => item.id === procedureId);
+      const selectedProcedure = this.procedures.find(item => item.id === primaryProcedureId);
       if (selectedProcedure?.responsibleUserId) {
         this.documentForm.controls.ownerUserId.setValue(selectedProcedure.responsibleUserId);
       }
@@ -586,15 +597,16 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
   onProcessChanged(): void {
     const processId = this.documentForm.controls.processId.value;
     this.documentForm.controls.procedureId.setValue(null);
+    this.documentForm.controls.procedureIds.setValue([]);
 
     if (!processId) {
       this.procedures = [];
       this.owners = [];
-      this.documentForm.controls.procedureId.disable({ emitEvent: false });
+      this.documentForm.controls.procedureIds.disable({ emitEvent: false });
       return;
     }
 
-    this.documentForm.controls.procedureId.enable({ emitEvent: false });
+    this.documentForm.controls.procedureIds.enable({ emitEvent: false });
 
     // Fetch procedures for the selected process
     this.procedureService.getProceduresByProcess(processId).subscribe({
@@ -765,13 +777,14 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
     const raw = this.documentForm.getRawValue();
 
     const processId = raw.processId;
-    const procedureId = raw.procedureId;
+    const procedureIds = this.normalizeIds(raw.procedureIds);
+    const procedureId = procedureIds[0] ?? null;
 
     return {
       processId: processId,
       procedureId: procedureId,
       processIds: processId ? [processId] : [],
-      procedureIds: procedureId ? [procedureId] : [],
+      procedureIds: procedureIds,
       code: raw.code.trim(),
       title: raw.title.trim(),
       type: raw.type,
@@ -799,6 +812,10 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
   }
 
   private patchDocument(document: DocumentResponse, currentVersion?: DocumentVersionResponse | null): void {
+    const procedureIds = document.procedureIds && document.procedureIds.length > 0
+      ? document.procedureIds
+      : (document.procedureId ? [document.procedureId] : []);
+
     this.documentForm.patchValue({
       code: document.code,
       title: document.title,
@@ -807,9 +824,9 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
       category: document.category ?? '',
       keywords: document.keywords ?? '',
       processId: document.processId ?? null,
-      procedureId: document.procedureId ?? null,
+      procedureId: procedureIds[0] ?? null,
       processIds: document.processIds ?? (document.processId ? [document.processId] : []),
-      procedureIds: document.procedureIds ?? (document.procedureId ? [document.procedureId] : []),
+      procedureIds: procedureIds,
       ownerUserId: document.ownerUserId ?? null,
       isActive: document.isActive,
       initialVersionStatus: document.currentVersionStatus ?? 'BROUILLON',
@@ -828,7 +845,9 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
     this.procedureService.getProceduresByProcess(processId).subscribe({
       next: (procedures) => {
         this.procedures = procedures;
-        this.documentForm.controls.procedureId.setValue(selectedProcedureId);
+        const selectedProcedureIds = selectedProcedureId ? [selectedProcedureId] : [];
+        this.documentForm.controls.procedureIds.setValue(selectedProcedureIds);
+        this.syncPrimaryProcedure(selectedProcedureIds);
         this.loading = false;
       },
       error: () => {
@@ -899,6 +918,14 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
     const month = `${value.getMonth() + 1}`.padStart(2, '0');
     const day = `${value.getDate()}`.padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  private normalizeIds(ids: Array<number | null | undefined> | null | undefined): number[] {
+    return Array.from(new Set((ids ?? []).filter((id): id is number => typeof id === 'number')));
+  }
+
+  private syncPrimaryProcedure(procedureIds: number[]): void {
+    this.documentForm.controls.procedureId.setValue(procedureIds[0] ?? null, { emitEvent: false });
   }
 
   private getTypePrefix(type: DocumentType): string {
