@@ -98,8 +98,22 @@ namespace DocApi.Infrastructure
             try
             {
                 using var pdfDocument = new PdfDocument();
-                var bodyFont = new XFont("Arial", 10, XFontStyle.Regular);
+
+                // Define fonts
+                var titleFont = new XFont("Arial", 16, XFontStyle.Bold);
+                var sectionFont = new XFont("Arial", 11, XFontStyle.Bold);
+                var metadataLabelFont = new XFont("Arial", 9.5, XFontStyle.Bold);
+                var bodyFont = new XFont("Arial", 9.5, XFontStyle.Regular);
+                var bodyBoldFont = new XFont("Arial", 9.5, XFontStyle.Bold);
+                var monoFont = new XFont("Courier New", 9, XFontStyle.Regular);
+
+                // Define colors/brushes
+                var primaryBrush = new XSolidBrush(XColor.FromArgb(27, 54, 93)); // Navy
+                var secondaryBrush = new XSolidBrush(XColor.FromArgb(74, 85, 104)); // Slate Charcoal
                 var textBrush = XBrushes.Black;
+                var metadataBgBrush = new XSolidBrush(XColor.FromArgb(247, 250, 252)); // Light grey
+                var metadataBorderPen = new XPen(XColor.FromArgb(226, 232, 240), 1);
+
                 var logoPath = ResolveLogoPath(metadata.OrganizationLogoPath, metadata.OrganizationCode);
                 var logoImage = TryLoadLogoImage(logoPath);
                 var signatureImage = TryLoadSignatureImage(metadata.SignatureBase64);
@@ -107,7 +121,6 @@ namespace DocApi.Infrastructure
                 const double leftMargin = 18d;
                 const double rightMargin = 18d;
                 const double bottomMargin = 24d;
-                const double lineHeight = 16d;
                 const double bodyTopMargin = 14d;
 
                 XGraphics? gfx = null;
@@ -135,25 +148,172 @@ namespace DocApi.Infrastructure
                 var normalizedText = NormalizeLineEndings(textContent ?? string.Empty);
                 var logicalLines = normalizedText.Split('\n', StringSplitOptions.None);
 
+                // Phase 1: Parse Title, Metadata, and Content
+                string? title = null;
+                var metadataLines = new List<string>();
+                var contentLines = new List<string>();
+                bool readingMetadata = true;
+
                 foreach (var rawLine in logicalLines)
+                {
+                    var line = rawLine.TrimEnd('\r').Trim();
+                    if (string.IsNullOrEmpty(line))
+                    {
+                        continue;
+                    }
+
+                    if (title == null)
+                    {
+                        title = line;
+                        continue;
+                    }
+
+                    if (readingMetadata)
+                    {
+                        // Check if it's metadata (contains colon followed by a value)
+                        if (line.Contains(':') && !line.StartsWith('|') && !line.StartsWith('-') && !line.StartsWith('*'))
+                        {
+                            var parts = line.Split(':', 2);
+                            var val = parts.Length > 1 ? parts[1].Trim() : string.Empty;
+                            if (!string.IsNullOrEmpty(val))
+                            {
+                                metadataLines.Add(line);
+                                continue;
+                            }
+                        }
+                        
+                        // If it's empty value or starts with table/list markers, stop reading metadata
+                        readingMetadata = false;
+                    }
+
+                    contentLines.Add(rawLine.TrimEnd('\r'));
+                }
+
+                // Phase 2: Draw Title Centered
+                if (title != null)
+                {
+                    var titleText = title.ToUpper();
+                    var titleSize = gfx!.MeasureString(titleText, titleFont);
+                    double titleX = leftMargin + (bodyWidth - titleSize.Width) / 2;
+                    gfx.DrawString(titleText, titleFont, primaryBrush, new XPoint(titleX, y));
+                    y += 18d;
+
+                    // Draw a subtle horizontal line under the title
+                    gfx.DrawLine(new XPen(XColor.FromArgb(27, 54, 93), 1.25), leftMargin + 30, y, leftMargin + bodyWidth - 30, y);
+                    y += 20d;
+                }
+
+                // Phase 3: Draw Metadata Box
+                if (metadataLines.Count > 0)
+                {
+                    double boxWidth = bodyWidth * 0.85;
+                    double boxHeight = (metadataLines.Count * 18d) + 14d;
+                    double boxX = leftMargin + (bodyWidth - boxWidth) / 2;
+
+                    if (y + boxHeight > maxY)
+                    {
+                        StartNewPage();
+                        boxX = leftMargin + (bodyWidth - boxWidth) / 2;
+                    }
+
+                    var boxRect = new XRect(boxX, y, boxWidth, boxHeight);
+                    gfx!.DrawRectangle(metadataBorderPen, metadataBgBrush, boxRect);
+
+                    double itemY = y + 14d;
+                    foreach (var metaLine in metadataLines)
+                    {
+                        var parts = metaLine.Split(':', 2);
+                        var key = parts[0].Trim() + " : ";
+                        var val = parts.Length > 1 ? parts[1].Trim() : string.Empty;
+
+                        double labelX = boxX + 16d;
+                        gfx.DrawString(key, metadataLabelFont, secondaryBrush, new XPoint(labelX, itemY));
+
+                        double keyWidth = gfx.MeasureString(key, metadataLabelFont).Width;
+                        double valX = labelX + keyWidth + 4d;
+                        gfx.DrawString(val, bodyFont, textBrush, new XPoint(valX, itemY));
+
+                        itemY += 18d;
+                    }
+
+                    y += boxHeight + 20d;
+                }
+
+                // Phase 4: Draw Content Lines Centered and Formatted
+                foreach (var rawLine in contentLines)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    var line = rawLine.TrimEnd('\r');
-                    var wrappedLines = WrapLine(gfx!, line, bodyFont, bodyWidth);
-                    foreach (var wrappedLine in wrappedLines)
+                    var line = rawLine.Trim();
+                    if (string.IsNullOrEmpty(line))
                     {
-                        if (y + lineHeight > maxY)
+                        y += 10d; // blank line spacing
+                        continue;
+                    }
+
+                    // Check if it's a section header (ends with colon)
+                    bool isSectionHeader = line.EndsWith(':') && !line.StartsWith('|') && !line.StartsWith('-') && !line.StartsWith('*');
+                    
+                    if (isSectionHeader)
+                    {
+                        var headerText = line.ToUpper();
+                        var headerSize = gfx!.MeasureString(headerText, sectionFont);
+                        double headerX = leftMargin + (bodyWidth - headerSize.Width) / 2;
+                        
+                        y += 10d; // spacing before header
+                        if (y + 20d > maxY)
                         {
                             StartNewPage();
                         }
-
-                        if (!string.IsNullOrEmpty(wrappedLine))
+                        
+                        gfx.DrawString(headerText, sectionFont, primaryBrush, new XPoint(headerX, y));
+                        y += 18d;
+                    }
+                    // Check if it's a table line
+                    else if (line.StartsWith('|') || line.StartsWith('+') || (line.StartsWith('-') && line.Contains("---")))
+                    {
+                        var lineSize = gfx!.MeasureString(rawLine, monoFont);
+                        double lineX = leftMargin + (bodyWidth - lineSize.Width) / 2;
+                        
+                        if (y + 14d > maxY)
                         {
-                            gfx!.DrawString(wrappedLine, bodyFont, textBrush, new XPoint(leftMargin, y));
+                            StartNewPage();
                         }
+                        
+                        gfx.DrawString(rawLine, monoFont, textBrush, new XPoint(lineX, y));
+                        y += 14d;
+                    }
+                    // Check if it's a list item
+                    else if (line.StartsWith('-') || line.StartsWith('*') || (line.Length > 2 && char.IsDigit(line[0]) && line[1] == '.'))
+                    {
+                        if (y + 16d > maxY)
+                        {
+                            StartNewPage();
+                        }
+                        
+                        gfx!.DrawString(rawLine, bodyFont, textBrush, new XPoint(leftMargin + 24d, y));
+                        y += 16d;
+                    }
+                    // Regular paragraph text
+                    else
+                    {
+                        var wrappedLines = WrapLine(gfx!, line, bodyFont, bodyWidth * 0.85);
+                        foreach (var wrappedLine in wrappedLines)
+                        {
+                            if (y + 16d > maxY)
+                            {
+                                StartNewPage();
+                            }
 
-                        y += lineHeight;
+                            if (!string.IsNullOrEmpty(wrappedLine))
+                            {
+                                var wlSize = gfx!.MeasureString(wrappedLine, bodyFont);
+                                double wlX = leftMargin + (bodyWidth - wlSize.Width) / 2;
+                                gfx.DrawString(wrappedLine, bodyFont, textBrush, new XPoint(wlX, y));
+                            }
+
+                            y += 16d;
+                        }
                     }
                 }
 

@@ -14,5 +14,6 @@ namespace DocApi.DTOs.Procedures
         public string Status { get; set; } = "ACTIF";
         public string VersionNumber { get; set; } = "1.0";
         public string? RevisionComment { get; set; }
+        public List<CreateInstructionRequest>? Instructions { get; set; } = new();
     }
 }

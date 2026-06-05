@@ -306,21 +306,16 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
             this.documentForm.controls.ownerUserId.disable({ emitEvent: false });
           }
 
-          const pIds = details.document.processIds && details.document.processIds.length > 0
-            ? details.document.processIds
-            : (details.document.processId ? [details.document.processId] : []);
+          const pId = details.document.processId;
+          const currentProcId = details.document.procedureId;
 
-          const currentProcIds = details.document.procedureIds && details.document.procedureIds.length > 0
-            ? details.document.procedureIds
-            : (details.document.procedureId ? [details.document.procedureId] : []);
-
-          if (pIds.length > 0) {
-            this.documentForm.controls.procedureIds.enable({ emitEvent: false });
-            const obsList = pIds.map(pId => this.procedureService.getProceduresByProcess(pId));
-            forkJoin(obsList).subscribe({
+          if (pId) {
+            this.documentForm.controls.procedureId.enable({ emitEvent: false });
+            this.updateOwnersFromProcesses([pId]);
+            this.procedureService.getProceduresByProcess(pId).subscribe({
               next: (results) => {
-                this.procedures = results.reduce((acc, curr) => acc.concat(curr), []);
-                this.documentForm.controls.procedureIds.setValue(currentProcIds);
+                this.procedures = results;
+                this.documentForm.controls.procedureId.setValue(currentProcId ?? null);
                 this.loading = false;
               },
               error: () => {
@@ -330,7 +325,7 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
               }
             });
           } else {
-            this.documentForm.controls.procedureIds.disable({ emitEvent: false });
+            this.documentForm.controls.procedureId.disable({ emitEvent: false });
             this.loading = false;
           }
         },
@@ -346,7 +341,7 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
 
     baseData$.subscribe({
       next: ({ processes, users, documents }) => {
-        this.owners = users.items.filter(user => user.isActive);
+        this.owners = [];
         this.existingDocuments = documents.items;
 
         if (!this.canSelectOwner && currentUser) {
@@ -363,7 +358,7 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
         if (!this.canSelectOwner) {
           this.documentForm.controls.ownerUserId.disable({ emitEvent: false });
         }
-        this.documentForm.controls.procedureIds.disable({ emitEvent: false });
+        this.documentForm.controls.procedureId.disable({ emitEvent: false });
 
         this.loading = false;
       },
@@ -374,12 +369,12 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
     });
 
     // Auto-select responsible from procedure
-    this.documentForm.controls.procedureIds.valueChanges.subscribe(procedureIds => {
-      if (!procedureIds || procedureIds.length === 0) {
+    this.documentForm.controls.procedureId.valueChanges.subscribe(procedureId => {
+      if (!procedureId) {
         return;
       }
 
-      const selectedProcedure = this.procedures.find(item => item.id === procedureIds[0]);
+      const selectedProcedure = this.procedures.find(item => item.id === procedureId);
       if (selectedProcedure?.responsibleUserId) {
         this.documentForm.controls.ownerUserId.setValue(selectedProcedure.responsibleUserId);
       }
@@ -588,33 +583,36 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
   }
 
   onProcessChanged(): void {
-    const processIds = this.documentForm.controls.processIds.value || [];
-    this.documentForm.controls.procedureIds.setValue([]);
+    const processId = this.documentForm.controls.processId.value;
+    this.documentForm.controls.procedureId.setValue(null);
 
-    if (processIds.length === 0) {
+    if (!processId) {
       this.procedures = [];
-      this.documentForm.controls.procedureIds.disable({ emitEvent: false });
+      this.owners = [];
+      this.documentForm.controls.procedureId.disable({ emitEvent: false });
       return;
     }
 
-    this.documentForm.controls.procedureIds.enable({ emitEvent: false });
+    this.documentForm.controls.procedureId.enable({ emitEvent: false });
 
-    // Fetch procedures for all selected processes
-    const obsList = processIds.map(pId => this.procedureService.getProceduresByProcess(pId));
-    forkJoin(obsList).subscribe({
+    // Fetch procedures for the selected process
+    this.procedureService.getProceduresByProcess(processId).subscribe({
       next: (results) => {
-        this.procedures = results.reduce((acc, curr) => acc.concat(curr), []);
+        this.procedures = results;
 
-        // Auto-select process owner (pilotUserId) of the first selected process
-        const selectedProcess = this.processes.find(p => p.id === processIds[0]);
+        // Auto-select process owner (pilotUserId)
+        const selectedProcess = this.processes.find(p => p.id === processId);
         if (selectedProcess?.pilotUserId) {
           this.ensurePilotInOwners(selectedProcess.pilotUserId, selectedProcess.pilotFullName ?? null);
           this.documentForm.controls.ownerUserId.setValue(selectedProcess.pilotUserId);
         }
+
+        // Dynamically fetch and display only the actors of the selected process
+        this.updateOwnersFromProcesses([processId]);
       },
       error: () => {
         this.procedures = [];
-        this.notificationService.showWarning('Impossible de charger les procedures des processus.');
+        this.notificationService.showWarning('Impossible de charger les procedures du processus.');
       }
     });
   }
@@ -765,23 +763,14 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
   private buildDocumentPayload(): CreateDocumentRequest {
     const raw = this.documentForm.getRawValue();
 
-    const resolvedProcessIds = new Set<number>();
-    if (raw.procedureIds && raw.procedureIds.length > 0) {
-      raw.procedureIds.forEach(procId => {
-        const proc = this.procedures.find(p => p.id === procId);
-        if (proc?.processId) {
-          resolvedProcessIds.add(proc.processId);
-        }
-      });
-    }
-
-    const processIdsArray = Array.from(resolvedProcessIds);
+    const processId = raw.processId;
+    const procedureId = raw.procedureId;
 
     return {
-      processId: processIdsArray.length > 0 ? processIdsArray[0] : null,
-      procedureId: raw.procedureIds && raw.procedureIds.length > 0 ? raw.procedureIds[0] : null,
-      processIds: processIdsArray,
-      procedureIds: raw.procedureIds || [],
+      processId: processId,
+      procedureId: procedureId,
+      processIds: processId ? [processId] : [],
+      procedureIds: procedureId ? [procedureId] : [],
       code: raw.code.trim(),
       title: raw.title.trim(),
       type: raw.type,
@@ -994,6 +983,74 @@ export class DocumentFormComponent implements OnInit, AfterViewInit {
 
       return exists ? { duplicateCode: true } : null;
     };
+  }
+
+  private updateOwnersFromProcesses(processIds: number[]): void {
+    if (!processIds || processIds.length === 0) {
+      this.owners = [];
+      return;
+    }
+
+    const actorsObs = processIds.map(pId => this.processService.getActors(pId));
+    
+    forkJoin(actorsObs).subscribe({
+      next: (results) => {
+        const uniqueActorsMap = new Map<number, any>();
+
+        // 1. Add pilots of the selected processes
+        processIds.forEach(pId => {
+          const proc = this.processes.find(p => p.id === pId);
+          if (proc?.pilotUserId) {
+            const parts = (proc.pilotFullName || '').trim().split(' ');
+            const firstName = parts[0] || 'Pilote';
+            const lastName = parts.slice(1).join(' ') || 'Processus';
+            uniqueActorsMap.set(proc.pilotUserId, {
+              id: proc.pilotUserId,
+              firstName,
+              lastName,
+              email: '',
+              role: 'UTILISATEUR',
+              isActive: true,
+              createdAt: new Date().toISOString()
+            });
+          }
+        });
+
+        // 2. Add actors of the selected processes
+        results.forEach(actors => {
+          actors.forEach(actor => {
+            if (!uniqueActorsMap.has(actor.userId)) {
+              const parts = (actor.fullName || '').trim().split(' ');
+              const firstName = parts[0] || 'Acteur';
+              const lastName = parts.slice(1).join(' ') || 'Processus';
+              uniqueActorsMap.set(actor.userId, {
+                id: actor.userId,
+                firstName,
+                lastName,
+                email: actor.email || '',
+                role: 'UTILISATEUR',
+                isActive: true,
+                createdAt: actor.assignedAt || new Date().toISOString()
+              });
+            }
+          });
+        });
+
+        // 3. Keep current selected owner if they exist
+        const currentOwnerId = this.documentForm.controls.ownerUserId.value;
+        if (currentOwnerId && !uniqueActorsMap.has(currentOwnerId)) {
+          const existingOwner = this.owners.find(o => o.id === currentOwnerId);
+          if (existingOwner) {
+            uniqueActorsMap.set(currentOwnerId, existingOwner);
+          }
+        }
+
+        this.owners = Array.from(uniqueActorsMap.values());
+      },
+      error: () => {
+        this.notificationService.showWarning('Impossible de charger les acteurs des processus.');
+      }
+    });
   }
 
   setActiveTab(index: number): void {

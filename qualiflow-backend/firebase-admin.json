@@ -1,13 +1,5 @@
 {
   "type": "service_account",
-  "project_id": "qualiflow-62af9",
-  "private_key_id": "f30417e3d288d09bc04ff2d06f7ce26df67afddb",
-  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDBBMg9832d9Lkt\nZmFSrWDZOcu15VrZvepjd8ydYpLAtTYZol/j2MBY4WvQd8rrTA7e7PZqf7Ru0JZq\nTfRoIl8962CnIt0j6JiJPQFhsIbBg8nq5pdZ5NmOl7fpEf0T2xh66duaQoxYdHRU\nCrusehYZ65GFWkjX4qN/0gHNoq4u6Om+58i2EMf7LYpQpm5o86dOSoKqBcoAgJPO\n9q8xbZ1JpIVnHQfpam8Fraz4lsx5/2wZ/nPtz3nFnmRufC5f47MhwKQ1SCfEPSsI\nSmdS3UF15W/qgAm8I4hMr9y4mysdau3O+/zh7kBTwTlrKKnVaj3WGASeZAPyEBjZ\n0JwblzhbAgMBAAECggEAAPEtvYMeIgiz+pzETB3sjwoLIGDC2G6BTeeR6KL0jQCx\nAyHhboXfZnh8cN5xOq4OnY8TDMKtvctqHg0GAs0BHRJyOoOUEQ2T+omSz6/2JWKn\n/sz8QrfoxT6pZpIV/iiyauiu/iWsWgC6IYZmKYS29oWqmmy7TVtrDvt3jFaFF0yn\nUSNeJqpgySp3rH5/HIuDMf+g+LEQZi+4OnRWRLizTudvMGnk9VwK0hzs1WF/pfjz\nTZ3LLxdiiQhfZrBZWTV3Dk3uMIvvNGsmT6X13yk1MWTDF4hZHS3zR/iZkoWHF3tn\nWSqPC4EJ2dChChAj8A1YnzDoTJHRgRu2AL8wf67CBQKBgQDr1bXBZpEa7mg6cGuM\nIEjYqXqY0qUzm6jpVBjZKFShZ+ml7KYWxY1k3SD2r8IKiAiFhfnrm+Y1vsPg1AKZ\n7oc909EZuu+Leg2Yyb+MnLPTOv+QyUtVbEEXGNUtJp5uY6fjbK+oMnS4+DVEUi65\nyRc9cP3pZeS7HT73id7NIIeitwKBgQDRhdn/nK1N9UpRaR/rl5O8wJrQYBcQ/5eL\nYJHkJVOFKQnnc4a4HY6akkhQtHDAb8uE3D5JU3v6dwZSS1Ig0mbwpxHnSjcH/i1U\n3ZXLT+TmosCdLCsYAqU1j2eWQ3a749KhZFFuyHAm0VhbpQX4Hiw9qD+sV5LVLWxF\nqch+NhBjfQKBgQCZeO0cG/xIM2fex/QlL4lYfgpLU6GwkRb+KP02rLlOhIoXsYZw\ngUU/o2vlPYGgSuCIzCRVAJJy3V8pe67pr8GRKbwE65MiCF661Gf0QLIBv347IdQF\nljpRppZsGJq3qeDC7qLtaVBuYxB/EqBXxRZ7pIGIlwegAStN+gnlIctCxwKBgQC9\n0QLPdTT4lImQualmeXspnGBk+TjMeJHlfkaNp1dEIwrK+bmKIZTo6i/DlcU0QdPi\neNmg+pYuMhizA3PTMmp6CRHKNU0n25lb8idb+vSIEdhoS/R6myLrJBEXa+UskVho\nSIcR01rvf+cJl7aRs1wnO777tpbatH0Lm6Z82SP9zQKBgQCVsW3rc4siUGkEv/KV\nTqwesdK2wCWodXkJWQa4QyeIpKiSEELx1HerR7nXuOUk4SThz3J24XSP43wnsAvG\n0YOqHOJ2T1Of029oWh1E+QfPy0nxgDvNXNRfDnxTmoYuoRJDrbIxwrO9JzE6avc6\nCRQ8aDdclWytE0q0DXs12B6oaQ==\n-----END PRIVATE KEY-----\n",
-  "client_email": "firebase-adminsdk-fbsvc@qualiflow-62af9.iam.gserviceaccount.com",
-  "client_id": "108634547087119508631",
-  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-  "token_uri": "https://oauth2.googleapis.com/token",
-  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40qualiflow-62af9.iam.gserviceaccount.com",
-  "universe_domain": "googleapis.com"
+  "project_id": "qualiflow-2a853",
+  "comment": "Credentials are loaded from the FIREBASE_SERVICE_ACCOUNT_JSON environment variable."
 }

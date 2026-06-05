@@ -21,7 +21,9 @@ import {
   ProcedureResponse,
   ProcedureStatus,
   UpdateProcedureRequest,
-  ProcedureListItemResponse
+  ProcedureListItemResponse,
+  CreateInstructionRequest,
+  UpdateInstructionRequest
 } from '../models/procedure.models';
 import { ProcedureService } from '../services/procedure.service';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
@@ -70,6 +72,13 @@ export class ProcedureFormComponent implements OnInit {
   responsibles: UserResponse[] = [];
   existingProcedures: ProcedureListItemResponse[] = [];
   activeTab = 0;
+
+  // Instructions state
+  instructionsList: Array<CreateInstructionRequest & { id?: number }> = [];
+  newInstruction: CreateInstructionRequest = { code: '', title: '', status: 'ACTIF', description: '' };
+  editInstruction: (CreateInstructionRequest & { id?: number }) | null = null;
+  editingInstructionIndex: number | null = null;
+  showAddInstructionForm = false;
 
   /** Search string for the process picker */
   processSearch = '';
@@ -153,6 +162,18 @@ export class ProcedureFormComponent implements OnInit {
           this.processes = base.processes.items;
           this.existingProcedures = base.procedures.items;
           this.patchForm(details.procedure);
+          if (details.instructions) {
+            this.instructionsList = details.instructions
+              .map(ins => ({
+                id: ins.id,
+                code: ins.code,
+                title: ins.title,
+                description: ins.description,
+                status: ins.status,
+                orderIndex: ins.orderIndex
+              }))
+              .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
+          }
           this.loading = false;
         },
         error: () => {
@@ -241,6 +262,10 @@ export class ProcedureFormComponent implements OnInit {
       return;
     }
 
+    if (this.editingInstructionIndex !== null) {
+      this.saveEditInstruction();
+    }
+
     this.saving = true;
 
     const payload = this.buildPayload();
@@ -285,6 +310,15 @@ export class ProcedureFormComponent implements OnInit {
   private buildPayload(): CreateProcedureRequest {
     const raw = this.procedureForm.getRawValue();
 
+    const instructions = this.instructionsList.map((ins, index) => ({
+      id: ins.id,
+      code: ins.code.trim(),
+      title: ins.title.trim(),
+      description: ins.description?.trim() || null,
+      status: ins.status,
+      orderIndex: index + 1
+    }));
+
     return {
       processIds: raw.processIds,
       code: raw.code.trim(),
@@ -295,7 +329,8 @@ export class ProcedureFormComponent implements OnInit {
       responsibleUserId: raw.responsibleUserId ?? null,
       status: raw.status,
       versionNumber: raw.versionNumber,
-      revisionComment: raw.revisionComment || null
+      revisionComment: raw.revisionComment || null,
+      instructions: instructions
     };
   }
 
@@ -395,7 +430,7 @@ export class ProcedureFormComponent implements OnInit {
   }
 
   nextTab(): void {
-    if (this.activeTab < 2) {
+    if (this.activeTab < 3) {
       this.activeTab++;
     }
   }
@@ -404,5 +439,126 @@ export class ProcedureFormComponent implements OnInit {
     if (this.activeTab > 0) {
       this.activeTab--;
     }
+  }
+
+  getSuggestedInstructionCode(index: number): string {
+    const procCode = this.procedureForm.controls.code.value || '';
+    if (!procCode) return '';
+    const seq = index + 1;
+    const seqStr = seq < 10 ? `0${seq}` : `${seq}`;
+    return `${procCode}-INS-${seqStr}`;
+  }
+
+  toggleAddInstructionForm(): void {
+    this.showAddInstructionForm = !this.showAddInstructionForm;
+    if (this.showAddInstructionForm) {
+      this.resetNewInstruction();
+    }
+  }
+
+  addInstruction(): void {
+    const title = this.newInstruction.title?.trim();
+    if (!title) {
+      this.notificationService.showError('Le titre de l\'instruction est requis.');
+      return;
+    }
+
+    const index = this.instructionsList.length;
+    const suggestedCode = this.getSuggestedInstructionCode(index);
+    const code = this.newInstruction.code?.trim() || suggestedCode;
+
+    // Check for duplicate codes in current list
+    if (this.instructionsList.some(ins => ins.code.toUpperCase() === code.toUpperCase())) {
+      this.notificationService.showError(`Le code d'instruction "${code}" existe déjà.`);
+      return;
+    }
+
+    this.instructionsList.push({
+      code,
+      title,
+      description: this.newInstruction.description?.trim() || null,
+      status: this.newInstruction.status || 'ACTIF',
+      orderIndex: index + 1
+    });
+
+    this.resetNewInstruction();
+    this.showAddInstructionForm = false;
+  }
+
+  resetNewInstruction(): void {
+    const index = this.instructionsList.length;
+    this.newInstruction = {
+      code: this.getSuggestedInstructionCode(index),
+      title: '',
+      description: '',
+      status: 'ACTIF'
+    };
+  }
+
+  startEditInstruction(index: number): void {
+    this.editingInstructionIndex = index;
+    this.editInstruction = { ...this.instructionsList[index] };
+  }
+
+  saveEditInstruction(): void {
+    if (!this.editInstruction) return;
+    const title = this.editInstruction.title?.trim();
+    if (!title) {
+      this.notificationService.showError('Le titre de l\'instruction est requis.');
+      return;
+    }
+
+    const code = this.editInstruction.code?.trim();
+    if (!code) {
+      this.notificationService.showError('Le code de l\'instruction est requis.');
+      return;
+    }
+
+    // Check duplicate code
+    const exists = this.instructionsList.some((ins, i) => i !== this.editingInstructionIndex && ins.code.toUpperCase() === code.toUpperCase());
+    if (exists) {
+      this.notificationService.showError(`Le code d'instruction "${code}" existe déjà.`);
+      return;
+    }
+
+    if (this.editingInstructionIndex !== null) {
+      this.instructionsList[this.editingInstructionIndex] = {
+        ...this.editInstruction,
+        title,
+        code,
+        description: this.editInstruction.description?.trim() || null
+      };
+    }
+
+    this.cancelEditInstruction();
+  }
+
+  cancelEditInstruction(): void {
+    this.editingInstructionIndex = null;
+    this.editInstruction = null;
+  }
+
+  removeInstruction(index: number): void {
+    this.instructionsList.splice(index, 1);
+    this.instructionsList.forEach((ins, idx) => {
+      ins.orderIndex = idx + 1;
+    });
+    this.cancelEditInstruction();
+  }
+
+  moveInstruction(index: number, direction: 'up' | 'down'): void {
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === this.instructionsList.length - 1) return;
+
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    const temp = this.instructionsList[index];
+    this.instructionsList[index] = this.instructionsList[targetIndex];
+    this.instructionsList[targetIndex] = temp;
+
+    this.instructionsList.forEach((ins, idx) => {
+      ins.orderIndex = idx + 1;
+    });
+
+    this.cancelEditInstruction();
   }
 }

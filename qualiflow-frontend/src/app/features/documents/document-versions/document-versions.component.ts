@@ -397,6 +397,10 @@ export class DocumentVersionsComponent implements OnInit {
   }
 
   private saveBlob(blob: Blob, fileName: string): void {
+    if (blob.type === 'application/pdf' && !fileName.toLowerCase().endsWith('.pdf')) {
+      const dotIndex = fileName.lastIndexOf('.');
+      fileName = (dotIndex > 0 ? fileName.slice(0, dotIndex) : fileName) + '.pdf';
+    }
     const objectUrl = URL.createObjectURL(blob);
     const link = window.document.createElement('a');
     link.href = objectUrl;

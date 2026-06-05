@@ -194,6 +194,40 @@ namespace DocApi.Services
                 await EnsureResponsibleIsProcessActorAsync(pid, organizationId, created.ResponsibleUserId);
             }
 
+            // Create instructions if provided in the creation request
+            if (request.Instructions != null && request.Instructions.Any())
+            {
+                int defaultOrderIndex = 1;
+                foreach (var insReq in request.Instructions)
+                {
+                    var orderIndex = insReq.OrderIndex ?? defaultOrderIndex++;
+                    await ValidateInstructionPayloadAsync(created.Id, insReq.Code, insReq.Title, insReq.Status, null);
+
+                    var instruction = new Instruction
+                    {
+                        OrganizationId = created.OrganizationId,
+                        ProcedureId = created.Id,
+                        Code = insReq.Code.Trim(),
+                        Title = insReq.Title.Trim(),
+                        Description = NormalizeNullable(insReq.Description),
+                        Status = string.IsNullOrWhiteSpace(insReq.Status)
+                            ? ProcedureConstants.StatusActif
+                            : insReq.Status.Trim().ToUpperInvariant(),
+                        OrderIndex = orderIndex,
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    await _instructionRepository.CreateAsync(instruction);
+                    await LogProcedureActionAsync(
+                        created,
+                        "INSTRUCTION_ADDED",
+                        null,
+                        insReq.Code,
+                        $"Instruction ajoutée : '{insReq.Title}'.",
+                        userContext.UserId);
+                }
+            }
+
             await LogProcedureActionAsync(
                 created,
                 "PROCEDURE_CREATED",
@@ -274,6 +308,96 @@ namespace DocApi.Services
             {
                 await _procedureRepository.AddProcessLinkAsync(pid, procedure.Id);
                 await EnsureResponsibleIsProcessActorAsync(pid, procedure.OrganizationId, procedure.ResponsibleUserId);
+            }
+
+            // Re-synchronize instructions if provided in the update request
+            if (request.Instructions != null)
+            {
+                var existingInstructions = (await _instructionRepository.GetByProcedureIdAsync(procedure.Id)).ToList();
+                var incomingInstructionIds = request.Instructions.Where(i => i.Id.HasValue && i.Id.Value > 0).Select(i => i.Id!.Value).ToHashSet();
+
+                // 1. Delete instructions that are not in the request
+                foreach (var existing in existingInstructions)
+                {
+                    if (!incomingInstructionIds.Contains(existing.Id))
+                    {
+                        await _instructionRepository.DeleteAsync(existing.Id);
+                        await LogProcedureActionAsync(
+                            procedure,
+                            "INSTRUCTION_DELETED",
+                            existing.Code,
+                            null,
+                            $"Instruction supprimée via le formulaire de procédure : '{existing.Title}'.",
+                            userContext.UserId);
+                    }
+                }
+
+                // 2. Add or Update instructions from the request
+                int defaultOrderIndex = 1;
+                foreach (var incoming in request.Instructions)
+                {
+                    var orderIndex = incoming.OrderIndex ?? defaultOrderIndex++;
+
+                    if (incoming.Id.HasValue && incoming.Id.Value > 0)
+                    {
+                        // Update existing
+                        var existing = existingInstructions.FirstOrDefault(i => i.Id == incoming.Id.Value);
+                        if (existing != null)
+                        {
+                            await ValidateInstructionPayloadAsync(procedure.Id, incoming.Code, incoming.Title, incoming.Status, existing.Id);
+
+                            var oldInsCode = existing.Code;
+                            var oldInsTitle = existing.Title;
+
+                            existing.Code = incoming.Code.Trim();
+                            existing.Title = incoming.Title.Trim();
+                            existing.Description = NormalizeNullable(incoming.Description);
+                            existing.Status = string.IsNullOrWhiteSpace(incoming.Status)
+                                ? ProcedureConstants.StatusActif
+                                : incoming.Status.Trim().ToUpperInvariant();
+                            existing.OrderIndex = orderIndex;
+                            existing.UpdatedAt = DateTime.UtcNow;
+
+                            await _instructionRepository.UpdateAsync(existing);
+
+                            await LogProcedureActionAsync(
+                                procedure,
+                                "INSTRUCTION_UPDATED",
+                                $"Code: {oldInsCode}, Titre: {oldInsTitle}",
+                                $"Code: {existing.Code}, Titre: {existing.Title}",
+                                $"Instruction modifiée via le formulaire de procédure : '{existing.Title}'.",
+                                userContext.UserId);
+                        }
+                    }
+                    else
+                    {
+                        // Create new
+                        await ValidateInstructionPayloadAsync(procedure.Id, incoming.Code, incoming.Title, incoming.Status, null);
+
+                        var instruction = new Instruction
+                        {
+                            OrganizationId = procedure.OrganizationId,
+                            ProcedureId = procedure.Id,
+                            Code = incoming.Code.Trim(),
+                            Title = incoming.Title.Trim(),
+                            Description = NormalizeNullable(incoming.Description),
+                            Status = string.IsNullOrWhiteSpace(incoming.Status)
+                                ? ProcedureConstants.StatusActif
+                                : incoming.Status.Trim().ToUpperInvariant(),
+                            OrderIndex = orderIndex,
+                            CreatedAt = DateTime.UtcNow
+                        };
+
+                        await _instructionRepository.CreateAsync(instruction);
+                        await LogProcedureActionAsync(
+                            procedure,
+                            "INSTRUCTION_ADDED",
+                            null,
+                            incoming.Code,
+                            $"Instruction ajoutée via le formulaire de procédure : '{incoming.Title}'.",
+                            userContext.UserId);
+                    }
+                }
             }
 
             var changesList = new List<string>();

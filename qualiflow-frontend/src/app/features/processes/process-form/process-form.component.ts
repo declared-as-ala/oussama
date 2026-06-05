@@ -1,7 +1,7 @@
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -29,6 +29,16 @@ import { ProcessService } from '../services/process.service';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 
 type ListFieldKey = 'finalities' | 'scope' | 'suppliers' | 'clients' | 'inputData' | 'outputData' | 'objectives';
+
+export function arrayNotEmpty(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const arr = control.value;
+    if (Array.isArray(arr) && arr.some(val => val && val.trim().length > 0)) {
+      return null;
+    }
+    return { required: true };
+  };
+}
 
 interface ListFieldMeta {
   key: ListFieldKey;
@@ -120,13 +130,13 @@ export class ProcessFormComponent implements OnInit {
     name: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(3), Validators.maxLength(160)]),
     description: this.fb.control<string>('', [Validators.maxLength(1200)]),
     type: this.fb.nonNullable.control<ProcessType>('PILOTAGE', Validators.required),
-    finalities: this.fb.nonNullable.control<string[]>([]),
+    finalities: this.fb.nonNullable.control<string[]>([], [arrayNotEmpty()]),
     scope: this.fb.nonNullable.control<string[]>([]),
     suppliers: this.fb.nonNullable.control<string[]>([]),
-    clients: this.fb.nonNullable.control<string[]>([]),
-    inputData: this.fb.nonNullable.control<string[]>([]),
-    outputData: this.fb.nonNullable.control<string[]>([]),
-    objectives: this.fb.nonNullable.control<string[]>([]),
+    clients: this.fb.nonNullable.control<string[]>([], [arrayNotEmpty()]),
+    inputData: this.fb.nonNullable.control<string[]>([], [arrayNotEmpty()]),
+    outputData: this.fb.nonNullable.control<string[]>([], [arrayNotEmpty()]),
+    objectives: this.fb.nonNullable.control<string[]>([], [arrayNotEmpty()]),
     pilotUserId: this.fb.control<number | null>(null),
     status: this.fb.nonNullable.control<ProcessStatus>('ACTIF', Validators.required),
     versionNumber: this.fb.control<string>('1.0', [Validators.required]),
@@ -247,8 +257,8 @@ export class ProcessFormComponent implements OnInit {
     return p ? `${p.firstName} ${p.lastName}` : 'Non défini';
   }
 
-  isInvalid(fieldName: 'code' | 'name' | 'description' | 'versionNumber'): boolean {
-    const control = this.processForm.controls[fieldName];
+  isInvalid(fieldName: string): boolean {
+    const control = this.processForm.get(fieldName);
     return !!control && control.invalid && (control.touched || control.dirty);
   }
 

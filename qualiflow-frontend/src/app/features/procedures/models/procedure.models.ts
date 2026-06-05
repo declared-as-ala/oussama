@@ -21,9 +21,12 @@ export interface CreateProcedureRequest {
   status: ProcedureStatus;
   versionNumber?: string | null;
   revisionComment?: string | null;
+  instructions?: CreateInstructionRequest[];
 }
 
-export type UpdateProcedureRequest = CreateProcedureRequest;
+export interface UpdateProcedureRequest extends Omit<CreateProcedureRequest, 'instructions'> {
+  instructions?: UpdateInstructionRequest[];
+}
 
 export interface CreateInstructionRequest {
   code: string;
@@ -33,7 +36,9 @@ export interface CreateInstructionRequest {
   orderIndex?: number | null;
 }
 
-export type UpdateInstructionRequest = CreateInstructionRequest;
+export interface UpdateInstructionRequest extends CreateInstructionRequest {
+  id?: number;
+}
 
 export interface ProcedureListItemResponse {
   id: number;

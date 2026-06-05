@@ -100,7 +100,19 @@ namespace DocApi.Services
             EnsureCanWrite(userContext);
 
             var targetOrganizationId = ResolveOrganizationScopeForWrite(userContext, organizationId);
-            await ValidateCreateOrUpdateRequestAsync(request.Code, request.Name, request.Type, request.Status, request.PilotUserId, targetOrganizationId, null);
+            await ValidateCreateOrUpdateRequestAsync(
+                request.Code,
+                request.Name,
+                request.Type,
+                request.Status,
+                request.PilotUserId,
+                targetOrganizationId,
+                null,
+                request.Finalities,
+                request.Clients,
+                request.InputData,
+                request.OutputData,
+                request.Objectives);
 
             var process = new Process
             {
@@ -162,7 +174,12 @@ namespace DocApi.Services
                 request.Status,
                 effectivePilotId,
                 process.OrganizationId,
-                id);
+                id,
+                request.Finalities,
+                request.Clients,
+                request.InputData,
+                request.OutputData,
+                request.Objectives);
 
             var oldCode = process.Code;
             var oldName = process.Name;
@@ -646,7 +663,12 @@ namespace DocApi.Services
             string status,
             int? pilotUserId,
             int organizationId,
-            int? existingProcessId)
+            int? existingProcessId,
+            List<string> finalities,
+            List<string> clients,
+            List<string> inputData,
+            List<string> outputData,
+            List<string> objectives)
         {
             if (string.IsNullOrWhiteSpace(code))
             {
@@ -656,6 +678,31 @@ namespace DocApi.Services
             if (string.IsNullOrWhiteSpace(name))
             {
                 throw new ServiceException("Le nom du processus est obligatoire.");
+            }
+
+            if (finalities == null || !finalities.Any(f => !string.IsNullOrWhiteSpace(f)))
+            {
+                throw new ServiceException("Au moins une finalité est obligatoire.");
+            }
+
+            if (clients == null || !clients.Any(c => !string.IsNullOrWhiteSpace(c)))
+            {
+                throw new ServiceException("Au moins un client est obligatoire.");
+            }
+
+            if (inputData == null || !inputData.Any(i => !string.IsNullOrWhiteSpace(i)))
+            {
+                throw new ServiceException("Au moins une donnée d'entrée est obligatoire.");
+            }
+
+            if (outputData == null || !outputData.Any(o => !string.IsNullOrWhiteSpace(o)))
+            {
+                throw new ServiceException("Au moins une donnée de sortie est obligatoire.");
+            }
+
+            if (objectives == null || !objectives.Any(o => !string.IsNullOrWhiteSpace(o)))
+            {
+                throw new ServiceException("Au moins un objectif est obligatoire.");
             }
 
             var normalizedType = NormalizeUpper(type);

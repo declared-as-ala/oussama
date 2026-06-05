@@ -148,6 +148,7 @@
                 <input [matChipInputFor]="chipGrid" [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
                   (matChipInputTokenEnd)="addChip(field, $event)" />
               </mat-chip-grid>
+              <mat-error *ngIf="isInvalid(field)">Ce champ est obligatoire (au moins 1 élément requis).</mat-error>
             </mat-form-field>
           </div>
         </div>
@@ -178,6 +179,7 @@
                 <input [matChipInputFor]="chipGrid" [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
                   (matChipInputTokenEnd)="addChip(field, $event)" />
               </mat-chip-grid>
+              <mat-error *ngIf="isInvalid(field)">Ce champ est obligatoire (au moins 1 élément requis).</mat-error>
             </mat-form-field>
           </div>
         </div>
