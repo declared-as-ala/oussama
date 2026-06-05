@@ -32,6 +32,8 @@ app-footer-home {
   color: var(--color-text);
   font-family: 'Inter', 'Segoe UI', sans-serif;
   scroll-behavior: smooth;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 main {
@@ -844,4 +846,3 @@ main {
     }
   }
 }
-

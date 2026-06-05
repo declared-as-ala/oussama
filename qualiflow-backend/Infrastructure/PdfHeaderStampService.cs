@@ -240,10 +240,137 @@ namespace DocApi.Infrastructure
                 }
 
                 // Phase 4: Draw Content Lines Centered and Formatted
-                foreach (var rawLine in contentLines)
+                void DrawBeautifulTable(List<string> tableLines)
+                {
+                    var tableRows = new List<List<string>>();
+                    var colProportions = new List<double>();
+
+                    foreach (var tblLine in tableLines)
+                    {
+                        var trimmed = tblLine.Trim();
+                        if (!trimmed.StartsWith("|")) continue;
+
+                        var parts = tblLine.Split('|');
+                        if (parts.Length < 3) continue;
+
+                        var cells = new List<string>();
+                        for (int colIdx = 1; colIdx < parts.Length - 1; colIdx++)
+                        {
+                            cells.Add(parts[colIdx].Trim());
+                        }
+
+                        tableRows.Add(cells);
+
+                        if (colProportions.Count == 0)
+                        {
+                            double totalLength = 0;
+                            for (int colIdx = 1; colIdx < parts.Length - 1; colIdx++)
+                            {
+                                totalLength += parts[colIdx].Length;
+                            }
+                            for (int colIdx = 1; colIdx < parts.Length - 1; colIdx++)
+                            {
+                                colProportions.Add(totalLength > 0 ? parts[colIdx].Length / totalLength : 1.0 / (parts.Length - 2));
+                            }
+                        }
+                    }
+
+                    int numCols = colProportions.Count;
+                    if (numCols == 0 || tableRows.Count == 0) return;
+
+                    // Pad or truncate rows
+                    for (int r = 0; r < tableRows.Count; r++)
+                    {
+                        var row = tableRows[r];
+                        while (row.Count < numCols) row.Add(string.Empty);
+                        if (row.Count > numCols) tableRows[r] = row.GetRange(0, numCols);
+                    }
+
+                    double tableWidth = bodyWidth * 0.9;
+                    double tableX = leftMargin + (bodyWidth - tableWidth) / 2;
+
+                    double[] colWidths = new double[numCols];
+                    for (int c = 0; c < numCols; c++)
+                    {
+                        colWidths[c] = colProportions[c] * tableWidth;
+                    }
+
+                    void DrawRow(List<string> rowCells, bool isHeader, bool isAlternate)
+                    {
+                        var font = isHeader ? bodyBoldFont : bodyFont;
+                        var cellLines = new List<List<string>>();
+                        int maxLines = 1;
+                        for (int c = 0; c < numCols; c++)
+                        {
+                            var wrapped = new List<string>(WrapLine(gfx!, rowCells[c], font, colWidths[c] - 16d));
+                            cellLines.Add(wrapped);
+                            if (wrapped.Count > maxLines) maxLines = wrapped.Count;
+                        }
+
+                        double lineSpacing = 13d;
+                        double rowHeight = (maxLines * lineSpacing) + 12d;
+
+                        if (y + rowHeight > maxY)
+                        {
+                            StartNewPage();
+                            if (!isHeader)
+                            {
+                                // Draw header on new page
+                                DrawRow(tableRows[0], true, false);
+                            }
+                        }
+
+                        var bgBrush = isHeader 
+                            ? primaryBrush 
+                            : (isAlternate ? new XSolidBrush(XColor.FromArgb(247, 250, 252)) : XBrushes.White);
+
+                        var rowRect = new XRect(tableX, y, tableWidth, rowHeight);
+                        gfx!.DrawRectangle(bgBrush, rowRect);
+
+                        var cellTextBrush = isHeader ? XBrushes.White : textBrush;
+                        double cellX = tableX;
+                        for (int c = 0; c < numCols; c++)
+                        {
+                            double cellY = y + 6d;
+                            foreach (var textLine in cellLines[c])
+                            {
+                                gfx!.DrawString(textLine, font, cellTextBrush, new XPoint(cellX + 8d, cellY + 9d));
+                                cellY += lineSpacing;
+                            }
+                            cellX += colWidths[c];
+                        }
+
+                        var borderPen = new XPen(XColor.FromArgb(226, 232, 240), 1);
+                        gfx!.DrawRectangle(borderPen, rowRect);
+
+                        double dividerX = tableX;
+                        for (int c = 0; c < numCols - 1; c++)
+                        {
+                            dividerX += colWidths[c];
+                            gfx!.DrawLine(borderPen, dividerX, y, dividerX, y + rowHeight);
+                        }
+
+                        y += rowHeight;
+                    }
+
+                    // Draw header first
+                    DrawRow(tableRows[0], true, false);
+
+                    // Draw data rows
+                    bool alternate = false;
+                    for (int r = 1; r < tableRows.Count; r++)
+                    {
+                        DrawRow(tableRows[r], false, alternate);
+                        alternate = !alternate;
+                    }
+
+                    y += 10d;
+                }
+
+                for (int lineIdx = 0; lineIdx < contentLines.Count; lineIdx++)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-
+                    var rawLine = contentLines[lineIdx];
                     var line = rawLine.Trim();
                     if (string.IsNullOrEmpty(line))
                     {
@@ -272,16 +399,24 @@ namespace DocApi.Infrastructure
                     // Check if it's a table line
                     else if (line.StartsWith('|') || line.StartsWith('+') || (line.StartsWith('-') && line.Contains("---")))
                     {
-                        var lineSize = gfx!.MeasureString(rawLine, monoFont);
-                        double lineX = leftMargin + (bodyWidth - lineSize.Width) / 2;
-                        
-                        if (y + 14d > maxY)
+                        var tableLines = new List<string>();
+                        while (lineIdx < contentLines.Count)
                         {
-                            StartNewPage();
+                            var nextRawLine = contentLines[lineIdx];
+                            var nextLine = nextRawLine.Trim();
+                            if (nextLine.StartsWith('|') || nextLine.StartsWith('+') || (nextLine.StartsWith('-') && nextLine.Contains("---")))
+                            {
+                                tableLines.Add(nextRawLine);
+                                lineIdx++;
+                            }
+                            else
+                            {
+                                break;
+                            }
                         }
-                        
-                        gfx.DrawString(rawLine, monoFont, textBrush, new XPoint(lineX, y));
-                        y += 14d;
+                        lineIdx--; // Step back since loop will increment it
+
+                        DrawBeautifulTable(tableLines);
                     }
                     // Check if it's a list item
                     else if (line.StartsWith('-') || line.StartsWith('*') || (line.Length > 2 && char.IsDigit(line[0]) && line[1] == '.'))
