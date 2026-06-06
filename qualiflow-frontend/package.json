@@ -3,13 +3,13 @@
   "version": "1.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --configuration development --host localhost --port 4200",
-    "build": "ng build",
-    "start:dev": "ng serve --configuration development --host localhost --port 4200",
+    "start": "node init && ng serve --configuration development --host localhost --port 4200",
+    "build": "node init && ng build",
+    "start:dev": "node init && ng serve --configuration development --host localhost --port 4200",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "api": "json-server --watch db.json --port 3001",
-    "dev": "concurrently \"npm run api\" \"ng serve\""
+    "dev": "node init && concurrently \"npm run api\" \"ng serve\""
   },
   "private": true,
   "dependencies": {
