@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, Subject, of } from 'rxjs';
-import { catchError, switchMap, tap } from 'rxjs/operators';
+import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
+import { catchError, finalize, shareReplay, switchMap, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 
@@ -134,6 +134,7 @@ export class AuthService {
   public currentUser$ = this.currentUserSubject.asObservable();
   private profilePhotoRefreshSubject = new Subject<void>();
   public profilePhotoRefresh$ = this.profilePhotoRefreshSubject.asObservable();
+  private refreshTokenRequest$?: Observable<LoginResponse>;
 
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(this.hasToken());
   public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
@@ -187,16 +188,31 @@ export class AuthService {
   }
 
   refreshToken(): Observable<LoginResponse> {
-    const refreshToken = this.getRefreshToken();
-    if (!refreshToken) {
-      throw new Error('No refresh token available');
+    return this.refreshAccessToken();
+  }
+
+  refreshAccessToken(): Observable<LoginResponse> {
+    if (this.refreshTokenRequest$) {
+      return this.refreshTokenRequest$;
     }
 
-    return this.http.post<LoginResponse>(`${this.apiUrl}/refresh-token`, { refreshToken }).pipe(
+    const refreshToken = this.getRefreshToken();
+    if (!refreshToken) {
+      return throwError(() => new Error('No refresh token available'));
+    }
+
+    this.refreshTokenRequest$ = this.http.post<LoginResponse>(`${this.apiUrl}/refresh-token`, { refreshToken }).pipe(
       tap(response => {
         this.setTokens(response.accessToken, response.refreshToken);
-      })
+        this.isAuthenticatedSubject.next(true);
+      }),
+      finalize(() => {
+        this.refreshTokenRequest$ = undefined;
+      }),
+      shareReplay({ bufferSize: 1, refCount: false })
     );
+
+    return this.refreshTokenRequest$;
   }
 
   changePassword(request: ChangePasswordRequest): Observable<any> {
@@ -290,6 +306,22 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
+  getCurrentUserId(): number | null {
+    const storedUserId = this.getCurrentUser()?.id;
+    if (storedUserId) {
+      return storedUserId;
+    }
+
+    const payload = this.getAccessTokenPayload();
+    const rawUserId =
+      payload?.['nameid'] ??
+      payload?.['sub'] ??
+      payload?.['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
+    const parsedUserId = Number(rawUserId);
+
+    return Number.isFinite(parsedUserId) && parsedUserId > 0 ? parsedUserId : null;
+  }
+
   private loadCurrentUser(): void {
     if (this.hasToken()) {
       const storedUser = this.getUserFromStorage();
@@ -340,6 +372,20 @@ export class AuthService {
     return this.hasToken();
   }
 
+  isAccessTokenExpired(leewaySeconds = 30): boolean {
+    const token = this.getAccessToken();
+    if (!token) {
+      return true;
+    }
+
+    const payload = this.getAccessTokenPayload();
+    if (!payload?.exp) {
+      return true;
+    }
+
+    return payload.exp * 1000 <= Date.now() + leewaySeconds * 1000;
+  }
+
   hasRole(role: string | string[]): boolean {
     const user = this.getCurrentUser();
     if (!user) return false;
@@ -378,5 +424,25 @@ export class AuthService {
     }
 
     return 'fr';
+  }
+
+  private getAccessTokenPayload(): ({ exp?: number } & Record<string, unknown>) | null {
+    const token = this.getAccessToken();
+    return token ? this.decodeJwtPayload(token) : null;
+  }
+
+  private decodeJwtPayload(token: string): ({ exp?: number } & Record<string, unknown>) | null {
+    try {
+      const payload = token.split('.')[1];
+      if (!payload) {
+        return null;
+      }
+
+      const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = normalized.padEnd(normalized.length + (4 - normalized.length % 4) % 4, '=');
+      return JSON.parse(atob(padded));
+    } catch {
+      return null;
+    }
   }
 }

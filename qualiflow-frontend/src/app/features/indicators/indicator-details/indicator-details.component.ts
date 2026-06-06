@@ -97,11 +97,11 @@ export class IndicatorDetailsComponent implements OnInit {
   }
 
   get isResponsible(): boolean {
-    const user = this.authService.getCurrentUser();
-    if (!user || !this.details) {
+    const userId = this.authService.getCurrentUserId();
+    if (!userId || !this.details) {
       return false;
     }
-    return user.id === this.details.responsible.id;
+    return userId === this.details.responsible.id;
   }
 
   get statusLabel(): string {

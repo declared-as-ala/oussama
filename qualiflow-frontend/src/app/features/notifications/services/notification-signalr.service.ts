@@ -1,5 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import * as signalR from '@microsoft/signalr';
 import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../../core/services/auth.service';
@@ -29,6 +30,11 @@ export class NotificationSignalRService implements OnDestroy {
     }
 
     if (!this.authService.isAuthenticated()) {
+      return;
+    }
+
+    const accessToken = await this.ensureValidAccessToken();
+    if (!accessToken) {
       return;
     }
 
@@ -67,6 +73,11 @@ export class NotificationSignalRService implements OnDestroy {
         console.log('SignalR connected successfully to notifications hub.');
       }
     } catch (err) {
+      if (this.isAuthenticationError(err)) {
+        await this.handleAuthenticationFailure();
+        return;
+      }
+
       if (!this.isExplicitlyStopped && this.authService.isAuthenticated()) {
         if (!environment.production) {
           console.warn('SignalR start failed. A retry will be scheduled.', err);
@@ -131,6 +142,11 @@ export class NotificationSignalRService implements OnDestroy {
       if (!environment.production) {
         console.warn('SignalR connection closed permanently.', error);
       }
+      if (this.isAuthenticationError(error)) {
+        void this.handleAuthenticationFailure();
+        return;
+      }
+
       if (!this.isExplicitlyStopped && this.authService.isAuthenticated()) {
         this.scheduleStartRetry();
       }
@@ -175,5 +191,48 @@ export class NotificationSignalRService implements OnDestroy {
       return;
     }
     // When SignalR reconnects, the backend will push unread updates on the next event.
+  }
+
+  private async ensureValidAccessToken(): Promise<string | null> {
+    const currentToken = this.authService.getAccessToken();
+    if (currentToken && !this.authService.isAccessTokenExpired()) {
+      return currentToken;
+    }
+
+    return this.refreshAccessTokenOrLogout();
+  }
+
+  private async handleAuthenticationFailure(): Promise<void> {
+    this.clearReconnectTimeout();
+
+    const refreshedToken = await this.refreshAccessTokenOrLogout();
+    if (refreshedToken && !this.isExplicitlyStopped) {
+      this.scheduleStartRetry();
+    }
+  }
+
+  private async refreshAccessTokenOrLogout(): Promise<string | null> {
+    if (!this.authService.getRefreshToken()) {
+      await this.stopConnection();
+      this.authService.forceLogout();
+      return null;
+    }
+
+    try {
+      const response = await firstValueFrom(this.authService.refreshAccessToken());
+      return response.accessToken;
+    } catch {
+      await this.stopConnection();
+      this.authService.forceLogout();
+      return null;
+    }
+  }
+
+  private isAuthenticationError(error: unknown): boolean {
+    const message = String(error ?? '');
+    return message.includes('401') ||
+      message.includes('403') ||
+      message.includes('Unauthorized') ||
+      message.includes('Forbidden');
   }
 }
